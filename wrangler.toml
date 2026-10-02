@@ -51,8 +51,28 @@ database_id = "your-dev-d1-database-id"
 [env.staging]
 name = "chupgibaygio-api-staging"
 vars = { APP_ENV = "staging", LOG_LEVEL = "info" }
+[[env.staging.d1_databases]]
+binding = "DB"
+database_name = "chupgibaygio-db-staging"
+database_id = "your-staging-d1-database-id"
+[[env.staging.r2_buckets]]
+binding = "R2_BUCKET"
+bucket_name = "chupgibaygio-assets-staging"
+[[env.staging.kv_namespaces]]
+binding = "CACHE"
+id = "your-staging-kv-namespace-id"
 
 # --- Production ---
 [env.production]
 name = "chupgibaygio-api"
 vars = { APP_ENV = "production", LOG_LEVEL = "info" }
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "chupgibaygio-db"
+database_id = "your-d1-database-id-here"
+[[env.production.r2_buckets]]
+binding = "R2_BUCKET"
+bucket_name = "chupgibaygio-assets"
+[[env.production.kv_namespaces]]
+binding = "CACHE"
+id = "your-kv-namespace-id"
