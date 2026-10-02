@@ -42,7 +42,7 @@ export const CommunityReportModal: React.FC<CommunityReportModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slateInk/70 backdrop-blur-xs flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[var(--z-modal)] overflow-y-auto bg-slateInk/70 backdrop-blur-xs flex items-center justify-center p-4">
       <div 
         className="relative bg-paper-light border-2 border-slateInk w-full max-w-lg shadow-hard-lg overflow-hidden reticle-corner reticle-tl reticle-br"
         onClick={(e) => e.stopPropagation()}

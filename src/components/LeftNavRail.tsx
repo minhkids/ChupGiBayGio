@@ -75,7 +75,7 @@ export const LeftNavRail: React.FC<LeftNavRailProps> = ({
       {/* ========================================================================= */}
       {/* 1. DESKTOP NAVIGATION RAIL — 76px, matches the lg:pl-[76px] content offset */}
       {/* ========================================================================= */}
-      <aside className="hidden lg:flex fixed top-0 left-0 bottom-0 z-40 w-[76px] select-none flex-col items-center justify-between border-r border-neutral-200 bg-white py-5">
+      <aside className="hidden lg:flex fixed top-0 left-0 bottom-0 z-[var(--z-rail)] w-[76px] select-none flex-col items-center justify-between border-r border-neutral-200 bg-white py-5">
         {/* ─── TOP: brand mark + primary navigation ─── */}
         <div className="flex w-full flex-col items-center gap-4">
           {/* Brand / Home button */}

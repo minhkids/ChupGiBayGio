@@ -510,7 +510,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
       {/* FLOATING RE-OPEN BUTTON (Attached right next to Nav Rail when panel collapsed) */}
       {/* ========================================================================= */}
       {isSidebarCollapsed && (
-        <div className="hidden lg:flex fixed top-1/2 left-[76px] -translate-y-1/2 z-40 items-center pointer-events-auto">
+        <div className="hidden lg:flex fixed top-1/2 left-[76px] -translate-y-1/2 z-[var(--z-rail)] items-center pointer-events-auto">
           <button
             type="button"
             onClick={() => setIsSidebarCollapsed(false)}

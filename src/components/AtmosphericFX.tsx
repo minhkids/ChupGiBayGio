@@ -617,7 +617,7 @@ export const AtmosphericFX: React.FC<AtmosphericFXProps> = ({
       ref={canvasRef}
       className="fixed inset-0 w-screen h-screen pointer-events-none"
       style={{
-        zIndex: 5, // Above map (z-0), below floating UI (z-30+)
+        zIndex: 'var(--z-base)',
         mixBlendMode: 'normal',
       }}
       aria-hidden="true"
