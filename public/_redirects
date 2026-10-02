@@ -1,15 +1,2 @@
-# Cloudflare Pages Redirects
-# Place in public/_redirects
-
-# SPA fallback - all routes serve index.html
-/* /index.html 200
-
-# Legacy/SEO redirects (example)
-/old-page /new-page 301
-/old-route/* /new-route/:splat 301
-
-# API routes to Workers (if not using Pages Functions)
-# /api/* https://api.chupgibaygio.com/:splat 302
-
-# www to non-www (or vice versa) - handled at DNS/Cloudflare level
-# https://www.chupgibaygio.com/* https://chupgibaygio.com/:splat 301
+# Custom redirects can be added here
+# SPA routing is natively handled by wrangler.toml [assets] not_found_handling = "single-page-application"
