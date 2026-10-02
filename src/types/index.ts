@@ -171,3 +171,13 @@ export interface RentalShop {
   phone: string;
   link: string;
 }
+
+export interface PoseItem {
+  id: string;
+  category: 'female' | 'male' | 'couple' | 'props';
+  name: string;
+  tips: string;
+  svgPath: string;
+  viewBox: string;
+  matchedSpots?: string[];
+}

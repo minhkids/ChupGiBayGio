@@ -1,5 +1,23 @@
 import { useState, useEffect, useCallback } from 'react';
 
+interface OpenMeteoCurrent {
+  temperature_2m: number;
+  relative_humidity_2m: number;
+  weather_code: number;
+  wind_speed_10m: number;
+  is_day: number;
+}
+
+interface OpenMeteoDaily {
+  sunrise: string[];
+  sunset: string[];
+}
+
+interface OpenMeteoResponse {
+  current: OpenMeteoCurrent;
+  daily: OpenMeteoDaily;
+}
+
 /**
  * WMO Weather Interpretation Codes (WW)
  * https://open-meteo.com/en/docs
@@ -186,7 +204,7 @@ export function useWeather(lat = HANOI_LAT, lng = HANOI_LNG) {
       const res = await fetch(`${OPEN_METEO_URL}?${params}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       
-      const data = await res.json();
+      const data: OpenMeteoResponse = await res.json();
       const current = data.current;
       const daily = data.daily;
       const now = new Date();

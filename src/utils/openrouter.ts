@@ -181,7 +181,7 @@ export async function analyzePostWithOpenRouter(
         throw new Error(`OpenRouter HTTP ${response.status}: ${await response.text()}`);
       }
 
-      const json = await response.json();
+      const json: { choices: Array<{ message: { content: string } }> } = await response.json();
       const content = json.choices[0]?.message?.content;
       const parsed: OpenRouterExtractionResult = JSON.parse(content);
 

@@ -115,7 +115,7 @@ export const FilmSpecsCard: React.FC<FilmSpecsCardProps> = ({
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-1 justify-end shrink-0">
-                  {shop.services.map((svc, sIdx) => (
+                  {shop.services.map((svc: string, sIdx: number) => (
                     <span key={sIdx} className="text-[9px] px-1.5 py-0.5 bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-200 rounded font-mono-spec">
                       {svc}
                     </span>
