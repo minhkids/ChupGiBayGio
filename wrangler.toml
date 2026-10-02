@@ -51,3 +51,8 @@ database_id = "your-dev-d1-database-id"
 [env.staging]
 name = "chupgibaygio-api-staging"
 vars = { APP_ENV = "staging", LOG_LEVEL = "info" }
+
+# --- Production ---
+[env.production]
+name = "chupgibaygio-api"
+vars = { APP_ENV = "production", LOG_LEVEL = "info" }
