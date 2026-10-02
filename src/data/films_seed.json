@@ -1,0 +1,656 @@
+[
+  {
+    "id": "film_kodak_gold_200",
+    "name": "Kodak Gold 200",
+    "brand": "Kodak",
+    "film_type": "Color Negative",
+    "iso": 200,
+    "tone_characteristics": "Tone vàng ấm hổ phách, tôn ánh nắng xiên, hạt mịn vừa phải",
+    "best_seasons": [
+      9,
+      10,
+      11
+    ],
+    "best_spots": [
+      "Đường Phan Đình Phùng",
+      "Đường Hoàng Diệu",
+      "Phố Cổ"
+    ],
+    "recommended_time": "15:30 - 17:00 (Nắng xiên chiều thu)",
+    "film_image_url": "https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=600&auto=format&fit=crop&q=80",
+    "sample_image_url": "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=1000&auto=format&fit=crop&q=80",
+    "matched_spots": [
+      {
+        "spot_name": "Đường Phan Đình Phùng",
+        "season_months": [
+          9,
+          10,
+          11
+        ],
+        "compatibility_score": 98,
+        "evaluation_reason": "Bắt trọn nắng xiên qua tán sấu và xe hoa rực rỡ, giữ tà áo dài trắng trong trẻo."
+      },
+      {
+        "spot_name": "Đường Hoàng Diệu",
+        "season_months": [
+          10,
+          11
+        ],
+        "compatibility_score": 95,
+        "evaluation_reason": "Tôn sắc vàng của lá rụng trên vỉa hè và tường rào di tích cổ."
+      },
+      {
+        "spot_name": "Phố Cổ Hà Nội",
+        "season_months": [
+          9,
+          10,
+          11
+        ],
+        "compatibility_score": 92,
+        "evaluation_reason": "Ghi lại sắc nắng thu ngả vàng trên các mái nhà rêu phong."
+      }
+    ],
+    "nearby_shops": [
+      {
+        "name": "36+ Film Lab",
+        "address": "1B Lê Phụng Hiểu, Hoàn Kiếm, Hà Nội",
+        "distance_to_core_spots": "Cách Phan Đình Phùng ~2.2km",
+        "services": [
+          "Bán film sẵn",
+          "Tráng scan 2h"
+        ]
+      },
+      {
+        "name": "Nadar Photo Club",
+        "address": "Số 2 ngõ 40 Châu Long, Ba Đình, Hà Nội",
+        "distance_to_core_spots": "Cách Phan Đình Phùng ~400m",
+        "services": [
+          "Bán film bảo quản lạnh",
+          "Tư vấn góc chụp"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "film_kodak_portra_400",
+    "name": "Kodak Portra 400",
+    "brand": "Kodak",
+    "film_type": "Color Negative",
+    "iso": 400,
+    "tone_characteristics": "Tone da mịn màng, dải sáng tương phản dịu nhẹ, chuyên chân dung ngoài trời",
+    "best_seasons": [
+      1,
+      2,
+      3,
+      9,
+      10,
+      11
+    ],
+    "best_spots": [
+      "Văn Miếu",
+      "Hoàng Thành Thăng Long",
+      "Bãi Đá Sông Hồng"
+    ],
+    "recommended_time": "08:00 - 10:00 & 15:00 - 16:30",
+    "film_image_url": "https://images.unsplash.com/photo-1589829085413-56de8ae18c73?w=600&auto=format&fit=crop&q=80",
+    "sample_image_url": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=1000&auto=format&fit=crop&q=80",
+    "matched_spots": [
+      {
+        "spot_name": "Hoàng Thành Thăng Long",
+        "season_months": [
+          1,
+          2,
+          3,
+          9,
+          10
+        ],
+        "compatibility_score": 98,
+        "evaluation_reason": "Giúp cứu chi tiết ở những góc khuất nắng dưới hiên đình/cổng thành, giữ tone da mẫu hồng hào, mịn màng."
+      },
+      {
+        "spot_name": "Văn Miếu - Quốc Tử Giám",
+        "season_months": [
+          1,
+          2,
+          3,
+          11
+        ],
+        "compatibility_score": 96,
+        "evaluation_reason": "Tôn vinh vẻ đẹp Áo dài cổ truyền với tone da tự nhiên và màu ngói đỏ hoài cổ."
+      },
+      {
+        "spot_name": "Bãi Đá Sông Hồng",
+        "season_months": [
+          9,
+          10,
+          11
+        ],
+        "compatibility_score": 94,
+        "evaluation_reason": "Dải tương phản dịu nhẹ cho concept nàng thơ trên đồng cỏ bạt ngàn."
+      }
+    ],
+    "nearby_shops": [
+      {
+        "name": "Zone 5 Film Lab",
+        "address": "258 Tôn Đức Thắng, Đống Đa, Hà Nội",
+        "distance_to_core_spots": "Cách Văn Miếu ~600m",
+        "services": [
+          "Scan chuẩn màu",
+          "Bán máy & phụ kiện"
+        ]
+      },
+      {
+        "name": "AEG Film Lab",
+        "address": "318 Bà Triệu, Hai Bà Trưng, Hà Nội",
+        "distance_to_core_spots": "Cách Hoàng Thành ~3km",
+        "services": [
+          "Sẵn Kodak Portra",
+          "Tráng scan nhanh"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "film_fuji_200",
+    "name": "Fujifilm 200",
+    "brand": "Fujifilm",
+    "film_type": "Color Negative",
+    "iso": 200,
+    "tone_characteristics": "Nghiêng tone xanh lá và cyan nhẹ, làm nổi bật sắc trắng tinh khiết, hợp trời mù lạnh",
+    "best_seasons": [
+      11,
+      12,
+      1
+    ],
+    "best_spots": [
+      "Vườn Cúc Họa Mi Bãi Đá",
+      "Thung Lũng Hoa Tây Hồ"
+    ],
+    "recommended_time": "07:00 - 09:00 (Sáng se lạnh)",
+    "film_image_url": "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=600&auto=format&fit=crop&q=80",
+    "sample_image_url": "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1000&auto=format&fit=crop&q=80",
+    "matched_spots": [
+      {
+        "spot_name": "Vườn Cúc Họa Mi Bãi Đá",
+        "season_months": [
+          11,
+          12
+        ],
+        "compatibility_score": 97,
+        "evaluation_reason": "Tôn sắc trắng tinh khôi của cánh hoa và màu xanh dịu của lá, không làm hoa cúc bị ngả vàng úa."
+      },
+      {
+        "spot_name": "Thung Lũng Hoa Hồ Tây",
+        "season_months": [
+          11,
+          12,
+          1
+        ],
+        "compatibility_score": 93,
+        "evaluation_reason": "Xử lý sắc xanh mượt mà trong không khí sương mù se lạnh đầu đông."
+      }
+    ],
+    "nearby_shops": [
+      {
+        "name": "Nadar Photo Club",
+        "address": "Số 2 ngõ 40 Châu Long, Ba Đình, Hà Nội",
+        "distance_to_core_spots": "Cách Hồ Tây ~1.5km",
+        "services": [
+          "Bán film tươi",
+          "Tư vấn kỹ thuật"
+        ]
+      },
+      {
+        "name": "Fox Lab Hanoi",
+        "address": "Ngõ 198 Thái Hà, Đống Đa, Hà Nội",
+        "distance_to_core_spots": "Cách khu vực trung tâm ~4km",
+        "services": [
+          "Giá sinh viên",
+          "Tráng màu chuẩn Fuji"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "film_cinestill_800t",
+    "name": "CineStill 800T",
+    "brand": "CineStill",
+    "film_type": "Tungsten High Speed",
+    "iso": 800,
+    "tone_characteristics": "Quầng đỏ rực Halation quanh đèn lồng và neon, chất điện ảnh cinematic chụp đêm",
+    "best_seasons": [
+      8,
+      9,
+      12
+    ],
+    "best_spots": [
+      "Phố Hàng Mã",
+      "Nhà Thờ Lớn",
+      "Phố Bia Tạ Hiện"
+    ],
+    "recommended_time": "18:30 - 21:30 (Đêm rực rỡ ánh đèn)",
+    "film_image_url": "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=600&auto=format&fit=crop&q=80",
+    "sample_image_url": "https://images.unsplash.com/photo-1514565131-fce0801e5785?w=1000&auto=format&fit=crop&q=80",
+    "matched_spots": [
+      {
+        "spot_name": "Phố Hàng Mã",
+        "season_months": [
+          8,
+          9,
+          12
+        ],
+        "compatibility_score": 99,
+        "evaluation_reason": "Tạo quầng hào quang đỏ cinematic quanh đèn lồng Trung Thu và đèn trang trí Giáng sinh."
+      },
+      {
+        "spot_name": "Nhà Thờ Lớn Hà Nội",
+        "season_months": [
+          12
+        ],
+        "compatibility_score": 92,
+        "evaluation_reason": "Bắt sáng tốt khung cảnh phố đi bộ lên đèn mùa đông mà không bị rung tay."
+      },
+      {
+        "spot_name": "Phố Bia Tạ Hiện",
+        "season_months": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12
+        ],
+        "compatibility_score": 94,
+        "evaluation_reason": "Tạo chất điện ảnh Hong Kong 90s cho phố đêm nhộn nhịp."
+      }
+    ],
+    "nearby_shops": [
+      {
+        "name": "AEG Film Lab",
+        "address": "318 Bà Triệu, Hai Bà Trưng, Hà Nội",
+        "distance_to_core_spots": "Cách Nhà Thờ Lớn ~1.8km",
+        "services": [
+          "Đầy đủ CineStill",
+          "Tráng ECN-2 chuẩn"
+        ]
+      },
+      {
+        "name": "Croplab Hà Nội",
+        "address": "102A ngõ 72 Nguyễn Chí Thanh, Đống Đa, Hà Nội",
+        "distance_to_core_spots": "Cách trung tâm ~4km",
+        "services": [
+          "Kho film điện ảnh",
+          "Tráng scan chuyên nghiệp"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "film_ilford_hp5",
+    "name": "Ilford HP5 Plus 400",
+    "brand": "Ilford",
+    "film_type": "Black & White",
+    "iso": 400,
+    "tone_characteristics": "Đen trắng cổ điển, tương phản mạnh, tôn đường nét sắt thép và kiến trúc hoài cổ",
+    "best_seasons": [
+      11,
+      12,
+      1,
+      2
+    ],
+    "best_spots": [
+      "Cầu Long Biên",
+      "Ga Hà Nội",
+      "Ngõ Phố Cổ"
+    ],
+    "recommended_time": "Sáng sớm có sương mù hoặc chiều muộn",
+    "film_image_url": "https://images.unsplash.com/photo-1495707902641-75cac588d2e9?w=600&auto=format&fit=crop&q=80",
+    "sample_image_url": "https://images.unsplash.com/photo-1477959858617-67f30bc75b82?w=1000&auto=format&fit=crop&q=80",
+    "matched_spots": [
+      {
+        "spot_name": "Cầu Long Biên",
+        "season_months": [
+          11,
+          12,
+          1,
+          2
+        ],
+        "compatibility_score": 98,
+        "evaluation_reason": "Cấu trúc giàn thép rỉ sét và dải xám mượt mà lột tả trọn vẹn vẻ thô mộc, cổ kính lịch sử."
+      },
+      {
+        "spot_name": "Ga Hà Nội & Cầu Đường Sắt Phùng Hưng",
+        "season_months": [
+          11,
+          12,
+          1,
+          2
+        ],
+        "compatibility_score": 95,
+        "evaluation_reason": "Tôn vinh hình khối kiến trúc cổ điển và các vệt sáng tối sâu đanh."
+      }
+    ],
+    "nearby_shops": [
+      {
+        "name": "36+ Film Lab",
+        "address": "89 Đinh Tiên Hoàng, Hoàn Kiếm, Hà Nội",
+        "distance_to_core_spots": "Cách Cầu Long Biên ~1.5km",
+        "services": [
+          "Bán film đen trắng",
+          "Tráng B&W chuyên biệt"
+        ]
+      },
+      {
+        "name": "Zone 5 Film Lab",
+        "address": "258 Tôn Đức Thắng, Đống Đa, Hà Nội",
+        "distance_to_core_spots": "Cách Ga Hà Nội ~800m",
+        "services": [
+          "Tráng scan B&W",
+          "Bán phụ kiện lens"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "film_kodak_colorplus_200",
+    "name": "Kodak ColorPlus 200",
+    "brand": "Kodak",
+    "film_type": "Color Negative",
+    "iso": 200,
+    "tone_characteristics": "Màu ảnh thập niên 90s, ấm áp nhẹ nhàng, giá thành dễ tiếp cận cho người mới",
+    "best_seasons": [
+      4,
+      5,
+      9,
+      10
+    ],
+    "best_spots": [
+      "Cà phê Cư Xá",
+      "Khu tập thể Kim Liên",
+      "Đường sách 19/12"
+    ],
+    "recommended_time": "14:00 - 16:30",
+    "film_image_url": "https://images.unsplash.com/photo-1542038784456-1ea8e935640e?w=600&auto=format&fit=crop&q=80",
+    "sample_image_url": "https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=1000&auto=format&fit=crop&q=80",
+    "matched_spots": [
+      {
+        "spot_name": "Cà Phê Cư Xá & Khu Tập Thể Kim Liên",
+        "season_months": [
+          4,
+          5,
+          9,
+          10
+        ],
+        "compatibility_score": 96,
+        "evaluation_reason": "Tường vàng tróc lở và mảng xi măng cũ cực hợp tone màu ngả nâu vàng retro 90s."
+      },
+      {
+        "spot_name": "Đường Sách 19/12",
+        "season_months": [
+          9,
+          10,
+          11
+        ],
+        "compatibility_score": 93,
+        "evaluation_reason": "Tạo cảm giác hoài niệm nhẹ nhàng như góc ảnh chụp thời bao cấp."
+      }
+    ],
+    "nearby_shops": [
+      {
+        "name": "Fox Lab Hanoi",
+        "address": "Ngõ 198 Thái Hà, Đống Đa, Hà Nội",
+        "distance_to_core_spots": "Gần KTT Kim Liên ~1.2km",
+        "services": [
+          "Giá film sinh viên",
+          "Nhiều dòng film outdate test máy"
+        ]
+      },
+      {
+        "name": "AEG Film Lab",
+        "address": "318 Bà Triệu, Hai Bà Trưng, Hà Nội",
+        "distance_to_core_spots": "Cách Đường Sách ~1.5km",
+        "services": [
+          "Bán film sẵn",
+          "Scan trả ảnh nhanh"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "film_kodak_ektar_100",
+    "name": "Kodak Ektar 100",
+    "brand": "Kodak",
+    "film_type": "Color Negative",
+    "iso": 100,
+    "tone_characteristics": "Hạt siêu mịn, màu sắc rực rỡ tươi sáng, tương phản cao hoàn hảo cho phong cảnh",
+    "best_seasons": [
+      5,
+      6,
+      7,
+      8
+    ],
+    "best_spots": [
+      "Đầm Sen Tây Hồ",
+      "Hoàng Hôn Bến Hàn Quốc"
+    ],
+    "recommended_time": "16:00 - 17:30 (Hoàng hôn hồ Tây)",
+    "film_image_url": "https://images.unsplash.com/photo-1605379399642-870262d3d051?w=600&auto=format&fit=crop&q=80",
+    "sample_image_url": "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=1000&auto=format&fit=crop&q=80",
+    "matched_spots": [
+      {
+        "spot_name": "Đầm Sen Tây Hồ",
+        "season_months": [
+          5,
+          6,
+          7
+        ],
+        "compatibility_score": 98,
+        "evaluation_reason": "Sắc xanh mướt của lá sen và sắc hồng thắm của búp sen nổi bật nét từng chi tiết."
+      },
+      {
+        "spot_name": "Hoàng Hôn Bến Hàn Quốc",
+        "season_months": [
+          5,
+          6,
+          7,
+          8
+        ],
+        "compatibility_score": 95,
+        "evaluation_reason": "Tái hiện rực rỡ màu cam tím chuyển vệt hoàng hôn trên mặt nước Hồ Tây."
+      }
+    ],
+    "nearby_shops": [
+      {
+        "name": "Nadar Photo Club",
+        "address": "Số 2 ngõ 40 Châu Long, Ba Đình, Hà Nội",
+        "distance_to_core_spots": "Gần Hồ Tây ~2km",
+        "services": [
+          "Film cao cấp bảo quản lạnh",
+          "Tư vấn exposure"
+        ]
+      },
+      {
+        "name": "36+ Film Lab",
+        "address": "1B Lê Phụng Hiểu, Hoàn Kiếm, Hà Nội",
+        "distance_to_core_spots": "Cách Hồ Tây ~3.5km",
+        "services": [
+          "Scan độ phân giải cao",
+          "Bán film chính hãng"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "film_lomo_800",
+    "name": "Lomography Color 800",
+    "brand": "Lomography",
+    "film_type": "Color Negative",
+    "iso": 800,
+    "tone_characteristics": "Chất màu rực rỡ phá cách, độ nhạy sáng cao, tạo hạt lo-fi đậm chất đường phố",
+    "best_seasons": [
+      10,
+      11,
+      12
+    ],
+    "best_spots": [
+      "Cầu Nhật Tân",
+      "Ga Cát Linh",
+      "Ngã tư Tràng Tiền"
+    ],
+    "recommended_time": "17:30 - 19:00 (Khung giờ chập tối Blue Hour)",
+    "film_image_url": "https://images.unsplash.com/photo-1512790182412-b19e6d62bc39?w=600&auto=format&fit=crop&q=80",
+    "sample_image_url": "https://images.unsplash.com/photo-1494548162494-384bba4ab999?w=1000&auto=format&fit=crop&q=80",
+    "matched_spots": [
+      {
+        "spot_name": "Cầu Nhật Tân & Ga Cát Linh",
+        "season_months": [
+          10,
+          11,
+          12
+        ],
+        "compatibility_score": 96,
+        "evaluation_reason": "Hạt film to và bão hòa màu mạnh cho lookbook đường phố hiện đại giờ Blue Hour."
+      },
+      {
+        "spot_name": "Ngã tư Tràng Tiền",
+        "season_months": [
+          10,
+          11,
+          12
+        ],
+        "compatibility_score": 93,
+        "evaluation_reason": "Bắt vệt đèn xe chạy dài lúc chập tối mà không lo thiếu sáng."
+      }
+    ],
+    "nearby_shops": [
+      {
+        "name": "Croplab Hà Nội",
+        "address": "102A ngõ 72 Nguyễn Chí Thanh, Đống Đa, Hà Nội",
+        "distance_to_core_spots": "Gần Ga Cát Linh ~2km",
+        "services": [
+          "Sẵn film Lomo 800",
+          "Tráng scan tốc độ"
+        ]
+      },
+      {
+        "name": "AEG Film Lab",
+        "address": "318 Bà Triệu, Hai Bà Trưng, Hà Nội",
+        "distance_to_core_spots": "Cách Tràng Tiền ~1.2km",
+        "services": [
+          "Tráng film ISO cao",
+          "Tư vấn push/pull"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "film_kodak_ultramax_400",
+    "name": "Kodak UltraMax 400",
+    "brand": "Kodak",
+    "film_type": "Color Negative",
+    "iso": 400,
+    "tone_characteristics": "Cuộn film đa dụng quốc dân, độ nhạy sáng 400 dễ chụp mọi lúc, màu rực rỡ vui tươi.",
+    "best_seasons": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+    ],
+    "best_spots": [
+      "Phố Cổ",
+      "Hồ Tây"
+    ],
+    "recommended_time": "Sáng tới chiều muộn",
+    "film_image_url": "https://images.unsplash.com/photo-1542038784456-1ea8e935640e?w=600&auto=format&fit=crop&q=80",
+    "sample_image_url": "https://images.unsplash.com/photo-1517502884422-41eaead166d4?w=1000&auto=format&fit=crop&q=80",
+    "matched_spots": [
+      {
+        "spot_name": "Phố Cổ",
+        "season_months": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12
+        ],
+        "compatibility_score": 90,
+        "evaluation_reason": "Màu sắc tươi tắn phù hợp không khí nhộn nhịp."
+      }
+    ],
+    "nearby_shops": [
+      {
+        "name": "Nadar Photo Club",
+        "address": "Số 2 ngõ 40 Châu Long, Ba Đình",
+        "distance_to_core_spots": "Gần Hồ Tây",
+        "services": [
+          "Sẵn film"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "film_fujifilm_velvia_50",
+    "name": "Fujifilm Velvia 50",
+    "brand": "Fujifilm",
+    "film_type": "Color Positive (Slide)",
+    "iso": 50,
+    "tone_characteristics": "Huyền thoại film dương bản (Slide film), độ bão hòa siêu cao, sinh ra cho ảnh phong cảnh thiên nhiên.",
+    "best_seasons": [
+      5,
+      6,
+      7,
+      8
+    ],
+    "best_spots": [
+      "Hồ Gươm",
+      "Công viên Thống Nhất"
+    ],
+    "recommended_time": "Trời nắng gắt, bình minh, hoàng hôn",
+    "film_image_url": "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=600&auto=format&fit=crop&q=80",
+    "sample_image_url": "https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=1000&auto=format&fit=crop&q=80",
+    "matched_spots": [
+      {
+        "spot_name": "Hồ Gươm",
+        "season_months": [
+          5,
+          6,
+          7,
+          8
+        ],
+        "compatibility_score": 95,
+        "evaluation_reason": "Màu sắc thiên nhiên rực rỡ, độ bão hòa cao làm nổi bật cảnh quan."
+      }
+    ],
+    "nearby_shops": [
+      {
+        "name": "AEG Film Lab",
+        "address": "318 Bà Triệu",
+        "distance_to_core_spots": "Hai Bà Trưng",
+        "services": [
+          "Tráng E-6"
+        ]
+      }
+    ]
+  }
+]

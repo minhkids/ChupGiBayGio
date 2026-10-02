@@ -1,0 +1,43 @@
+# Cloudflare Pages Security Headers
+# Place in public/_headers
+
+/*
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(self)
+  Cache-Control: public, max-age=0, must-revalidate
+
+# Static assets - long cache
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Images
+/*.jpg
+  Cache-Control: public, max-age=31536000, immutable
+/*.png
+  Cache-Control: public, max-age=31536000, immutable
+/*.webp
+  Cache-Control: public, max-age=31536000, immutable
+/*.avif
+  Cache-Control: public, max-age=31536000, immutable
+
+# Fonts
+/*.woff2
+  Cache-Control: public, max-age=31536000, immutable
+
+# HTML - no cache for SPA
+/*.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+# Service Worker
+/sw.js
+  Cache-Control: public, max-age=0, must-revalidate
+  Service-Worker-Allowed: /
+
+# API routes (if using Pages Functions)
+/api/*
+  Access-Control-Allow-Origin: https://chupgibaygio.pages.dev
+  Access-Control-Allow-Methods: GET, POST, OPTIONS
+  Access-Control-Allow-Headers: Content-Type, Authorization
+  Cache-Control: no-store

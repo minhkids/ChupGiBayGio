@@ -1,0 +1,48 @@
+{
+  "name": "anh-ot",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "build:worker": "wrangler deploy --dry-run --env production",
+    "lint": "oxlint",
+    "preview": "vite preview",
+    "cf:login": "wrangler login",
+    "cf:deploy:pages": "wrangler pages deploy dist --project-name=chupgibaygio",
+    "cf:deploy:worker": "wrangler deploy --env production",
+    "cf:deploy:worker:dev": "wrangler deploy --env dev",
+    "cf:d1:create": "wrangler d1 create chupgibaygio-db",
+    "cf:d1:migrate": "wrangler d1 migrations apply chupgibaygio-db --env production",
+    "cf:d1:migrate:dev": "wrangler d1 migrations apply chupgibaygio-db-dev --env dev",
+    "cf:r2:create": "wrangler r2 bucket create chupgibaygio-assets",
+    "cf:kv:create": "wrangler kv:namespace create CACHE"
+  },
+  "dependencies": {
+    "@types/leaflet": "^1.9.22",
+    "clsx": "^2.1.1",
+    "framer-motion": "^13.4.6",
+    "hono": "^4.6.0",
+    "leaflet": "^1.9.4",
+    "lucide-react": "^1.49.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "tailwind-merge": "^3.7.0",
+    "vaul": "^1.1.2"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20241022.0",
+    "@types/node": "^24.13.3",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.7",
+    "@vitejs/plugin-react": "^6.1.1",
+    "autoprefixer": "^10.6.1",
+    "oxlint": "^1.81.0",
+    "postcss": "^8.5.28",
+    "tailwindcss": "^3.4.17",
+    "typescript": "~6.0.2",
+    "vite": "^8.3.0",
+    "wrangler": "^3.80.0"
+  }
+}
