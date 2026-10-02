@@ -6,18 +6,18 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "build:worker": "wrangler deploy --dry-run --env production",
+    "build:worker": "wrangler deploy --dry-run --env production --config wrangler-worker.toml",
     "lint": "oxlint",
     "preview": "vite preview",
     "cf:login": "wrangler login",
     "cf:deploy:pages": "wrangler pages deploy dist --project-name=chupgibaygio",
-    "cf:deploy:worker": "wrangler deploy --env production",
-    "cf:deploy:worker:dev": "wrangler deploy --env dev",
-    "cf:d1:create": "wrangler d1 create chupgibaygio-db",
-    "cf:d1:migrate": "wrangler d1 migrations apply chupgibaygio-db --env production",
-    "cf:d1:migrate:dev": "wrangler d1 migrations apply chupgibaygio-db-dev --env dev",
-    "cf:r2:create": "wrangler r2 bucket create chupgibaygio-assets",
-    "cf:kv:create": "wrangler kv:namespace create CACHE"
+    "cf:deploy:worker": "wrangler deploy --env production --config wrangler-worker.toml",
+    "cf:deploy:worker:dev": "wrangler deploy --env dev --config wrangler-worker.toml",
+    "cf:d1:create": "wrangler d1 create chupgibaygio-db --config wrangler-worker.toml",
+    "cf:d1:migrate": "wrangler d1 migrations apply chupgibaygio-db --env production --config wrangler-worker.toml",
+    "cf:d1:migrate:dev": "wrangler d1 migrations apply chupgibaygio-db-dev --env dev --config wrangler-worker.toml",
+    "cf:r2:create": "wrangler r2 bucket create chupgibaygio-assets --config wrangler-worker.toml",
+    "cf:kv:create": "wrangler kv:namespace create CACHE --config wrangler-worker.toml"
   },
   "dependencies": {
     "@types/leaflet": "^1.9.22",
