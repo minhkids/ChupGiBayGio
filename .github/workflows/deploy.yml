@@ -7,7 +7,7 @@ on:
     branches: [main, master]
 
 env:
-  NODE_VERSION: '20'
+  NODE_VERSION: '22'
   CF_PAGES_BRANCH: ${{ github.ref_name }}
 
 jobs:
