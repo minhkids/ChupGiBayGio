@@ -12,6 +12,9 @@ interface SpotMapProps {
   onSelectSpot: (spot: Spot) => void;
   userCoords: { lat: number; lng: number } | null;
   className?: string;
+  isPickingLocation?: boolean;
+  pickedLocation?: { lat: number; lng: number; address?: string } | null;
+  onPickLocation?: (coords: { lat: number; lng: number }) => void;
 }
 
 type TileProvider = 'osm' | 'esri' | 'carto';
@@ -22,7 +25,10 @@ export const SpotMap: React.FC<SpotMapProps> = ({
   selectedSpot,
   onSelectSpot,
   userCoords,
-  className = ''
+  className = '',
+  isPickingLocation = false,
+  pickedLocation = null,
+  onPickLocation
 }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
@@ -293,14 +299,95 @@ export const SpotMap: React.FC<SpotMapProps> = ({
     }
   }, [spots, selectedSpot, userCoords, onSelectSpot]);
 
-  // Recenter to selected spot if changed
+  // Reference for temporary picked location marker
+  const pickedMarkerRef = useRef<L.Marker | null>(null);
+
+  // Click-to-Pin listener on map
   useEffect(() => {
-    if (selectedSpot && mapInstanceRef.current) {
-      mapInstanceRef.current.flyTo([selectedSpot.lat, selectedSpot.lng], 14, {
-        duration: 0.8
-      });
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    if (!isPickingLocation) {
+      if (mapContainerRef.current) {
+        mapContainerRef.current.style.cursor = '';
+      }
+      return;
     }
-  }, [selectedSpot]);
+
+    if (mapContainerRef.current) {
+      mapContainerRef.current.style.cursor = 'crosshair';
+    }
+
+    const handleMapClick = (e: L.LeafletMouseEvent) => {
+      onPickLocation?.({ lat: e.latlng.lat, lng: e.latlng.lng });
+    };
+
+    map.on('click', handleMapClick);
+    return () => {
+      map.off('click', handleMapClick);
+      if (mapContainerRef.current) {
+        mapContainerRef.current.style.cursor = '';
+      }
+    };
+  }, [isPickingLocation, onPickLocation]);
+
+  // Render or update picked yellow/orange draggable marker
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    if (!pickedLocation) {
+      if (pickedMarkerRef.current) {
+        pickedMarkerRef.current.remove();
+        pickedMarkerRef.current = null;
+      }
+      return;
+    }
+
+    const { lat, lng } = pickedLocation;
+
+    if (pickedMarkerRef.current) {
+      pickedMarkerRef.current.setLatLng([lat, lng]);
+    } else {
+      const pinIcon = L.divIcon({
+        className: 'custom-picked-pin',
+        html: `
+          <div style="position: relative; display: flex; align-items: center; justify-content: center;">
+            <div style="position: absolute; top: -38px; width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, #f59e0b, #ea580c); border: 2.5px solid white; box-shadow: 0 10px 25px -5px rgba(234, 88, 12, 0.7); display: flex; align-items: center; justify-content: center; cursor: grab;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
+                <circle cx="12" cy="10" r="3"/>
+              </svg>
+            </div>
+            <div style="width: 12px; height: 12px; border-radius: 50%; background: rgba(245, 158, 11, 0.5); box-shadow: 0 0 0 8px rgba(245, 158, 11, 0.25);"></div>
+          </div>
+        `,
+        iconSize: [36, 36],
+        iconAnchor: [18, 36]
+      });
+
+      const marker = L.marker([lat, lng], {
+        icon: pinIcon,
+        draggable: true,
+        zIndexOffset: 1500
+      }).addTo(map);
+
+      marker.bindPopup(`
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; padding: 2px;">
+          <strong style="color: #ea580c;">📍 Vị Trí Đã Ghim</strong>
+          <p style="margin: 2px 0 0; color: #4b5563; font-size: 10px;">${lat.toFixed(5)}, ${lng.toFixed(5)}</p>
+          <p style="margin: 2px 0 0; color: #9ca3af; font-size: 9px;">Kéo thả để điều chỉnh tọa độ</p>
+        </div>
+      `);
+
+      marker.on('dragend', (e) => {
+        const newCoords = e.target.getLatLng();
+        onPickLocation?.({ lat: newCoords.lat, lng: newCoords.lng });
+      });
+
+      pickedMarkerRef.current = marker;
+    }
+  }, [pickedLocation, onPickLocation]);
 
   return (
     <div className={`relative w-full h-full bg-neutral-100 overflow-hidden ${className}`}>

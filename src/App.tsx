@@ -9,13 +9,14 @@ import { MoodboardView } from './components/MoodboardView';
 import { FilmGalleryView } from './components/FilmGalleryView';
 import { AddFacebookPostModal } from './components/AddFacebookPostModal';
 import { CommunityReportModal } from './components/CommunityReportModal';
-import { SubmitSpotModal } from './components/SubmitSpotModal';
+import { AddSpotModal } from './components/AddSpotModal';
 import { SavedSpotsModal } from './components/SavedSpotsModal';
 import { ModernSpotCard } from './components/ModernSpotCard';
 import { Footer } from './components/Footer';
 import { GoogleMapsLayout } from './components/GoogleMapsLayout';
 import { LeftNavRail } from './components/LeftNavRail';
 import { useWeather } from './hooks/useWeather';
+import { useMapLocationPicker } from './hooks/useMapLocationPicker';
 import { isSpotActiveInMonth } from './utils/season';
 import { calculateDistanceKm } from './utils/geo';
 import { recommendFilmForSpot } from './utils/filmAdvisor';
@@ -61,6 +62,13 @@ export function App() {
   const [isSavedModalOpen, setIsSavedModalOpen] = useState(false);
   const [isAddPostModalOpen, setIsAddPostModalOpen] = useState(false);
   const [addPostTargetSpotId, setAddPostTargetSpotId] = useState<string | undefined>(undefined);
+
+  // Map Click-to-Pin location picker
+  const mapLocationPicker = useMapLocationPicker({
+    onLocationSelected: () => {
+      setIsSubmitModalOpen(true);
+    }
+  });
 
   // Sync saved to localStorage
   useEffect(() => {
@@ -280,6 +288,9 @@ export function App() {
           }}
           uiTheme={uiTheme}
           onToggleUiTheme={() => setUiTheme(prev => prev === 'modern' ? 'editorial' : 'modern')}
+          isPickingLocation={mapLocationPicker.isPicking}
+          pickedLocation={mapLocationPicker.selectedLocation}
+          onPickLocation={mapLocationPicker.onSelectMapCoords}
         />
 
         {/* Community Report Modal */}
@@ -289,11 +300,23 @@ export function App() {
           onSubmitReport={handleSubmitReport}
         />
 
-        {/* Submit Spot Modal (Crowdsourcing) */}
-        <SubmitSpotModal
-          isOpen={isSubmitModalOpen}
-          onClose={() => setIsSubmitModalOpen(false)}
-          onSubmitNewSpot={handleAddNewSpot}
+        {/* Add Spot Modal (Zero manual coordinate input, Click-to-Pin & AI Extraction) */}
+        <AddSpotModal
+          isOpen={isSubmitModalOpen || mapLocationPicker.isPicking}
+          onClose={() => {
+            setIsSubmitModalOpen(false);
+            mapLocationPicker.cancelPicking();
+          }}
+          onSubmitNewSpot={(newSpot) => {
+            handleAddNewSpot(newSpot);
+            mapLocationPicker.clearLocation();
+          }}
+          isPickingLocation={mapLocationPicker.isPicking}
+          selectedLocation={mapLocationPicker.selectedLocation}
+          onStartMapPick={mapLocationPicker.startPicking}
+          onCancelMapPick={mapLocationPicker.cancelPicking}
+          onClearLocation={mapLocationPicker.clearLocation}
+          isGeocoding={mapLocationPicker.isGeocoding}
         />
 
         {/* Saved Bookmarks Modal */}
@@ -460,11 +483,23 @@ export function App() {
         onSubmitReport={handleSubmitReport}
       />
 
-      {/* Submit Spot Modal (Crowdsourcing) */}
-      <SubmitSpotModal
-        isOpen={isSubmitModalOpen}
-        onClose={() => setIsSubmitModalOpen(false)}
-        onSubmitNewSpot={handleAddNewSpot}
+      {/* Add Spot Modal (Zero manual coordinate input, Click-to-Pin & AI Extraction) */}
+      <AddSpotModal
+        isOpen={isSubmitModalOpen || mapLocationPicker.isPicking}
+        onClose={() => {
+          setIsSubmitModalOpen(false);
+          mapLocationPicker.cancelPicking();
+        }}
+        onSubmitNewSpot={(newSpot) => {
+          handleAddNewSpot(newSpot);
+          mapLocationPicker.clearLocation();
+        }}
+        isPickingLocation={mapLocationPicker.isPicking}
+        selectedLocation={mapLocationPicker.selectedLocation}
+        onStartMapPick={mapLocationPicker.startPicking}
+        onCancelMapPick={mapLocationPicker.cancelPicking}
+        onClearLocation={mapLocationPicker.clearLocation}
+        isGeocoding={mapLocationPicker.isGeocoding}
       />
 
       {/* Saved Bookmarks Modal */}

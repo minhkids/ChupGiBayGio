@@ -53,6 +53,9 @@ interface GoogleMapsLayoutProps {
   onOpenAddPostModal: (spotId?: string) => void;
   uiTheme?: 'modern' | 'editorial';
   onToggleUiTheme?: () => void;
+  isPickingLocation?: boolean;
+  pickedLocation?: { lat: number; lng: number; address?: string } | null;
+  onPickLocation?: (coords: { lat: number; lng: number }) => void;
 }
 
 const QUICK_CHIPS = [
@@ -85,7 +88,10 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
   onOpenReportModal,
   onOpenAddPostModal,
   uiTheme = 'modern',
-  onToggleUiTheme
+  onToggleUiTheme,
+  isPickingLocation = false,
+  pickedLocation = null,
+  onPickLocation
 }) => {
   // Desktop sidebar collapse toggle state
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -289,6 +295,9 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
           }}
           activeRegionId={activeRegionId}
           userCoords={null}
+          isPickingLocation={isPickingLocation}
+          pickedLocation={pickedLocation}
+          onPickLocation={onPickLocation}
         />
       </div>
 
