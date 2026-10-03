@@ -543,7 +543,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
       {/* 3. LAYER 3: CONTENT PANEL SIDEBAR (w-[420px] NEXT TO NAV RAIL AT left-[76px]) */}
       {/* ========================================================================= */}
       <div
-        className={`hidden lg:flex flex-col fixed top-0 bottom-0 left-[76px] z-30 w-[420px] max-w-[calc(100vw-76px)] bg-white/95 dark:bg-neutral-900/95 border-r border-neutral-200/80 dark:border-neutral-800 shadow-2xl backdrop-blur-md overflow-hidden transition-transform duration-300 ease-out ${isSidebarCollapsed ? '-translate-x-full pointer-events-none' : 'translate-x-0'
+        className={`hidden lg:flex flex-col fixed top-0 bottom-0 left-[76px] z-30 w-[440px] max-w-[calc(100vw-76px)] bg-white/95 dark:bg-neutral-900/95 border-r border-neutral-200/80 dark:border-neutral-800 shadow-2xl backdrop-blur-md overflow-hidden transition-transform duration-300 ease-out ${isSidebarCollapsed ? '-translate-x-full pointer-events-none' : 'translate-x-0'
           }`}
       >
         {/* Collapse Toggle Floating Tab Button [‹] */}
@@ -557,10 +557,10 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
         </button>
 
         {/* ─── STICKY HEADER (EXACTLY 2 CLEAN FILTER ROWS + iOS SEGMENTED SWITCH) ─── */}
-        <div className="p-3.5 border-b border-neutral-200/80 dark:border-neutral-800 shrink-0 space-y-2.5 bg-white/70 dark:bg-neutral-900/70 backdrop-blur-sm">
+        <div className="px-5 py-4 border-b border-neutral-200/80 dark:border-neutral-800 shrink-0 space-y-3.5 bg-white/70 dark:bg-neutral-900/70 backdrop-blur-sm">
 
           {/* ROW 1: Search Bar + Clear/Reset Actions */}
-          <div className="h-11 w-full rounded-full bg-neutral-100/90 dark:bg-neutral-800/90 border border-neutral-200/80 dark:border-neutral-700/80 px-3.5 flex items-center justify-between transition-all focus-within:ring-2 focus-within:ring-terracotta/40 focus-within:bg-white dark:focus-within:bg-neutral-850">
+          <div className="h-12 w-full rounded-full bg-neutral-100/90 dark:bg-neutral-800/90 border border-neutral-200/80 dark:border-neutral-700/80 px-4 flex items-center justify-between transition-all focus-within:ring-2 focus-within:ring-terracotta/40 focus-within:bg-white dark:focus-within:bg-neutral-850">
             <div className="flex items-center space-x-2 flex-1 min-w-0">
               <Search className="w-4 h-4 text-neutral-400 shrink-0" />
               <input
@@ -568,7 +568,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                 value={filters.searchQuery}
                 onChange={(e) => onChangeFilters(prev => ({ ...prev, searchQuery: e.target.value }))}
                 placeholder={sidebarTab === 'spots' ? 'Tìm điểm chụp, cúc họa mi, áo dài...' : 'Tìm bài viết, tác giả, thiết bị...'}
-                className="w-full bg-transparent text-xs text-neutral-800 dark:text-neutral-100 placeholder-neutral-400 focus:outline-none font-medium"
+                className="w-full bg-transparent text-sm text-neutral-800 dark:text-neutral-100 placeholder-neutral-400 focus:outline-none font-medium"
               />
             </div>
 
@@ -587,7 +587,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
               <button
                 type="button"
                 onClick={onResetFilters}
-                className="text-[10px] font-mono-spec font-bold px-2.5 py-1 rounded-full text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
+                className="text-xs font-mono-spec font-bold px-3 py-1 rounded-full text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
                 title="Đặt lại bộ lọc"
               >
                 Reset
@@ -596,7 +596,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
           </div>
 
           {/* ROW 2: SINGLE SCROLLABLE CHIP ROW ([🔥 Đang rộ] [📍 Gần tôi] [🌸 Cúc họa mi]...) */}
-          <div className="flex items-center space-x-1.5 overflow-x-auto no-scrollbar py-0.5">
+          <div className="flex items-center space-x-2 overflow-x-auto no-scrollbar py-1">
             {QUICK_CHIPS.map((chip, idx) => {
               const active = isChipActive(chip);
               return (
@@ -604,7 +604,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                   key={idx}
                   type="button"
                   onClick={() => handleChipClick(chip)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap shadow-xs transition-all shrink-0 ${active
+                  className={`px-3.5 py-2 rounded-full text-sm font-medium whitespace-nowrap shadow-xs transition-all shrink-0 ${active
                       ? 'bg-neutral-900 text-white dark:bg-white dark:text-neutral-950 font-bold scale-105 shadow-sm'
                       : 'bg-white/90 dark:bg-neutral-800/90 text-neutral-700 dark:text-neutral-300 border border-neutral-200/80 dark:border-neutral-700/80 hover:bg-white dark:hover:bg-neutral-750'
                     }`}
@@ -616,11 +616,11 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
           </div>
 
           {/* iOS-STYLE SEGMENTED SWITCH (🗺️ Điểm Chụp vs 💬 Bài Viết FB) */}
-          <div className="flex items-center p-1 bg-neutral-100/90 dark:bg-neutral-800/90 rounded-xl text-xs font-semibold border border-neutral-200/50 dark:border-neutral-750/50">
+          <div className="flex items-center p-1 bg-neutral-100/90 dark:bg-neutral-800/90 rounded-xl text-sm font-semibold border border-neutral-200/50 dark:border-neutral-750/50">
             <button
               type="button"
               onClick={() => setSidebarTab('spots')}
-              className={`flex-1 flex items-center justify-center space-x-1.5 py-1.5 rounded-lg transition-all ${sidebarTab === 'spots'
+              className={`flex-1 flex items-center justify-center space-x-1.5 py-2 rounded-lg transition-all ${sidebarTab === 'spots'
                   ? 'bg-white dark:bg-neutral-900 text-terracotta font-bold shadow-sm'
                   : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
                 }`}
@@ -632,7 +632,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
             <button
               type="button"
               onClick={() => setSidebarTab('posts')}
-              className={`flex-1 flex items-center justify-center space-x-1.5 py-1.5 rounded-lg transition-all ${sidebarTab === 'posts'
+              className={`flex-1 flex items-center justify-center space-x-1.5 py-2 rounded-lg transition-all ${sidebarTab === 'posts'
                   ? 'bg-white dark:bg-neutral-900 text-blue-600 dark:text-blue-400 font-bold shadow-sm'
                   : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
                 }`}
@@ -644,7 +644,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
         </div>
 
         {/* ─── SCROLLABLE FEED BODY (Large Visual Spot Cards or Facebook Posts) ─── */}
-        <div className="flex-1 overflow-y-auto p-3.5 space-y-3.5">
+        <div className="flex-1 overflow-y-auto p-5 space-y-5">
           {sidebarTab === 'spots' ? (
             /* TAB 1: LARGE VISUAL SPOTS LIST */
             filteredSpots.length === 0 ? (
@@ -696,7 +696,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
               filteredPosts.map(post => (
                 <div
                   key={post.id}
-                  className="p-3 rounded-xl border border-neutral-200/80 dark:border-neutral-800 bg-white dark:bg-neutral-850/80 hover:border-blue-400/60 dark:hover:border-blue-500/60 transition-all space-y-2.5 shadow-xs"
+                  className="p-4 rounded-xl border border-neutral-200/80 dark:border-neutral-800 bg-white dark:bg-neutral-850/80 hover:border-blue-400/60 dark:hover:border-blue-500/60 transition-all space-y-3 shadow-xs"
                 >
                   {/* Author Header */}
                   <div className="flex items-center justify-between">
@@ -704,16 +704,16 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                       <img
                         src={post.authorAvatar}
                         alt={post.authorName}
-                        className="w-7 h-7 rounded-full object-cover border border-neutral-200 dark:border-neutral-700"
+                        className="w-9 h-9 rounded-full object-cover border border-neutral-200 dark:border-neutral-700"
                       />
                       <div>
-                        <div className="text-xs font-bold text-neutral-900 dark:text-white flex items-center space-x-1">
+                        <div className="text-sm font-bold text-neutral-900 dark:text-white flex items-center space-x-1.5">
                           <span>{post.authorName}</span>
-                          <span className="text-[10px] px-1.5 py-0.2 bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 rounded font-mono-spec font-semibold">
+                          <span className="text-[11px] px-1.5 py-0.5 bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 rounded font-mono-spec font-semibold">
                             Aphoto
                           </span>
                         </div>
-                        <div className="text-[10px] text-neutral-400 font-mono-spec">
+                        <div className="text-xs text-neutral-400 font-mono-spec">
                           {post.postDate}
                         </div>
                       </div>
@@ -731,7 +731,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                   </div>
 
                   {/* Caption & Post Content */}
-                  <p className="text-xs text-neutral-700 dark:text-neutral-300 line-clamp-3 leading-relaxed font-sans">
+                  <p className="text-sm text-neutral-700 dark:text-neutral-300 line-clamp-3 leading-relaxed font-sans">
                     {post.fullContent || post.caption}
                   </p>
 
@@ -758,7 +758,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
 
                   {/* Camera Settings Snippet */}
                   {post.cameraSettings && (
-                    <div className="text-[10px] font-mono-spec text-neutral-500 dark:text-neutral-400 flex items-center space-x-1 truncate bg-neutral-50 dark:bg-neutral-800/60 px-2 py-1 rounded">
+                    <div className="text-xs font-mono-spec text-neutral-500 dark:text-neutral-400 flex items-center space-x-1.5 truncate bg-neutral-50 dark:bg-neutral-800/60 px-2 py-1 rounded">
                       <Camera className="w-3 h-3 text-terracotta shrink-0" />
                       <span className="truncate">{post.cameraSettings}</span>
                     </div>
@@ -766,7 +766,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
 
                   {/* Spot Badge & Focus Map Action */}
                   <div className="flex items-center justify-between pt-1 border-t border-neutral-100 dark:border-neutral-800">
-                    <span className="text-[11px] font-medium text-neutral-600 dark:text-neutral-300 truncate max-w-[200px] flex items-center">
+                    <span className="text-xs font-medium text-neutral-600 dark:text-neutral-300 truncate max-w-[240px] flex items-center">
                       <MapPin className="w-3 h-3 text-terracotta mr-1 shrink-0" />
                       <span className="truncate">{post.spot.name}</span>
                     </span>
@@ -778,7 +778,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                         setActivePhotoIdx(0);
                         setDetailTab('posts');
                       }}
-                      className="text-xs font-semibold text-terracotta hover:underline flex items-center space-x-1"
+                      className="text-sm font-semibold text-terracotta hover:underline flex items-center space-x-1"
                     >
                       <span>Xem trên bản đồ</span>
                       <ChevronRight className="w-3.5 h-3.5" />
@@ -802,7 +802,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -30 }}
             transition={{ duration: 0.25, ease: 'easeOut' }}
-            className={`hidden lg:flex flex-col fixed top-3 bottom-3 z-30 w-[390px] max-w-[calc(100vw-450px)] rounded-2xl shadow-2xl border border-neutral-200/80 dark:border-neutral-800 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-md overflow-hidden transition-all duration-300 ease-out ${isSidebarCollapsed ? 'left-3' : 'left-[436px]'
+            className={`hidden lg:flex flex-col fixed top-3 bottom-3 z-30 w-[420px] rounded-2xl shadow-2xl border border-neutral-200/80 dark:border-neutral-800 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-md overflow-hidden transition-all duration-300 ease-out ${isSidebarCollapsed ? 'left-[96px] max-w-[calc(100vw-112px)]' : 'left-[560px] max-w-[calc(100vw-576px)]'
               }`}
           >
             {/* Cover Photo Gallery Banner */}
@@ -824,11 +824,11 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
               </button>
 
               {/* Status Badge */}
-              <span className="absolute top-3 left-3 px-2.5 py-1 rounded-md bg-terracotta text-white font-mono-spec text-[10px] font-bold shadow-md uppercase tracking-wider">
+              <span className="absolute top-3 left-3 px-2.5 py-1 rounded-md bg-terracotta text-white font-mono-spec text-xs font-bold shadow-md uppercase tracking-wider">
                 {selectedSpot.seasonalTrend?.status === 'PEAK' ? 'ĐANG RỘ (PEAK)' : (selectedSpot.seasonalTrend?.status || 'PEAK')}
               </span>
 
-              {/* Ghost Pose Camera launcher */}
+              {/* Ghost Pose Camera launcher (temporarily disabled)
               <button
                 type="button"
                 onClick={() => openPoseCamera(selectedSpot)}
@@ -837,8 +837,9 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                 className="absolute bottom-2.5 right-2.5 z-10 inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-amberFilm text-neutral-900 shadow-md hover:bg-neutral-900 hover:text-amberFilm transition-colors"
               >
                 <Camera className="w-3.5 h-3.5" strokeWidth={2.4} />
-                <span className="font-mono-spec text-[10px] font-bold uppercase tracking-wider">Dáng chụp</span>
+                <span className="font-mono-spec text-xs font-bold uppercase tracking-wider">Dáng chụp</span>
               </button>
+              */}
 
               {/* Gallery Thumbnails Strip */}
               {selectedSpot.galleryUrls && selectedSpot.galleryUrls.length > 1 && (
@@ -859,13 +860,13 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
             </div>
 
             {/* DETAIL CARD NAVBAR TABS: Cẩm nang vs Bài viết liên quan */}
-            <div className="p-3 border-b border-neutral-200/80 dark:border-neutral-800 shrink-0">
-              <div className="flex items-center justify-between mb-2">
+            <div className="px-5 pt-4 pb-4 border-b border-neutral-200/80 dark:border-neutral-800 shrink-0">
+              <div className="flex items-start justify-between gap-3 mb-3">
                 <div className="min-w-0 pr-2">
-                  <span className="text-[10px] font-mono-spec font-bold text-terracotta uppercase block truncate">
+                  <span className="text-xs font-mono-spec font-bold text-terracotta uppercase tracking-wide block truncate">
                     {selectedSpot.seasonalTrend?.trendTitle}
                   </span>
-                  <h2 className="font-editorial text-xl font-extrabold text-neutral-900 dark:text-white truncate">
+                  <h2 className="font-editorial text-2xl font-extrabold leading-tight text-neutral-900 dark:text-white line-clamp-2 mt-1">
                     {selectedSpot.name}
                   </h2>
                 </div>
@@ -873,7 +874,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                   <button
                     type="button"
                     onClick={() => onToggleSave(selectedSpot.id)}
-                    className="p-1.5 rounded-lg bg-neutral-100 dark:bg-neutral-800 hover:text-terracotta text-neutral-600 dark:text-neutral-300"
+                    className="p-2 rounded-lg bg-neutral-100 dark:bg-neutral-800 hover:text-terracotta text-neutral-600 dark:text-neutral-300"
                     title={savedSpotIds.includes(selectedSpot.id) ? 'Đã lưu' : 'Lưu'}
                   >
                     <Bookmark className={`w-4 h-4 ${savedSpotIds.includes(selectedSpot.id) ? 'text-terracotta fill-terracotta' : ''}`} />
@@ -881,7 +882,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                   <button
                     type="button"
                     onClick={() => handleOpenDirections(selectedSpot)}
-                    className="p-1.5 rounded-lg bg-terracotta text-white hover:bg-terracotta-dark"
+                    className="p-2 rounded-lg bg-terracotta text-white hover:bg-terracotta-dark"
                     title="Chỉ đường Google Maps"
                   >
                     <Navigation className="w-4 h-4" />
@@ -890,11 +891,11 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
               </div>
 
               {/* Sub-navbar inside detail card */}
-              <div className="flex items-center p-0.5 bg-neutral-100 dark:bg-neutral-800 rounded-lg text-xs font-semibold">
+              <div className="flex items-center p-1 bg-neutral-100 dark:bg-neutral-800 rounded-lg text-sm font-semibold">
                 <button
                   type="button"
                   onClick={() => setDetailTab('info')}
-                  className={`flex-1 py-1 rounded-md transition-all ${detailTab === 'info'
+                  className={`flex-1 py-1.5 rounded-md transition-all ${detailTab === 'info'
                       ? 'bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white shadow-xs'
                       : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-white'
                     }`}
@@ -904,13 +905,13 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                 <button
                   type="button"
                   onClick={() => setDetailTab('posts')}
-                  className={`flex-1 py-1 rounded-md transition-all flex items-center justify-center space-x-1 ${detailTab === 'posts'
+                  className={`flex-1 py-1.5 rounded-md transition-all flex items-center justify-center space-x-1 ${detailTab === 'posts'
                       ? 'bg-white dark:bg-neutral-900 text-blue-600 dark:text-blue-400 shadow-xs'
                       : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-white'
                     }`}
                 >
                   <span>Bài Đăng FB</span>
-                  <span className="text-[10px] px-1 bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-300 rounded font-mono-spec">
+                  <span className="text-xs px-1.5 bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-300 rounded font-mono-spec">
                     {selectedSpot.inspirationPosts?.length || 0}
                   </span>
                 </button>
@@ -918,7 +919,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
             </div>
 
             {/* Scrollable Detail Body */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            <div className="flex-1 overflow-y-auto p-5 space-y-5">
               {detailTab === 'info' ? (
                 <>
                   {/* Quick Action Row */}
@@ -926,33 +927,33 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                     <button
                       type="button"
                       onClick={() => handleOpenDirections(selectedSpot)}
-                      className="flex flex-col items-center justify-center p-2 rounded-xl bg-neutral-50 dark:bg-neutral-800 hover:bg-neutral-100 text-neutral-800 dark:text-neutral-200 transition-colors group"
+                      className="flex flex-col items-center justify-center p-3 rounded-xl bg-neutral-50 dark:bg-neutral-800 hover:bg-neutral-100 text-neutral-800 dark:text-neutral-200 transition-colors group"
                     >
                       <Navigation className="w-4 h-4 text-terracotta group-hover:scale-110 transition-transform" />
-                      <span className="text-[11px] font-semibold mt-1">Chỉ đường</span>
+                      <span className="text-xs font-semibold mt-1.5">Chỉ đường</span>
                     </button>
 
                     <button
                       type="button"
                       onClick={() => handleShareSpot(selectedSpot)}
-                      className="flex flex-col items-center justify-center p-2 rounded-xl bg-neutral-50 dark:bg-neutral-800 hover:bg-neutral-100 text-neutral-800 dark:text-neutral-200 transition-colors group"
+                      className="flex flex-col items-center justify-center p-3 rounded-xl bg-neutral-50 dark:bg-neutral-800 hover:bg-neutral-100 text-neutral-800 dark:text-neutral-200 transition-colors group"
                     >
                       <Share2 className="w-4 h-4 text-neutral-500 group-hover:scale-110 transition-transform" />
-                      <span className="text-[11px] font-semibold mt-1">Chia sẻ</span>
+                      <span className="text-xs font-semibold mt-1.5">Chia sẻ</span>
                     </button>
 
                     <button
                       type="button"
                       onClick={() => onOpenReportModal(selectedSpot)}
-                      className="flex flex-col items-center justify-center p-2 rounded-xl bg-neutral-50 dark:bg-neutral-800 hover:bg-neutral-100 text-neutral-800 dark:text-neutral-200 transition-colors group"
+                      className="flex flex-col items-center justify-center p-3 rounded-xl bg-neutral-50 dark:bg-neutral-800 hover:bg-neutral-100 text-neutral-800 dark:text-neutral-200 transition-colors group"
                     >
                       <Flag className="w-4 h-4 text-amberFilm group-hover:scale-110 transition-transform" />
-                      <span className="text-[11px] font-semibold mt-1">Báo nở</span>
+                      <span className="text-xs font-semibold mt-1.5">Báo nở</span>
                     </button>
                   </div>
 
                   {/* Bloom Condition Summary */}
-                  <div className="bg-amber-50/70 dark:bg-neutral-800/70 border border-amber-200/60 dark:border-neutral-700/60 rounded-xl p-3 space-y-1.5">
+                  <div className="bg-amber-50/70 dark:bg-neutral-800/70 border border-amber-200/60 dark:border-neutral-700/60 rounded-xl p-4 space-y-2">
                     <div className="flex items-center justify-between text-xs font-mono-spec">
                       <span className="font-bold text-neutral-900 dark:text-neutral-100">
                         TÌNH TRẠNG HOA / PHONG CẢNH
@@ -967,7 +968,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                         style={{ width: `${selectedSpot.seasonalTrend?.bloomPercentage || 85}%` }}
                       />
                     </div>
-                    <p className="text-xs text-neutral-600 dark:text-neutral-300 font-sans leading-relaxed pt-1">
+                    <p className="text-sm text-neutral-600 dark:text-neutral-300 font-sans leading-relaxed pt-1">
                       {selectedSpot.description}
                     </p>
                   </div>
@@ -980,13 +981,13 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
 
                   {/* PHOTOGRAPHY TIPS (Ống kính, Giờ vàng, Concept) */}
                   <div className="space-y-3 pt-1">
-                    <h3 className="font-mono-spec text-xs font-bold text-neutral-900 dark:text-neutral-100 uppercase tracking-wider flex items-center">
+                    <h3 className="font-mono-spec text-sm font-bold text-neutral-900 dark:text-neutral-100 uppercase tracking-wider flex items-center">
                       <Camera className="w-3.5 h-3.5 mr-1.5 text-terracotta" />
                       CẨM NANG NHIẾP ẢNH & THIẾT BỊ
                     </h3>
 
                     {/* Golden Hour / Best Time */}
-                    <div className="flex items-start space-x-2.5 text-xs">
+                    <div className="flex items-start space-x-2.5 text-sm">
                       <Clock className="w-4 h-4 text-amberFilm shrink-0 mt-0.5" />
                       <div>
                         <span className="font-bold text-neutral-800 dark:text-neutral-200">Khung giờ đẹp: </span>
@@ -995,13 +996,13 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                     </div>
 
                     {/* Recommended Lenses */}
-                    <div className="flex items-start space-x-2.5 text-xs">
+                    <div className="flex items-start space-x-2.5 text-sm">
                       <Camera className="w-4 h-4 text-terracotta shrink-0 mt-0.5" />
                       <div>
                         <span className="font-bold text-neutral-800 dark:text-neutral-200">Ống kính khuyên dùng: </span>
                         <div className="flex flex-wrap gap-1 mt-1">
                           {selectedSpot.recommendedLenses.map((lens, lIdx) => (
-                            <span key={lIdx} className="px-2 py-0.5 bg-neutral-100 dark:bg-neutral-800 rounded-md font-mono-spec text-[10px] text-neutral-700 dark:text-neutral-300">
+                            <span key={lIdx} className="px-2 py-0.5 bg-neutral-100 dark:bg-neutral-800 rounded-md font-mono-spec text-xs text-neutral-700 dark:text-neutral-300">
                               {lens}
                             </span>
                           ))}
@@ -1010,13 +1011,13 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                     </div>
 
                     {/* Concept & Outfits */}
-                    <div className="flex items-start space-x-2.5 text-xs">
+                    <div className="flex items-start space-x-2.5 text-sm">
                       <Sparkles className="w-4 h-4 text-purple-500 shrink-0 mt-0.5" />
                       <div>
                         <span className="font-bold text-neutral-800 dark:text-neutral-200">Concept & Trang phục: </span>
                         <div className="flex flex-wrap gap-1 mt-1">
                           {selectedSpot.seasonalTrend?.conceptTags.map((tag, tIdx) => (
-                            <span key={tIdx} className="px-2 py-0.5 bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800/60 rounded-md text-[10px]">
+                            <span key={tIdx} className="px-2 py-0.5 bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800/60 rounded-md text-xs">
                               #{tag}
                             </span>
                           ))}
@@ -1049,7 +1050,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                     selectedSpot.inspirationPosts.map(post => (
                       <div
                         key={post.id}
-                        className="p-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50/80 dark:bg-neutral-850/80 space-y-2"
+                        className="p-4 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50/80 dark:bg-neutral-850/80 space-y-2"
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-2">
@@ -1059,10 +1060,10 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                               className="w-6 h-6 rounded-full object-cover"
                             />
                             <div>
-                              <div className="text-xs font-bold text-neutral-800 dark:text-neutral-200">
+                              <div className="text-sm font-bold text-neutral-800 dark:text-neutral-200">
                                 {post.authorName}
                               </div>
-                              <div className="text-[10px] text-neutral-400 font-mono-spec">
+                              <div className="text-xs text-neutral-400 font-mono-spec">
                                 {post.postDate}
                               </div>
                             </div>
@@ -1078,12 +1079,12 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                           </a>
                         </div>
 
-                        <p className="text-xs text-neutral-600 dark:text-neutral-300 font-sans leading-relaxed">
+                        <p className="text-sm text-neutral-600 dark:text-neutral-300 font-sans leading-relaxed">
                           {post.fullContent || post.caption}
                         </p>
 
                         {post.cameraSettings && (
-                          <div className="text-[10px] font-mono-spec text-neutral-500 bg-white dark:bg-neutral-800 px-2 py-1 rounded">
+                          <div className="text-xs font-mono-spec text-neutral-500 bg-white dark:bg-neutral-800 px-2 py-1 rounded">
                             📷 {post.cameraSettings}
                           </div>
                         )}
@@ -1405,6 +1406,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                 </div>
 
                 <div className="flex items-center gap-1.5 shrink-0">
+                  {/* Ghost Pose Camera launcher (temporarily disabled)
                   <button
                     type="button"
                     onClick={() => openPoseCamera(selectedSpot)}
@@ -1415,6 +1417,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                     <Camera className="w-3.5 h-3.5" strokeWidth={2.4} />
                     <span className="font-mono-spec text-[10px] font-bold uppercase tracking-wider">Dáng chụp</span>
                   </button>
+                  */}
 
                   <button
                     type="button"

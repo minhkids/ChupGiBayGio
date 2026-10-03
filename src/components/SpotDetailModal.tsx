@@ -177,7 +177,7 @@ export const SpotDetailModal: React.FC<SpotDetailModalProps> = ({
             </h1>
 
             {/* Pose guide — the entry point for the Ghost Pose Camera sits next
-                to the tip it actually illustrates. */}
+                to the tip it actually illustrates. (temporarily disabled)
             {spot.poseTip && (
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-l-4 border-amberFilm bg-paper-warm pl-3 pr-3 py-2.5">
                 <div className="min-w-0">
@@ -196,6 +196,7 @@ export const SpotDetailModal: React.FC<SpotDetailModalProps> = ({
                 </button>
               </div>
             )}
+            */}
 
             {/* Address & GPS Actions */}
             <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-b border-paper-border pb-3">

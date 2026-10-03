@@ -66,6 +66,7 @@ export const MobileSheet: React.FC<MobileSheetProps> = ({
             </div>
 
             <div className="flex items-center gap-1.5 shrink-0">
+              {/* Ghost Pose Camera launcher (temporarily disabled)
               <button
                 type="button"
                 onClick={handleOpenPoseCamera}
@@ -76,6 +77,7 @@ export const MobileSheet: React.FC<MobileSheetProps> = ({
                 <Camera className="w-3.5 h-3.5" strokeWidth={2.4} />
                 <span className="font-mono-spec text-[10px] font-bold uppercase tracking-wider">Dáng chụp</span>
               </button>
+              */}
 
               <button
                 type="button"

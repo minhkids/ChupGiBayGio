@@ -180,7 +180,7 @@ export const Panel: React.FC<PanelProps> = ({
             {spot.seasonalTrend?.status === 'PEAK' ? 'ĐANG RỘ (PEAK)' : (spot.seasonalTrend?.status || 'PEAK')}
           </span>
 
-          {/* Ghost Pose Camera launcher */}
+          {/* Ghost Pose Camera launcher (temporarily disabled) 
           <button
             type="button"
             onClick={handleOpenPoseCamera}
@@ -191,6 +191,7 @@ export const Panel: React.FC<PanelProps> = ({
             <Camera className="w-3.5 h-3.5" strokeWidth={2.4} />
             <span className="font-mono-spec text-[10px] font-bold uppercase tracking-wider">Dáng chụp</span>
           </button>
+          */}
 
           {/* Gallery Thumbnails Strip */}
           {spot.galleryUrls && spot.galleryUrls.length > 1 && (
