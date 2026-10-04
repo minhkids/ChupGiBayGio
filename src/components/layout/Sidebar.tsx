@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, X, Camera } from 'lucide-react';
+import { ChevronLeft, X } from 'lucide-react';
 import type { Spot, FilterState } from '../../types';
 import { REGIONS } from '../../data/regions';
 import { SpotFilters } from './SpotFilters';
@@ -134,10 +134,12 @@ export const Panel: React.FC<PanelProps> = ({
     onClose();
   };
 
+  /* Ghost Pose Camera launcher (temporarily disabled)
   const handleOpenPoseCamera = () => {
     // TODO: Connect to pose camera when available
     console.log('Open pose camera for spot:', spot.id);
   };
+  */
 
   return (
     <AnimatePresence>

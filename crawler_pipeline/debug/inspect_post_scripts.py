@@ -1,7 +1,7 @@
 import re
 import json
 
-with open("crawler_pipeline/single_post_googlebot.html", encoding="utf-8", errors="ignore") as f:
+with open("crawler_pipeline/data/single_post_googlebot.html", encoding="utf-8", errors="ignore") as f:
     html = f.read()
 
 # Let's inspect all <script type="application/json">

@@ -1,6 +1,6 @@
 import json
 
-with open("crawler_pipeline/script_39.json", encoding="utf-8") as f:
+with open("crawler_pipeline/data/script_39.json", encoding="utf-8") as f:
     data = json.load(f)
 
 def find_key(obj, target):

@@ -1,6 +1,6 @@
 import json
 
-with open("crawler_pipeline/crawled_real_fb_results.json", encoding="utf-8") as f:
+with open("crawler_pipeline/data/crawled_real_fb_results.json", encoding="utf-8") as f:
     fb = json.load(f)
 
 def make_inspo(id_val, author_name, handle, avatar, post_url, date_str, caption, full_content, thumb, gallery, palette, pose_tip, camera_settings, likes='1.2k', comments='142', shares='48'):

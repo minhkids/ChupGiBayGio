@@ -1,7 +1,7 @@
 import json
 import urllib.request
 
-with open('crawler_pipeline/extracted_fb_posts.json', encoding='utf-8') as f:
+with open('crawler_pipeline/data/extracted_fb_posts.json', encoding='utf-8') as f:
     posts = json.load(f)
 
 for i, p in enumerate(posts[:10]):

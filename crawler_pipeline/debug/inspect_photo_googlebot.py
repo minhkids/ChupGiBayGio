@@ -1,6 +1,6 @@
 import re
 
-with open("crawler_pipeline/photo_googlebot.html", encoding="utf-8", errors="ignore") as f:
+with open("crawler_pipeline/data/photo_googlebot.html", encoding="utf-8", errors="ignore") as f:
     html = f.read()
 
 print("Photo size:", len(html))

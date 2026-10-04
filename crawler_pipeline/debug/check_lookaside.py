@@ -1,6 +1,6 @@
 import re
 
-with open("crawler_pipeline/from_lookaside.html", encoding="utf-8", errors="ignore") as f:
+with open("crawler_pipeline/data/from_lookaside.html", encoding="utf-8", errors="ignore") as f:
     html = f.read()
 
 print("Size:", len(html))

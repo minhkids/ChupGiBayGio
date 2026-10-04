@@ -1,6 +1,6 @@
 import re
 
-with open("crawler_pipeline/generate_mock_spots.py", encoding="utf-8") as f:
+with open("crawler_pipeline/data/generate_mock_spots.py", encoding="utf-8") as f:
     code = f.read()
 
 # Replace each spot's recentReports ending with recentReports + savesCount + isFeatured
@@ -22,7 +22,7 @@ for s_id, (saves, feat) in saves_data.items():
     replacement = rf"\1    savesCount: {saves},\n    isFeatured: {'true' if feat else 'false'},\n"
     code = re.sub(pattern, replacement, code, flags=re.DOTALL)
 
-with open("crawler_pipeline/generate_mock_spots.py", "w", encoding="utf-8") as f:
+with open("crawler_pipeline/data/generate_mock_spots.py", "w", encoding="utf-8") as f:
     f.write(code)
 
 print("Updated generate_mock_spots.py with savesCount and isFeatured!")

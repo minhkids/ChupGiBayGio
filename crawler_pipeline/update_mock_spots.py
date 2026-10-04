@@ -1,7 +1,7 @@
 import json
 import re
 
-with open("crawler_pipeline/crawled_real_fb_results.json", encoding="utf-8") as f:
+with open("crawler_pipeline/data/crawled_real_fb_results.json", encoding="utf-8") as f:
     fb_posts = json.load(f)
 
 # Let's inspect mockSpots.ts

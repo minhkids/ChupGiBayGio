@@ -141,6 +141,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
     setSelectedPose(findMatchingPose(spot));
     setShowPoseCamera(true);
   };
+  void openPoseCamera;
 
   // Show/hide atmospheric effects toggle
   const [isAtmosphericActive, setIsAtmosphericActive] = useState(true);

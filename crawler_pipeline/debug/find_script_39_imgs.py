@@ -1,7 +1,7 @@
 import json
 import re
 
-with open("crawler_pipeline/script_39.json", encoding="utf-8") as f:
+with open("crawler_pipeline/data/script_39.json", encoding="utf-8") as f:
     text = f.read()
 
 print(f"Total characters in script_39.json: {len(text)}")

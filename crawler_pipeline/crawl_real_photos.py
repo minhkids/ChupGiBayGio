@@ -10,7 +10,7 @@ sys.stdout.reconfigure(encoding='utf-8')
 chrome_path = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
 os.makedirs("public/facebook_media", exist_ok=True)
 
-with open("crawler_pipeline/extracted_fb_posts.json", encoding="utf-8") as f:
+with open("crawler_pipeline/data/extracted_fb_posts.json", encoding="utf-8") as f:
     posts = json.load(f)
 
 print(f"Loaded {len(posts)} posts from extracted_fb_posts.json")
@@ -119,7 +119,7 @@ for idx, p in enumerate(target_posts):
     except Exception as e:
         print(f"  Error processing post: {e}")
 
-with open("crawler_pipeline/crawled_real_fb_results.json", "w", encoding="utf-8") as f:
+with open("crawler_pipeline/data/crawled_real_fb_results.json", "w", encoding="utf-8") as f:
     json.dump(results, f, ensure_ascii=False, indent=2)
 
 print("\nFinished crawling all target posts! Saved crawled_real_fb_results.json")

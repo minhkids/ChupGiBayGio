@@ -12,7 +12,7 @@ user_agents = [
 ]
 
 for idx, ua in enumerate(user_agents):
-    out_file = f"crawler_pipeline/fb_ua_{idx}.html"
+    out_file = f"crawler_pipeline/data/fb_ua_{idx}.html"
     cmd = [
         "curl.exe", "-s", "-L",
         "-A", ua,

@@ -1,6 +1,6 @@
 import re
 
-with open("crawler_pipeline/chrome_dump.html", encoding="utf-8", errors="ignore") as f:
+with open("crawler_pipeline/data/chrome_dump.html", encoding="utf-8", errors="ignore") as f:
     html = f.read()
 
 print(f"Dump size: {len(html)}")

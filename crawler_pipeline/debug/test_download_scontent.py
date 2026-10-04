@@ -3,7 +3,7 @@ import urllib.request
 import os
 import json
 
-with open("crawler_pipeline/fb_ua_0.html", encoding="utf-8", errors="ignore") as f:
+with open("crawler_pipeline/data/fb_ua_0.html", encoding="utf-8", errors="ignore") as f:
     html = f.read()
 
 json_scripts = re.findall(r'<script type="application/json"[^>]*>(.*?)</script>', html)
@@ -21,10 +21,10 @@ for idx, s in enumerate(json_scripts):
         pass
 
 print(f"Total non-static fbcdn URLs from JSON: {len(all_uris)}")
-os.makedirs("crawler_pipeline/downloaded_scontent", exist_ok=True)
+os.makedirs("crawler_pipeline/data/downloaded_scontent", exist_ok=True)
 
 for idx, url in enumerate(list(all_uris)):
-    filename = f"crawler_pipeline/downloaded_scontent/img_{idx}.jpg"
+    filename = f"crawler_pipeline/data/downloaded_scontent/img_{idx}.jpg"
     print(f"Downloading {idx}: {url[:100]}...")
     try:
         req = urllib.request.Request(url, headers={

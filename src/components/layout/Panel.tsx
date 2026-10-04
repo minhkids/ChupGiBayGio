@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Camera } from 'lucide-react';
+import { X } from 'lucide-react';
 import type { Spot } from '../../types';
 import { SpotDetailContent } from './SpotDetailContent';
 import type { LayoutCallbacks, SharedUIState } from './shared-types';
@@ -32,10 +32,12 @@ export const Panel: React.FC<PanelProps> = ({
     onClose();
   };
 
+  /* Ghost Pose Camera launcher (temporarily disabled)
   const handleOpenPoseCamera = () => {
     // TODO: Connect to pose camera when available
     console.log('Open pose camera for spot:', spot.id);
   };
+  */
 
   return (
     <AnimatePresence>

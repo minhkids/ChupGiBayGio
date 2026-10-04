@@ -1,6 +1,6 @@
 import re
 
-with open("crawler_pipeline/plugin_post.html", encoding="utf-8", errors="ignore") as f:
+with open("crawler_pipeline/data/plugin_post.html", encoding="utf-8", errors="ignore") as f:
     html = f.read()
 
 print("Plugin size:", len(html))

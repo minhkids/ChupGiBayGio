@@ -35,6 +35,7 @@ export const MobileSheet: React.FC<MobileSheetProps> = ({
     // TODO: Connect to pose camera when available
     console.log('Open pose camera for spot:', spot.id);
   };
+  void handleOpenPoseCamera;
 
   return (
     <AnimatePresence>

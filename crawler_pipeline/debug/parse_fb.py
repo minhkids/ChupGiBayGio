@@ -1,7 +1,7 @@
 import re
 import json
 
-with open("crawler_pipeline/fb_ua_0.html", encoding="utf-8", errors="ignore") as f:
+with open("crawler_pipeline/data/fb_ua_0.html", encoding="utf-8", errors="ignore") as f:
     html = f.read()
 
 print(f"Loaded html: {len(html)} bytes")

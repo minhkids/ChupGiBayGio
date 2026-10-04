@@ -4,7 +4,7 @@ import sys
 
 sys.stdout.reconfigure(encoding='utf-8')
 
-with open("crawler_pipeline/script_39.json", encoding="utf-8") as f:
+with open("crawler_pipeline/data/script_39.json", encoding="utf-8") as f:
     data = json.load(f)
 
 extracted_stories = []
@@ -102,7 +102,7 @@ for idx, s in enumerate(unique_stories):
     print(f"Message: {s['message'][:100] if s['message'] else 'None'}")
     print(f"Images count: {len(s['images'])}")
 
-with open("crawler_pipeline/extracted_fb_posts.json", "w", encoding="utf-8") as f:
+with open("crawler_pipeline/data/extracted_fb_posts.json", "w", encoding="utf-8") as f:
     json.dump(unique_stories, f, ensure_ascii=False, indent=2)
 
 print("\nSaved extracted_fb_posts.json successfully!")

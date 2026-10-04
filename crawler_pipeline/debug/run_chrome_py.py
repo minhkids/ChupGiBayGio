@@ -18,7 +18,7 @@ res = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", erro
 print(f"Stdout length: {len(res.stdout)}")
 print(f"Stderr length: {len(res.stderr)}")
 
-with open("crawler_pipeline/chrome_dump_python.html", "w", encoding="utf-8") as f:
+with open("crawler_pipeline/data/chrome_dump_python.html", "w", encoding="utf-8") as f:
     f.write(res.stdout)
 
 scontent = re.findall(r'https://[^\s"\'<>\\]+fbcdn\.net[^\s"\'<>\\]+', res.stdout)
