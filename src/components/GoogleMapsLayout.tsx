@@ -22,14 +22,14 @@ import {
 } from 'lucide-react';
 import type { Spot, FilterState } from '../types';
 import { REGIONS } from '../data/regions';
-import { SpotMap } from './SpotMap';
-import { AtmosphericFX } from './AtmosphericFX';
-import { FilmSpecsCard } from './FilmSpecsCard';
-import { LeftNavRail } from './LeftNavRail';
-import { PoseCamera } from './PoseCamera';
+import { SpotMap } from './map/SpotMap';
+import { AtmosphericFX } from './features/AtmosphericFX';
+import { FilmSpecsCard } from './cards/FilmSpecsCard';
+import { LeftNavRail } from './navigation/LeftNavRail';
+import { PoseCamera } from './features/PoseCamera';
 import { useWeather } from '../hooks/useWeather';
 import { getLocalInsights } from '../data/localInsights';
-import { LocalInsightFeed } from './LocalInsightFeed';
+import { LocalInsightFeed } from './views/LocalInsightFeed';
 import { POSES, type PoseItem } from '../data/poses';
 import { TapToShopImage } from './outfit/TapToShopImage';
 

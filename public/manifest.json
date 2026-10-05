@@ -1,0 +1,44 @@
+{
+  "name": "Chụp Gì Bây Giờ",
+  "short_name": "Chụp Gì Bây Giờ",
+  "description": "Bản đồ check-in & nhiếp ảnh theo mùa tại Việt Nam. Tìm góc chụp đẹp, hoa theo mùa, giờ vàng, xu hướng pose & outfit.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FBF9F5",
+  "theme_color": "#C85A32",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "vi-VN",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["photography", "travel", "lifestyle"],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Bản đồ",
+      "short_name": "Bản đồ",
+      "description": "Xem bản đồ địa điểm chụp ảnh",
+      "url": "/",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Tạp chí",
+      "short_name": "Tạp chí",
+      "description": "Duyệt tạp chí ảnh theo mùa",
+      "url": "/?view=grid",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

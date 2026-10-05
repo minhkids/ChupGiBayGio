@@ -1,0 +1,15 @@
+# Robots.txt for Chụp Gì Bây Giờ
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://chupgibaygio.com/sitemap.xml
+
+# Crawl-delay for respectful crawling
+Crawl-delay: 10
+
+# Disallow admin/private paths (if any in future)
+# Disallow: /admin/
+# Disallow: /api/
+# Disallow: /_next/
+# Disallow: /node_modules/

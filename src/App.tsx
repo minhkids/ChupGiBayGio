@@ -2,19 +2,21 @@ import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { db } from './services/db';
 import type { Spot, FilterState, CommunityReport, InspirationPost } from './types';
-import { FilterBar } from './components/FilterBar';
-import { SpotCard } from './components/SpotCard';
-import { SpotDetailModal } from './components/SpotDetailModal';
-import { MoodboardView } from './components/MoodboardView';
-import { FilmGalleryView } from './components/FilmGalleryView';
-import { AddFacebookPostModal } from './components/AddFacebookPostModal';
-import { CommunityReportModal } from './components/CommunityReportModal';
-import { AddSpotModal } from './components/AddSpotModal';
-import { SavedSpotsModal } from './components/SavedSpotsModal';
-import { ModernSpotCard } from './components/ModernSpotCard';
-import { Footer } from './components/Footer';
-import { GoogleMapsLayout } from './components/GoogleMapsLayout';
-import { LeftNavRail } from './components/LeftNavRail';
+import {
+  FilterBar,
+  SpotCard,
+  SpotDetailModal,
+  MoodboardView,
+  FilmGalleryView,
+  AddFacebookPostModal,
+  CommunityReportModal,
+  AddSpotModal,
+  SavedSpotsModal,
+  ModernSpotCard,
+  Footer,
+  GoogleMapsLayout,
+  LeftNavRail
+} from './components';
 import { useWeather } from './hooks/useWeather';
 import { useMapLocationPicker } from './hooks/useMapLocationPicker';
 import { isSpotActiveInMonth } from './utils/season';

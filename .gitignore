@@ -11,6 +11,9 @@ node_modules
 dist
 dist-ssr
 *.local
+tmp
+*.out.js
+.wrangler
 
 # Editor directories and files
 .vscode/*
