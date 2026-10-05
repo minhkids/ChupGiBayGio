@@ -29,7 +29,7 @@ const MONTH_LABELS: Record<number, string> = {
   6: 'T.06 — Sen Hồ Tây',
   7: 'T.07 — Biển Xanh',
   8: 'T.08 — Mùa Sương Mây',
-  9: 'T.09 — Thu Hà Nội',
+  9: 'T.09 — Hoa Sữa & Cà Phê',
   10: 'T.10 — Xe Hoa Phố Cổ',
   11: 'T.11 — Cúc Họa Mi & Cỏ Hồng',
   12: 'T.12 — Dã Quỳ & Giáng Sinh'

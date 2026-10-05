@@ -14,10 +14,6 @@ interface QuickChip {
 }
 
 const QUICK_CHIPS: QuickChip[] = [
-  { label: '🍂 Thu Hà Nội', query: 'Phan Đình Phùng' },
-  { label: '🎞️ Kodak Gold 200', filmId: 'kodak-gold-200' },
-  { label: '🌙 CineStill 800T', filmId: 'cinestill-800t' },
-  { label: '🌿 Fuji 400', filmId: 'fujifilm-400' },
   { label: '🌅 Hoàng hôn', timeOfDay: 'SUNSET' as BestTimeOfDay },
   { label: '☕ Vintage Film', concept: 'VINTAGE' as ConceptTag },
   { label: '✨ Đang Rộ (Peak)', status: 'PEAK' as SpotStatus },

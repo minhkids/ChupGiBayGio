@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import type { InspirationPost, Spot } from '../types';
 import { PaletteSwatch } from './PaletteSwatch';
+import { TapToShopImage } from './outfit/TapToShopImage';
 
 interface FacebookPostCardProps {
   post: InspirationPost;
@@ -172,19 +173,23 @@ export const FacebookPostCard: React.FC<FacebookPostCardProps> = ({
       {/* Post Image Gallery (Facebook Layout: 1, 2, 3 or 4 photos) */}
       <div className="relative border-y border-slateInk bg-slateInk">
         {allImages.length === 1 && (
-          <div 
-            className="relative aspect-[16/10] overflow-hidden cursor-pointer group"
-            onClick={() => setActivePhotoModal(allImages[0])}
-          >
-            <img
+          <div className="relative aspect-[16/10] overflow-hidden group">
+            <TapToShopImage
               src={allImages[0]}
-              alt={post.caption}
-              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-103"
+              alt={post.caption || 'Ảnh check-in'}
+              postId={post.id}
+              spotId={spot?.id}
+              aspectRatio="aspect-[16/10]"
+              imageClassName="transition-transform duration-300 group-hover:scale-103"
             />
-            <div className="absolute bottom-2 right-2 bg-slateInk/80 text-white font-mono-spec text-[10px] px-2 py-0.5 flex items-center border border-white/20 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button
+              type="button"
+              onClick={() => setActivePhotoModal(allImages[0])}
+              className="absolute bottom-2 right-2 bg-slateInk/80 hover:bg-slateInk text-white text-[10px] px-2 py-0.5 flex items-center border border-white/20 opacity-0 group-hover:opacity-100 transition-opacity z-20 cursor-pointer rounded"
+            >
               <Maximize2 className="w-3 h-3 mr-1" />
-              Xem ảnh phóng lớn
-            </div>
+              Xem ảnh lớn
+            </button>
           </div>
         )}
 

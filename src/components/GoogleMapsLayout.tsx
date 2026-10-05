@@ -20,7 +20,7 @@ import {
   PlusCircle,
   Layers
 } from 'lucide-react';
-import type { Spot, FilterState, ConceptTag } from '../types';
+import type { Spot, FilterState } from '../types';
 import { REGIONS } from '../data/regions';
 import { SpotMap } from './SpotMap';
 import { AtmosphericFX } from './AtmosphericFX';
@@ -31,6 +31,7 @@ import { useWeather } from '../hooks/useWeather';
 import { getLocalInsights } from '../data/localInsights';
 import { LocalInsightFeed } from './LocalInsightFeed';
 import { POSES, type PoseItem } from '../data/poses';
+import { TapToShopImage } from './outfit/TapToShopImage';
 
 interface GoogleMapsLayoutProps {
   spots: Spot[];
@@ -56,16 +57,6 @@ interface GoogleMapsLayoutProps {
   pickedLocation?: { lat: number; lng: number; address?: string } | null;
   onPickLocation?: (coords: { lat: number; lng: number }) => void;
 }
-
-const QUICK_CHIPS = [
-  { label: '🍂 Thu Hà Nội', query: 'Phan Đình Phùng' },
-  { label: '🎞️ Kodak Gold 200', filmId: 'kodak-gold-200' },
-  { label: '🌙 CineStill 800T', filmId: 'cinestill-800t' },
-  { label: '🌿 Fuji 400', filmId: 'fujifilm-400' },
-  { label: '🌅 Hoàng hôn', timeOfDay: 'SUNSET' as const },
-  { label: '☕ Vintage Film', concept: 'VINTAGE' as ConceptTag },
-  { label: '✨ Đang Rộ (Peak)', status: 'PEAK' as const }
-];
 
 export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
   filteredSpots,
@@ -225,45 +216,6 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
     }
   };
 
-  // Quick chip click handler
-  const handleChipClick = (chip: typeof QUICK_CHIPS[number]) => {
-    if ('filmId' in chip && chip.filmId) {
-      onChangeFilters(prev => ({
-        ...prev,
-        filmId: prev.filmId === chip.filmId ? 'ALL' : chip.filmId
-      }));
-    } else if (chip.query) {
-      onChangeFilters(prev => ({
-        ...prev,
-        searchQuery: prev.searchQuery === chip.query ? '' : chip.query
-      }));
-    } else if (chip.timeOfDay) {
-      onChangeFilters(prev => ({
-        ...prev,
-        timeOfDay: prev.timeOfDay === chip.timeOfDay ? 'ALL' : chip.timeOfDay
-      }));
-    } else if (chip.concept) {
-      onChangeFilters(prev => ({
-        ...prev,
-        concept: prev.concept === chip.concept ? 'ALL' : chip.concept
-      }));
-    } else if (chip.status) {
-      onChangeFilters(prev => ({
-        ...prev,
-        status: prev.status === chip.status ? 'ALL' : chip.status
-      }));
-    }
-  };
-
-  const isChipActive = (chip: typeof QUICK_CHIPS[number]) => {
-    if ('filmId' in chip && chip.filmId) return filters.filmId === chip.filmId;
-    if (chip.query) return filters.searchQuery === chip.query;
-    if (chip.timeOfDay) return filters.timeOfDay === chip.timeOfDay;
-    if (chip.concept) return filters.concept === chip.concept;
-    if (chip.status) return filters.status === chip.status;
-    return false;
-  };
-
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-neutral-100 dark:bg-neutral-950 font-sans select-none">
 
@@ -283,9 +235,8 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
           activeRegionId={activeRegionId}
           onSelectRegion={onSelectRegion}
           uiTheme={uiTheme}
-          onToggleUiTheme={onToggleUiTheme}
-          onSelectFilmFilter={() => onChangeFilters(prev => ({ ...prev, filmId: prev.filmId === 'kodak-gold-200' ? 'ALL' : 'kodak-gold-200' }))}
-        />
+                    onToggleUiTheme={onToggleUiTheme}
+                  />
       </div>
 
       {/* ========================================================================= */}
@@ -507,25 +458,6 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
           </div>
         </div>
 
-        {/* Quick Filter Chips (Mobile horizontal scroll) */}
-        <div className="flex items-center space-x-1.5 overflow-x-auto no-scrollbar py-0.5 pointer-events-auto">
-          {QUICK_CHIPS.map((chip, idx) => {
-            const active = isChipActive(chip);
-            return (
-              <button
-                key={idx}
-                type="button"
-                onClick={() => handleChipClick(chip)}
-                className={`px-4 py-1.5 rounded-full text-xs font-medium whitespace-nowrap shadow-sm backdrop-blur-md transition-all shrink-0 ${active
-                    ? 'bg-neutral-900 text-white dark:bg-white dark:text-neutral-950 font-bold scale-105'
-                    : 'bg-white/90 dark:bg-neutral-900/90 text-neutral-700 dark:text-neutral-300 border border-neutral-200/80 dark:border-neutral-800 hover:bg-white'
-                  }`}
-              >
-                {chip.label}
-              </button>
-            );
-          })}
-        </div>
       </div>
 
       {/* ========================================================================= */}
@@ -614,25 +546,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
             </div>
           </div>
 
-          {/* ROW 2: SINGLE SCROLLABLE CHIP ROW ([🔥 Đang rộ] [📍 Gần tôi] [🌸 Cúc họa mi]...) */}
-          <div className="flex items-center space-x-2 overflow-x-auto no-scrollbar py-1">
-            {QUICK_CHIPS.map((chip, idx) => {
-              const active = isChipActive(chip);
-              return (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={() => handleChipClick(chip)}
-                  className={`px-3.5 py-2 rounded-full text-sm font-medium whitespace-nowrap shadow-xs transition-all shrink-0 ${active
-                      ? 'bg-neutral-900 text-white dark:bg-white dark:text-neutral-950 font-bold scale-105 shadow-sm'
-                      : 'bg-white/90 dark:bg-neutral-800/90 text-neutral-700 dark:text-neutral-300 border border-neutral-200/80 dark:border-neutral-700/80 hover:bg-white dark:hover:bg-neutral-750'
-                    }`}
-                >
-                  {chip.label}
-                </button>
-              );
-            })}
-          </div>
+
 
           {/* 3 PHOTOGRAPHY TABS: 👗 Quần áo | 📷 Thuê máy ảnh | 🎞️ Mua film */}
           <div className="grid grid-cols-3 p-1 bg-neutral-100/90 dark:bg-neutral-800/90 rounded-xl text-xs font-semibold border border-neutral-200/50 dark:border-neutral-750/50 gap-1">
@@ -697,18 +611,21 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
               }`}
           >
             {/* Cover Photo Gallery Banner */}
+            {/* Cover Photo Gallery Banner with Visual Outfit Tap-to-Shop */}
             <div className="relative h-52 bg-neutral-900 shrink-0">
-              <img
+              <TapToShopImage
                 src={selectedSpot.galleryUrls?.[activePhotoIdx] || selectedSpot.coverImageUrl}
                 alt={selectedSpot.name}
-                className="w-full h-full object-cover"
+                spotId={selectedSpot.id}
+                aspectRatio="h-52"
+                imageClassName="w-full h-full object-cover"
               />
 
               {/* Dismiss Button ✕ */}
               <button
                 type="button"
                 onClick={() => onSelectSpot(null)}
-                className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/60 hover:bg-black/80 text-white flex items-center justify-center backdrop-blur-xs transition-colors shadow-md z-10"
+                className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/60 hover:bg-black/80 text-white flex items-center justify-center backdrop-blur-xs transition-colors shadow-md z-30"
                 title="Đóng chi tiết"
               >
                 <X className="w-4 h-4" />
@@ -1136,16 +1053,18 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
             {/* Mobile Detail Body */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
 
-              {/* Cover Photo */}
+              {/* Cover Photo with Visual Outfit Tap-to-Shop */}
               <div className="relative h-48 rounded-2xl overflow-hidden bg-neutral-900 shrink-0 shadow-md">
-                <img
+                <TapToShopImage
                   src={selectedSpot.galleryUrls?.[activePhotoIdx] || selectedSpot.coverImageUrl}
                   alt={selectedSpot.name}
-                  className="w-full h-full object-cover"
+                  spotId={selectedSpot.id}
+                  aspectRatio="h-48"
+                  imageClassName="w-full h-full object-cover"
                 />
 
-                <span className="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-md bg-terracotta text-white font-mono-spec text-[10px] font-bold shadow-md">
-                  {selectedSpot.seasonalTrend?.status === 'PEAK' ? 'ĐANG RỘ (PEAK)' : (selectedSpot.seasonalTrend?.status || 'PEAK')}
+                <span className="absolute top-2.5 left-2.5 px-2.5 py-1 rounded-full bg-terracotta text-white text-[11px] font-semibold shadow-md">
+                  {selectedSpot.seasonalTrend?.status === 'PEAK' ? 'Đang rộ' : (selectedSpot.seasonalTrend?.status || 'Đang rộ')}
                 </span>
 
                 {/* Thumbnails */}
@@ -1311,7 +1230,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
         )}
       </AnimatePresence>
 
-      {/* Ghost Pose Camera — z-[100] sits above the detail panels (z-30/z-50) */}
+      {/* Ghost Pose Camera z-[100] sits above the detail panels (z-30/z-50) */}
       {showPoseCamera && selectedPose && (
         <PoseCamera
           pose={selectedPose}

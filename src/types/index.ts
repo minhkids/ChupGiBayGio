@@ -212,3 +212,34 @@ export interface PoseItem {
   viewBox: string;
   matchedSpots?: string[];
 }
+
+export type OutfitCategory = 'AO_DAI' | 'DRESS' | 'JACKET' | 'PROP' | 'SET' | 'ACCESSORY';
+
+export interface SimilarProduct {
+  id: string;
+  name: string;
+  priceEstimate: string;
+  shopeeUrl: string;
+  tiktokUrl: string;
+  thumbnailUrl?: string;
+  matchScore?: number;
+}
+
+export interface PostOutfit {
+  id: string;
+  postId: string;
+  spotId?: string;
+  imageUrl: string;
+  itemName: string;
+  category: OutfitCategory;
+  color?: string;
+  style?: string;
+  xPercent: number; // 0.0 - 100.0%
+  yPercent: number; // 0.0 - 100.0%
+  searchQuery: string;
+  priceEstimate?: string;
+  shopeeUrl: string;
+  tiktokUrl: string;
+  similarItems: SimilarProduct[];
+  aiNotes?: string;
+}
