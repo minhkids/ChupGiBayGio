@@ -227,7 +227,7 @@ function mockOpenRouterAnalysis(postText: string): OpenRouterExtractionResult {
 
   // Extract gear if mentioned
   let cameraParams: string | null = null;
-  const gearMatch = postText.match(/(Sony|Fujifilm|Canon|Nikon|Leica)\s+[\w\s\+\-\/\.]+/i);
+  const gearMatch = postText.match(/(Sony|Fujifilm|Canon|Nikon|Leica)\s+[\w\s+\-/.]+/i);
   if (gearMatch) {
     cameraParams = gearMatch[0].trim();
   }

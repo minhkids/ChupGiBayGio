@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   X, 
   MapPin, 
@@ -45,9 +45,10 @@ export const SpotDetailModal: React.FC<SpotDetailModalProps> = ({
   onOpenAddPostModal
 }) => {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
-  const [copiedCoords, setCopiedCoords] = useState(false);
-  const [showPoseCamera, setShowPoseCamera] = useState(false);
-  const [selectedPose, setSelectedPose] = useState<PoseItem | null>(null);
+    const [copiedCoords, setCopiedCoords] = useState(false);
+    const [showPoseCamera, setShowPoseCamera] = useState(false);
+    const [selectedPose, setSelectedPose] = useState<PoseItem | null>(null);
+    const currentMonth = useMemo(() => new Date().getMonth() + 1, []); // eslint-disable-line react/purity — runs once
 
   // Find a matching pose for the spot
   const findMatchingPose = (currentSpot: Spot): PoseItem => {
@@ -318,7 +319,7 @@ export const SpotDetailModal: React.FC<SpotDetailModalProps> = ({
                   isActive = month >= startMonth || month <= endMonth;
                 }
                 const isPeak = isActive && spot.seasonalTrend.status === 'PEAK';
-                const isCurrentCalendar = new Date().getMonth() + 1 === month;
+                const isCurrentCalendar = currentMonth === month;
 
                 return (
                   <div key={month} className="flex flex-col items-center">

@@ -203,9 +203,9 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
         await navigator.share(shareData);
         showToast('Đã chia sẻ địa điểm!');
         return;
-      } catch (err) {
-        // User cancelled or fallback
-      }
+      } catch {
+              // User cancelled or fallback
+            }
     }
 
     try {

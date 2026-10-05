@@ -95,12 +95,13 @@ export const AddSpotModal: React.FC<AddSpotModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
 
-  // Sync spotName or address when location changes
-  React.useEffect(() => {
-    if (selectedLocation?.placeName && !spotName) {
-      setSpotName(selectedLocation.placeName);
-    }
-  }, [selectedLocation, spotName]);
+  // Sync spotName when location changes (from external map picker hook)
+    React.useEffect(() => {
+          // eslint-disable-next-line react/set-state-in-effect — sync from external hook
+      if (selectedLocation?.placeName && !spotName) {
+        setSpotName(selectedLocation.placeName);
+      }
+    }, [selectedLocation, spotName]);
 
   if (!isOpen) return null;
 

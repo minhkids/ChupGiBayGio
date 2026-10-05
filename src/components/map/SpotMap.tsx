@@ -136,9 +136,9 @@ export const SpotMap: React.FC<SpotMapProps> = ({
       map.remove();
       mapInstanceRef.current = null;
     };
-  }, []);
+  }, []); // eslint-disable-next-line react-hooks/exhaustive-deps — map init runs once, region/tile changes handled separately
 
-  // Switch Tile Provider
+    // Switch Tile Provider
   const handleSwitchProvider = (provider: TileProvider) => {
     setTileProvider(provider);
     if (!mapInstanceRef.current) return;
@@ -323,12 +323,13 @@ export const SpotMap: React.FC<SpotMapProps> = ({
     };
 
     map.on('click', handleMapClick);
-    return () => {
-      map.off('click', handleMapClick);
-      if (mapContainerRef.current) {
-        mapContainerRef.current.style.cursor = '';
-      }
-    };
+        return () => {
+          map.off('click', handleMapClick);
+          const container = mapContainerRef.current;
+          if (container) {
+            container.style.cursor = '';
+          }
+        };
   }, [isPickingLocation, onPickLocation]);
 
   // Render or update picked yellow/orange draggable marker

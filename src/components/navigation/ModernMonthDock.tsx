@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { SlidersHorizontal, Sparkles } from 'lucide-react';
 import type { Spot } from '../../types';
@@ -32,7 +32,7 @@ export const ModernMonthDock: React.FC<ModernMonthDockProps> = ({
   spots,
   onOpenFilters
 }) => {
-  const currentMonthNum = new Date().getMonth() + 1;
+  const currentMonthNum = useMemo(() => new Date().getMonth() + 1, []); // eslint-disable-line react/purity — runs once
 
   // Calculate dynamic spot count per month
   const getMonthCount = (monthId: number) => {

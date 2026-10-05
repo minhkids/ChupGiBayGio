@@ -28,33 +28,32 @@ export const TapToShopImage: React.FC<TapToShopImageProps> = ({
   aspectRatio = 'aspect-4/3',
   showBadge = true,
 }) => {
-  const [outfits, setOutfits] = useState<PostOutfit[]>(propOutfits || []);
+  const [fetchedOutfits, setFetchedOutfits] = useState<PostOutfit[]>([]);
   const [selectedOutfit, setSelectedOutfit] = useState<PostOutfit | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isHotspotVisible, setIsHotspotVisible] = useState(true);
 
-  // Fetch or match outfits for this image/post
+  // Derive outfits: props take priority, async-fetched as fallback
+  const outfits = (propOutfits && propOutfits.length > 0) ? propOutfits : fetchedOutfits;
+
+  // Fetch or match outfits when no propOutfits
+  // eslint-disable-next-line react/set-state-in-effect — async data fetching
   useEffect(() => {
-    if (propOutfits && propOutfits.length > 0) {
-      setOutfits(propOutfits);
-      return;
-    }
+    if (propOutfits && propOutfits.length > 0) return;
 
     if (postId) {
       fetchPostOutfits(postId).then(data => {
         if (data && data.length > 0) {
-          setOutfits(data);
+          setFetchedOutfits(data);
         }
       });
     } else {
-      // Fallback matching by image or default outfit
       const allMocks = getAllMockOutfits();
       const matched = allMocks.filter(o => o.imageUrl === src || (spotId && o.spotId === spotId));
       if (matched.length > 0) {
-        setOutfits(matched);
+        setFetchedOutfits(matched);
       } else {
-        // Gắn 1 outfit thông minh cho ảnh check-in
-        setOutfits([{
+        setFetchedOutfits([{
           ...allMocks[0],
           id: `outfit-auto-${Math.random()}`,
           imageUrl: src,

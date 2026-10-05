@@ -1,20 +1,12 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { db } from './services/db';
 import type { Spot, FilterState, CommunityReport, InspirationPost } from './types';
 import {
   FilterBar,
   SpotCard,
-  SpotDetailModal,
-  MoodboardView,
-  FilmGalleryView,
-  AddFacebookPostModal,
-  CommunityReportModal,
-  AddSpotModal,
-  SavedSpotsModal,
   ModernSpotCard,
   Footer,
-  GoogleMapsLayout,
   LeftNavRail
 } from './components';
 import { useWeather } from './hooks/useWeather';
@@ -25,11 +17,22 @@ import { recommendFilmForSpot } from './utils/filmAdvisor';
 import { AlertCircle } from 'lucide-react';
 import { containerVariants, itemVariants } from './utils/motion-tokens';
 
+// Lazy-loaded heavy components
+const GoogleMapsLayout = lazy(() => import('./components/GoogleMapsLayout').then(m => ({ default: m.GoogleMapsLayout })));
+const CommunityReportModal = lazy(() => import('./components/modals/CommunityReportModal').then(m => ({ default: m.CommunityReportModal })));
+const AddSpotModal = lazy(() => import('./components/modals/AddSpotModal').then(m => ({ default: m.AddSpotModal })));
+const SavedSpotsModal = lazy(() => import('./components/modals/SavedSpotsModal').then(m => ({ default: m.SavedSpotsModal })));
+const AddFacebookPostModal = lazy(() => import('./components/modals/AddFacebookPostModal').then(m => ({ default: m.AddFacebookPostModal })));
+const MoodboardView = lazy(() => import('./components/views/MoodboardView').then(m => ({ default: m.MoodboardView })));
+const FilmGalleryView = lazy(() => import('./components/views/FilmGalleryView').then(m => ({ default: m.FilmGalleryView })));
+const SpotDetailModal = lazy(() => import('./components/modals/SpotDetailModal').then(m => ({ default: m.SpotDetailModal })));
+
 export function App() {
   const [spots, setSpots] = useState<Spot[]>(db.spots.getAll());
   const [activeRegionId, setActiveRegionId] = useState<string>('hanoi');
   const [activeView, setActiveView] = useState<'map' | 'grid' | 'moodboard' | 'film'>('map');
   const [uiTheme, setUiTheme] = useState<'modern' | 'editorial'>('modern');
+  const currentMonth = useMemo(() => new Date().getMonth() + 1, []); // eslint-disable-line react/purity — runs once at mount
 
   // Filter State
   const [filters, setFilters] = useState<FilterState>({
@@ -217,7 +220,7 @@ export function App() {
 
         // Film Stock Filter
         if (filters.filmId && filters.filmId !== 'ALL') {
-          const rec = recommendFilmForSpot(spot, filters.month || new Date().getMonth() + 1);
+          const rec = recommendFilmForSpot(spot, filters.month || currentMonth);
           if (rec.film.id !== filters.filmId) {
             return false;
           }
@@ -255,7 +258,7 @@ export function App() {
         if (b.seasonalTrend.status === 'PEAK' && a.seasonalTrend.status !== 'PEAK') return 1;
         return (b.seasonalTrend.trendScore || 0) - (a.seasonalTrend.trendScore || 0);
       });
-  }, [spots, filters]);
+  }, [spots, filters, currentMonth]);
 
   const savedSpots = useMemo(() => {
     return spots.filter(s => savedSpotIds.includes(s.id));
@@ -267,6 +270,7 @@ export function App() {
   if (activeView === 'map') {
     return (
       <div className="w-screen h-screen overflow-hidden">
+        <Suspense fallback={<div className="w-full h-full bg-neutral-100 flex items-center justify-center"><div className="animate-spin w-8 h-8 border-2 border-terracotta border-t-transparent rounded-full" /></div>}>
         <GoogleMapsLayout
           spots={spots}
           filteredSpots={filteredSpots}
@@ -294,15 +298,19 @@ export function App() {
           pickedLocation={mapLocationPicker.selectedLocation}
           onPickLocation={mapLocationPicker.onSelectMapCoords}
         />
+        </Suspense>
 
         {/* Community Report Modal */}
+        <Suspense fallback={null}>
         <CommunityReportModal
           spot={reportSpot}
           onClose={() => setReportSpot(null)}
           onSubmitReport={handleSubmitReport}
         />
+        </Suspense>
 
         {/* Add Spot Modal (Zero manual coordinate input, Click-to-Pin & AI Extraction) */}
+        <Suspense fallback={null}>
         <AddSpotModal
           isOpen={isSubmitModalOpen || mapLocationPicker.isPicking}
           onClose={() => {
@@ -320,8 +328,10 @@ export function App() {
           onClearLocation={mapLocationPicker.clearLocation}
           isGeocoding={mapLocationPicker.isGeocoding}
         />
+        </Suspense>
 
         {/* Saved Bookmarks Modal */}
+        <Suspense fallback={null}>
         <SavedSpotsModal
           isOpen={isSavedModalOpen}
           onClose={() => setIsSavedModalOpen(false)}
@@ -329,8 +339,10 @@ export function App() {
           onRemoveSave={handleToggleSave}
           onSelectSpot={setSelectedSpot}
         />
+        </Suspense>
 
         {/* Add Facebook Post Modal */}
+        <Suspense fallback={null}>
         <AddFacebookPostModal
           isOpen={isAddPostModalOpen}
           onClose={() => setIsAddPostModalOpen(false)}
@@ -338,6 +350,7 @@ export function App() {
           selectedSpotId={addPostTargetSpotId}
           onAddPost={handleAddFacebookPost}
         />
+        </Suspense>
       </div>
     );
   }
@@ -448,15 +461,19 @@ export function App() {
 
         {/* VIEW 3: Moodboard & Film Color Recipes */}
         {activeView === 'moodboard' && (
+          <Suspense fallback={<div className="p-8 text-center">Đang tải bảng cảm hứng...</div>}>
           <MoodboardView
             spots={spots}
             onSelectSpot={setSelectedSpot}
           />
+          </Suspense>
         )}
 
         {/* VIEW 4: Film Rolls Gallery */}
         {activeView === 'film' && (
+          <Suspense fallback={<div className="p-8 text-center">Đang tải gallery film...</div>}>
           <FilmGalleryView />
+          </Suspense>
         )}
 
       </main>
@@ -464,6 +481,7 @@ export function App() {
       {/* Spot Detail Profile Modal (Shared Element Transition with AnimatePresence) */}
       <AnimatePresence>
         {selectedSpot && (
+          <Suspense fallback={null}>
           <SpotDetailModal
             spot={selectedSpot}
             onClose={() => setSelectedSpot(null)}
@@ -475,17 +493,21 @@ export function App() {
               setIsAddPostModalOpen(true);
             }}
           />
+          </Suspense>
         )}
       </AnimatePresence>
 
       {/* Community Report Modal */}
+      <Suspense fallback={null}>
       <CommunityReportModal
         spot={reportSpot}
         onClose={() => setReportSpot(null)}
         onSubmitReport={handleSubmitReport}
       />
+      </Suspense>
 
       {/* Add Spot Modal (Zero manual coordinate input, Click-to-Pin & AI Extraction) */}
+      <Suspense fallback={null}>
       <AddSpotModal
         isOpen={isSubmitModalOpen || mapLocationPicker.isPicking}
         onClose={() => {
@@ -503,8 +525,10 @@ export function App() {
         onClearLocation={mapLocationPicker.clearLocation}
         isGeocoding={mapLocationPicker.isGeocoding}
       />
+      </Suspense>
 
       {/* Saved Bookmarks Modal */}
+      <Suspense fallback={null}>
       <SavedSpotsModal
         isOpen={isSavedModalOpen}
         onClose={() => setIsSavedModalOpen(false)}
@@ -512,8 +536,10 @@ export function App() {
         onRemoveSave={handleToggleSave}
         onSelectSpot={setSelectedSpot}
       />
+      </Suspense>
 
       {/* Add Facebook Post Modal */}
+      <Suspense fallback={null}>
       <AddFacebookPostModal
         isOpen={isAddPostModalOpen}
         onClose={() => setIsAddPostModalOpen(false)}
@@ -521,6 +547,7 @@ export function App() {
         selectedSpotId={addPostTargetSpotId}
         onAddPost={handleAddFacebookPost}
       />
+      </Suspense>
 
       {/* Editorial Colophon Footer */}
       <Footer />

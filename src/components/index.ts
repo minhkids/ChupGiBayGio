@@ -1,15 +1,15 @@
 // Barrel export for all components
 
-// Main Layout
-export { GoogleMapsLayout } from './GoogleMapsLayout';
+// Main Layout (lazy-loaded in App.tsx)
+// GoogleMapsLayout — imported via React.lazy in App.tsx
 
-// Modals
-export { AddFacebookPostModal } from './modals/AddFacebookPostModal';
-export { AddSpotModal } from './modals/AddSpotModal';
-export { CommunityReportModal } from './modals/CommunityReportModal';
+// Modals (lazy-loaded in App.tsx)
+// AddFacebookPostModal — imported via React.lazy in App.tsx
+// AddSpotModal — imported via React.lazy in App.tsx
+// CommunityReportModal — imported via React.lazy in App.tsx
+// SavedSpotsModal — imported via React.lazy in App.tsx
+// SpotDetailModal — imported via React.lazy in App.tsx
 export { PoseLibraryModal } from './modals/PoseLibraryModal';
-export { SavedSpotsModal } from './modals/SavedSpotsModal';
-export { SpotDetailModal } from './modals/SpotDetailModal';
 export { SubmitSpotModal } from './modals/SubmitSpotModal';
 
 // Cards
@@ -20,11 +20,11 @@ export { ModernSpotCard } from './cards/ModernSpotCard';
 export { OutfitAdvisorCard } from './cards/OutfitAdvisorCard';
 export { SpotCard } from './cards/SpotCard';
 
-// Views & Feeds
+// Views & Feeds (lazy-loaded in App.tsx)
+// MoodboardView — imported via React.lazy in App.tsx
+// FilmGalleryView — imported via React.lazy in App.tsx
 export { FacebookFeedView } from './views/FacebookFeedView';
-export { FilmGalleryView } from './views/FilmGalleryView';
 export { LocalInsightFeed } from './views/LocalInsightFeed';
-export { MoodboardView } from './views/MoodboardView';
 
 // Features & Tools
 export { AtmosphericFX } from './features/AtmosphericFX';

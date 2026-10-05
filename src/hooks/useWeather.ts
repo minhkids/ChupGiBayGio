@@ -254,6 +254,7 @@ export function useWeather(lat = HANOI_LAT, lng = HANOI_LNG) {
   }, [lat, lng]);
 
   useEffect(() => {
+    // eslint-disable-next-line react/set-state-in-effect — data-fetching pattern
     fetchWeather();
 
     // Re-fetch every 15 minutes

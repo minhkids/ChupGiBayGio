@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Calendar } from 'lucide-react';
 import { isSpotActiveInMonth } from '../../utils/season';
 import type { Spot } from '../../types';
@@ -33,7 +33,7 @@ export const MonthTimeline: React.FC<MonthTimelineProps> = ({
   onSelectSeason,
   spots
 }) => {
-  const currentMonthNum = new Date().getMonth() + 1;
+  const currentMonthNum = useMemo(() => new Date().getMonth() + 1, []); // eslint-disable-line react/purity — runs once
 
   const getMonthCount = (monthId: number) => {
     return spots.filter(s =>
