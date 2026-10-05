@@ -61,14 +61,14 @@ export const LocalInsightFeed: React.FC<LocalInsightFeedProps> = ({
     return (
       <div className="py-12 text-center space-y-2 text-neutral-500">
         <Sparkles className="w-8 h-8 text-neutral-300 mx-auto" />
-        <p className="font-editorial text-base">Chưa có ưu đãi nào cho khu vực này</p>
+        <p className="text-base font-semibold text-neutral-800 dark:text-neutral-200">Chưa có thông tin cho khu vực này</p>
         {onResetFilters && (
           <button
             type="button"
             onClick={onResetFilters}
-            className="text-xs font-mono-spec font-bold text-terracotta hover:underline"
+            className="text-xs font-semibold text-terracotta hover:underline"
           >
-            Xem tất cả ưu đãi
+            Xem lại tất cả
           </button>
         )}
       </div>
@@ -84,28 +84,28 @@ export const LocalInsightFeed: React.FC<LocalInsightFeedProps> = ({
             key={item.id}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="relative p-3.5 rounded-xl border border-neutral-200/80 dark:border-neutral-800 bg-white dark:bg-neutral-850/80 hover:border-terracotta/60 transition-all space-y-2.5 shadow-xs"
+            className="relative p-3.5 rounded-2xl border border-neutral-200/80 dark:border-neutral-800 bg-white dark:bg-neutral-850/80 hover:border-terracotta/40 hover:shadow-md transition-all space-y-2.5 shadow-xs"
           >
             {/* Header: loại + độ hot */}
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-1.5 min-w-0">
                 <span
-                  className={`inline-flex items-center gap-1 text-[10px] font-mono-spec font-bold uppercase px-2 py-0.5 rounded-full ${
+                  className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full ${
                     isDeal
-                      ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
-                      : 'bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300'
+                      ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60'
+                      : 'bg-orange-50 text-orange-700 dark:bg-orange-950/60 dark:text-orange-300 border border-orange-200/60 dark:border-orange-800/60'
                   }`}
                 >
                   {isDeal ? <Tag className="w-3 h-3" /> : <Flame className="w-3 h-3" />}
                   {isDeal ? 'Ưu đãi' : 'Đang hot'}
                 </span>
                 {item.isNearSelected && (
-                  <span className="text-[10px] font-mono-spec font-bold px-2 py-0.5 rounded-full bg-terracotta/10 text-terracotta truncate">
+                  <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-terracotta/10 text-terracotta border border-terracotta/20 truncate">
                     Gần điểm đang chọn
                   </span>
                 )}
               </div>
-              <span className="text-[11px] font-mono-spec text-neutral-400 shrink-0">
+              <span className="text-xs text-neutral-400 font-medium shrink-0">
                 {CATEGORY_ICON[item.category]}{' '}
                 {INSIGHT_CATEGORIES.find(c => c.id === item.category)?.label.replace(/^\S+\s/, '')}
               </span>
@@ -113,7 +113,7 @@ export const LocalInsightFeed: React.FC<LocalInsightFeedProps> = ({
 
             {/* Tiêu đề + mô tả */}
             <div>
-              <h4 className="font-editorial text-sm font-bold text-neutral-900 dark:text-white leading-snug">
+              <h4 className="text-[15px] font-bold text-neutral-900 dark:text-neutral-100 leading-snug">
                 {item.title}
               </h4>
               <p className="text-xs text-neutral-600 dark:text-neutral-300 leading-relaxed mt-1 line-clamp-3">
@@ -123,15 +123,15 @@ export const LocalInsightFeed: React.FC<LocalInsightFeedProps> = ({
 
             {/* Giá */}
             {(item.priceNow || item.discountLabel) && (
-              <div className="flex items-baseline flex-wrap gap-x-2 gap-y-1">
+              <div className="flex items-baseline flex-wrap gap-x-2 gap-y-1 pt-0.5">
                 {item.priceNow && (
-                  <span className="text-base font-bold text-terracotta font-mono-spec">{item.priceNow}</span>
+                  <span className="text-base font-bold text-terracotta tabular-nums">{item.priceNow}</span>
                 )}
                 {item.priceOld && (
-                  <span className="text-xs text-neutral-400 line-through font-mono-spec">{item.priceOld}</span>
+                  <span className="text-xs text-neutral-400 line-through tabular-nums">{item.priceOld}</span>
                 )}
                 {item.discountLabel && (
-                  <span className="text-[10px] font-mono-spec font-bold px-1.5 py-0.5 rounded bg-terracotta text-white">
+                  <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-terracotta text-white shadow-xs">
                     {item.discountLabel}
                   </span>
                 )}
@@ -141,11 +141,11 @@ export const LocalInsightFeed: React.FC<LocalInsightFeedProps> = ({
             {/* Địa điểm + hiệu lực + chỉ đường */}
             <div className="flex items-center justify-between gap-2 pt-2 border-t border-neutral-100 dark:border-neutral-800">
               <div className="min-w-0 space-y-0.5">
-                <div className="text-[11px] font-medium text-neutral-700 dark:text-neutral-200 flex items-center truncate">
-                  <MapPin className="w-3 h-3 text-terracotta mr-1 shrink-0" />
+                <div className="text-xs font-semibold text-neutral-800 dark:text-neutral-200 flex items-center truncate">
+                  <MapPin className="w-3.5 h-3.5 text-terracotta mr-1 shrink-0" />
                   <span className="truncate">{item.placeName}</span>
                 </div>
-                <div className="text-[10px] text-neutral-400 font-mono-spec truncate">
+                <div className="text-[11px] text-neutral-400 truncate">
                   {item.areaLabel}
                   {item.validNote && (
                     <>
@@ -159,7 +159,7 @@ export const LocalInsightFeed: React.FC<LocalInsightFeedProps> = ({
               <button
                 type="button"
                 onClick={() => openPlaceInMaps(item.placeName, item.areaLabel)}
-                className="text-xs font-semibold text-terracotta hover:underline flex items-center gap-1 shrink-0"
+                className="text-xs font-semibold text-terracotta hover:text-terracotta-dark hover:underline flex items-center gap-1 shrink-0 py-1 px-2 rounded-lg hover:bg-terracotta/5 transition-colors"
               >
                 <Navigation className="w-3.5 h-3.5" />
                 Chỉ đường
@@ -167,8 +167,8 @@ export const LocalInsightFeed: React.FC<LocalInsightFeedProps> = ({
             </div>
 
             {item.sourceLabel && (
-              <div className="text-[9px] font-mono-spec text-neutral-400 uppercase tracking-wider">
-                {item.sourceLabel}
+              <div className="text-[11px] text-neutral-400 font-medium">
+                Nguồn: {item.sourceLabel}
               </div>
             )}
           </motion.article>

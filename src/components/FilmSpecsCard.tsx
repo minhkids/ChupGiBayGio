@@ -35,19 +35,19 @@ export const FilmSpecsCard: React.FC<FilmSpecsCardProps> = ({
             </div>
           )}
           <div>
-            <div className="text-xs font-mono-spec font-bold uppercase tracking-widest text-amber-600 dark:text-amber-400 flex items-center space-x-1">
+            <div className="text-xs font-semibold text-amber-600 dark:text-amber-400 flex items-center space-x-1">
               <Sparkles className="w-3 h-3 text-amber-500" />
               <span>Gợi ý cuộn film</span>
             </div>
             <h4 className="text-base font-bold text-neutral-900 dark:text-white flex items-center space-x-1.5">
               <span>{film.fullName}</span>
-              <span className="text-xs font-mono-spec font-normal text-neutral-400">({film.format})</span>
+              <span className="text-xs font-normal text-neutral-400">({film.format})</span>
             </h4>
           </div>
         </div>
 
         {/* ISO Badge */}
-        <div className={`px-2.5 py-1 rounded-full text-xs font-mono-spec font-bold border ${film.badgeBg}`}>
+        <div className={`px-2.5 py-1 rounded-full text-xs font-semibold tabular-nums border ${film.badgeBg}`}>
           ISO {film.iso}
         </div>
       </div>
@@ -61,7 +61,7 @@ export const FilmSpecsCard: React.FC<FilmSpecsCardProps> = ({
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent flex items-end p-2">
-            <span className="text-xs font-mono-spec text-white/90 bg-black/40 backdrop-blur-md px-2 py-0.5 rounded-full border border-white/20">
+            <span className="text-xs text-white/90 bg-black/40 backdrop-blur-md px-2 py-0.5 rounded-full border border-white/20">
               🎞️ Ảnh demo nước màu thực tế
             </span>
           </div>
@@ -75,10 +75,10 @@ export const FilmSpecsCard: React.FC<FilmSpecsCardProps> = ({
       </p>
 
       {/* Recommended Aperture & Shutter Speed Specs */}
-      <div className="bg-white/80 dark:bg-neutral-800/80 rounded-xl p-3 border border-neutral-200/80 dark:border-neutral-700/80 flex items-center justify-between text-sm font-mono-spec mb-3">
+      <div className="bg-white/80 dark:bg-neutral-800/80 rounded-xl p-3 border border-neutral-200/80 dark:border-neutral-700/80 flex items-center justify-between text-sm mb-3">
         <div className="flex items-center space-x-1.5 text-neutral-700 dark:text-neutral-300">
           <Aperture className="w-3.5 h-3.5 text-terracotta shrink-0" />
-          <span className="font-semibold">{recommendedSettings}</span>
+          <span className="font-semibold tabular-nums">{recommendedSettings}</span>
         </div>
 
         {/* Color Palette Swatches */}
@@ -107,7 +107,7 @@ export const FilmSpecsCard: React.FC<FilmSpecsCardProps> = ({
                 <div>
                   <div className="font-semibold text-neutral-900 dark:text-neutral-100 flex items-center space-x-1">
                     <span>{shop.name}</span>
-                    <span className="text-[11px] text-amber-600 dark:text-amber-400 font-mono-spec font-normal">({shop.distance_to_core_spots})</span>
+                    <span className="text-[11px] text-amber-600 dark:text-amber-400 font-normal tabular-nums">({shop.distance_to_core_spots})</span>
                   </div>
                   <div className="text-xs text-neutral-500 dark:text-neutral-400 flex items-center space-x-1 mt-0.5">
                     <MapPin className="w-2.5 h-2.5 shrink-0 text-neutral-400" />
@@ -116,7 +116,7 @@ export const FilmSpecsCard: React.FC<FilmSpecsCardProps> = ({
                 </div>
                 <div className="flex flex-wrap gap-1 justify-end shrink-0">
                   {shop.services.map((svc: string, sIdx: number) => (
-                    <span key={sIdx} className="text-[11px] px-1.5 py-0.5 bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-200 rounded font-mono-spec">
+                    <span key={sIdx} className="text-[11px] px-1.5 py-0.5 bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-200 rounded font-medium">
                       {svc}
                     </span>
                   ))}
@@ -132,7 +132,7 @@ export const FilmSpecsCard: React.FC<FilmSpecsCardProps> = ({
         <button
           type="button"
           onClick={() => onSelectFilmFilter(film.id)}
-          className="w-full py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 text-xs font-mono-spec font-bold transition-colors flex items-center justify-center space-x-1 cursor-pointer"
+          className="w-full py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 text-xs font-semibold transition-colors flex items-center justify-center space-x-1 cursor-pointer"
         >
           <Sliders className="w-3 h-3" />
           <span>Lọc địa điểm phù hợp với cuộn {film.name}</span>

@@ -351,8 +351,14 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                 type="text"
                 value={filters.searchQuery}
                 onChange={(e) => onChangeFilters(prev => ({ ...prev, searchQuery: e.target.value }))}
-                placeholder="Tìm điểm chụp, cúc họa mi..."
-                className="w-full bg-transparent text-sm text-neutral-800 dark:text-neutral-100 placeholder-neutral-400 focus:outline-none"
+                placeholder={
+                  sidebarTab === 'outfit'
+                    ? 'Tìm trang phục, áo dài, tiệm thuê đồ...'
+                    : sidebarTab === 'camera'
+                    ? 'Tìm máy ảnh, lens, tiệm thuê...'
+                    : 'Tìm cuộn film, lab tráng scan...'
+                }
+                className="w-full bg-transparent text-sm text-neutral-800 dark:text-neutral-100 placeholder-neutral-400 focus:outline-none font-medium"
               />
             </div>
 
@@ -600,10 +606,10 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
               <button
                 type="button"
                 onClick={onResetFilters}
-                className="text-xs font-mono-spec font-bold px-3 py-1 rounded-full text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
+                className="text-xs font-semibold px-3 py-1 rounded-full text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
                 title="Đặt lại bộ lọc"
               >
-                Reset
+                Đặt lại
               </button>
             </div>
           </div>
@@ -709,8 +715,8 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
               </button>
 
               {/* Status Badge */}
-              <span className="absolute top-3 left-3 px-2.5 py-1 rounded-md bg-terracotta text-white font-mono-spec text-xs font-bold shadow-md uppercase tracking-wider">
-                {selectedSpot.seasonalTrend?.status === 'PEAK' ? 'ĐANG RỘ (PEAK)' : (selectedSpot.seasonalTrend?.status || 'PEAK')}
+              <span className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-terracotta text-white text-xs font-semibold shadow-sm">
+                {selectedSpot.seasonalTrend?.status === 'PEAK' ? 'Đang rộ' : (selectedSpot.seasonalTrend?.status || 'Đang rộ')}
               </span>
 
               {/* Ghost Pose Camera launcher (temporarily disabled)
@@ -748,10 +754,10 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
             <div className="px-5 pt-4 pb-4 border-b border-neutral-200/80 dark:border-neutral-800 shrink-0">
               <div className="flex items-start justify-between gap-3 mb-3">
                 <div className="min-w-0 pr-2">
-                  <span className="text-xs font-mono-spec font-bold text-terracotta uppercase tracking-wide block truncate">
+                  <span className="text-xs font-semibold text-terracotta block truncate">
                     {selectedSpot.seasonalTrend?.trendTitle}
                   </span>
-                  <h2 className="font-editorial text-2xl font-extrabold leading-tight text-neutral-900 dark:text-white line-clamp-2 mt-1">
+                  <h2 className="font-editorial text-2xl font-bold leading-tight text-neutral-900 dark:text-white line-clamp-2 mt-1">
                     {selectedSpot.name}
                   </h2>
                 </div>
@@ -866,9 +872,9 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
 
                   {/* PHOTOGRAPHY TIPS (Ống kính, Giờ vàng, Concept) */}
                   <div className="space-y-3 pt-1">
-                    <h3 className="font-mono-spec text-sm font-bold text-neutral-900 dark:text-neutral-100 uppercase tracking-wider flex items-center">
+                    <h3 className="text-sm font-bold text-neutral-900 dark:text-neutral-100 flex items-center">
                       <Camera className="w-3.5 h-3.5 mr-1.5 text-terracotta" />
-                      CẨM NANG NHIẾP ẢNH & THIẾT BỊ
+                      Cẩm nang chụp ảnh & thiết bị
                     </h3>
 
                     {/* Golden Hour / Best Time */}
@@ -1055,7 +1061,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
 
             {/* Snap Toggle Indicator */}
             <div className="flex items-center space-x-1 text-neutral-400 pl-2 shrink-0">
-              <span className="text-[10px] uppercase font-bold tracking-wider hidden sm:inline">
+              <span className="text-[11px] font-medium hidden sm:inline">
                 {mobileSnap === 'peek' ? 'Kéo lên' : mobileSnap === 'half' ? 'Nửa màn' : 'Thu gọn'}
               </span>
               {mobileSnap !== 'full' ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
@@ -1224,9 +1230,9 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
 
               {/* Photography Guide */}
               <div className="space-y-3 pt-1">
-                <h4 className="font-mono-spec text-xs font-bold text-neutral-900 dark:text-neutral-100 uppercase tracking-wider flex items-center">
+                <h4 className="text-xs font-bold text-neutral-900 dark:text-neutral-100 flex items-center">
                   <Camera className="w-3.5 h-3.5 mr-1.5 text-terracotta" />
-                  CẨM NANG CHỤP ẢNH & THIẾT BỊ
+                  Cẩm nang chụp ảnh & thiết bị
                 </h4>
 
                 <div className="flex items-start space-x-2 text-xs">

@@ -41,11 +41,11 @@ export default {
         }
       },
       fontFamily: {
-        serif: ['Fraunces', 'Georgia', 'serif'],
-        sans: ['Manrope', 'system-ui', 'sans-serif'],
-        mono: ['IBM Plex Mono', 'monospace'],
-        // Legacy stacks kept as fallbacks so old class names still resolve.
-        display: ['Fraunces', 'Georgia', 'serif'],
+        sans: ['"Quicksand"', '"Fredoka"', 'system-ui', '-apple-system', 'sans-serif'],
+        serif: ['"Quicksand"', 'Georgia', 'serif'],
+        mono: ['"Quicksand"', 'system-ui', 'monospace'],
+        display: ['"Fredoka"', '"Quicksand"', 'system-ui', '-apple-system', 'sans-serif'],
+        body: ['"Quicksand"', '"Fredoka"', 'system-ui', 'sans-serif'],
       },
       boxShadow: {
         'hard': '2px 2px 0px #141413',
