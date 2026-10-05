@@ -14,7 +14,6 @@ interface QuickChip {
 }
 
 const QUICK_CHIPS: QuickChip[] = [
-  { label: '🌸 Cúc họa mi', query: 'cúc họa mi' },
   { label: '🍂 Thu Hà Nội', query: 'Phan Đình Phùng' },
   { label: '🎞️ Kodak Gold 200', filmId: 'kodak-gold-200' },
   { label: '🌙 CineStill 800T', filmId: 'cinestill-800t' },

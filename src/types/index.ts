@@ -56,6 +56,37 @@ export interface InspirationPost {
   sharesCount?: string;
 }
 
+export type InsightKind = 'DEAL' | 'HOT';
+
+export type InsightCategory = 'FILM' | 'LAB' | 'OUTFIT' | 'RENTAL' | 'PROP';
+
+/** Ưu đãi / xu hướng nhiếp ảnh đang diễn ra quanh khu vực điểm chụp. */
+export interface LocalInsight {
+  id: string;
+  regionId: string;
+  kind: InsightKind;
+  category: InsightCategory;
+  title: string;
+  detail: string;
+  /** Tên địa điểm cụ thể (rạp, tiệm, quán...) */
+  placeName: string;
+  /** Khu vực hiển thị, vd "Quanh Phan Đình Phùng" */
+  areaLabel: string;
+  /** Từ khóa khớp với tên/địa chỉ spot đang chọn để ưu tiên hiển thị */
+  nearKeywords?: string[];
+  priceNow?: string;
+  priceOld?: string;
+  discountLabel?: string;
+  /** Mức độ hot 1-100 (dùng để sắp xếp) */
+  hotScore: number;
+  /** ISO date YYYY-MM-DD; quá hạn sẽ tự ẩn */
+  validUntil?: string;
+  validNote?: string;
+  /** Nguồn tham khảo / liên kết */
+  sourceLabel?: string;
+  link?: string;
+}
+
 export interface CommunityReport {
   id: string;
   authorName: string;

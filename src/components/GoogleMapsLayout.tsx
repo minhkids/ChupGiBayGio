@@ -18,7 +18,6 @@ import {
   ChevronDown,
   ExternalLink,
   PlusCircle,
-  MessageSquare,
   Layers
 } from 'lucide-react';
 import type { Spot, FilterState, ConceptTag } from '../types';
@@ -26,11 +25,11 @@ import { REGIONS } from '../data/regions';
 import { SpotMap } from './SpotMap';
 import { AtmosphericFX } from './AtmosphericFX';
 import { FilmSpecsCard } from './FilmSpecsCard';
-import { SpotCard } from './SpotCard';
 import { LeftNavRail } from './LeftNavRail';
 import { PoseCamera } from './PoseCamera';
 import { useWeather } from '../hooks/useWeather';
-import { getStatusBadgeInfo } from '../utils/season';
+import { getLocalInsights } from '../data/localInsights';
+import { LocalInsightFeed } from './LocalInsightFeed';
 import { POSES, type PoseItem } from '../data/poses';
 
 interface GoogleMapsLayoutProps {
@@ -59,7 +58,6 @@ interface GoogleMapsLayoutProps {
 }
 
 const QUICK_CHIPS = [
-  { label: '🌸 Cúc họa mi', query: 'cúc họa mi' },
   { label: '🍂 Thu Hà Nội', query: 'Phan Đình Phùng' },
   { label: '🎞️ Kodak Gold 200', filmId: 'kodak-gold-200' },
   { label: '🌙 CineStill 800T', filmId: 'cinestill-800t' },
@@ -70,7 +68,6 @@ const QUICK_CHIPS = [
 ];
 
 export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
-  spots,
   filteredSpots,
   selectedSpot,
   onSelectSpot,
@@ -97,13 +94,10 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   // Sidebar tab state: 'spots' (Địa điểm) | 'posts' (Bài viết Facebook bên cạnh)
-  const [sidebarTab, setSidebarTab] = useState<'spots' | 'posts'>('spots');
+  const [sidebarTab, setSidebarTab] = useState<'outfit' | 'camera' | 'film'>('outfit');
 
   // Detail card tab state: 'info' (Cẩm nang) | 'posts' (Bài viết liên quan)
   const [detailTab, setDetailTab] = useState<'info' | 'posts'>('info');
-
-  // Post category filter tag
-  const [postTagFilter, setPostTagFilter] = useState<string>('ALL');
 
   // Mobile drawer snap: 'peek' (110px) | 'half' (48vh) | 'full' (86vh)
   const [mobileSnap, setMobileSnap] = useState<'peek' | 'half' | 'full'>('half');
@@ -149,38 +143,50 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
   // Real-time weather from Open-Meteo API (Hanoi)
   const weather = useWeather();
 
-  // Collect all crawled Facebook posts across spots with spot reference
-  const allPostsWithSpot = useMemo(() => {
-    return spots.flatMap(spot =>
-      (spot.inspirationPosts || []).map(post => ({
-        ...post,
-        spot
-      }))
-    );
-  }, [spots]);
+  // Ưu đãi & xu hướng theo khu vực / spot đang chọn (thay cho tab bài viết FB)
+  // Dữ liệu theo 3 tab chuyên môn nhiếp ảnh
+  const outfitInsights = useMemo(
+    () => getLocalInsights({
+      regionId: activeRegionId,
+      category: ['OUTFIT', 'PROP'],
+      searchQuery: filters.searchQuery,
+      selectedSpot,
+    }),
+    [activeRegionId, filters.searchQuery, selectedSpot]
+  );
 
-  // Filtered posts based on search query & tag filter
-  const filteredPosts = useMemo(() => {
-    let list = allPostsWithSpot;
-    if (postTagFilter !== 'ALL') {
-      const tagLower = postTagFilter.toLowerCase();
-      list = list.filter(p =>
-        p.caption.toLowerCase().includes(tagLower) ||
-        (p.fullContent || '').toLowerCase().includes(tagLower) ||
-        p.spot.name.toLowerCase().includes(tagLower)
-      );
+  const cameraInsights = useMemo(
+    () => getLocalInsights({
+      regionId: activeRegionId,
+      category: ['RENTAL'],
+      searchQuery: filters.searchQuery,
+      selectedSpot,
+    }),
+    [activeRegionId, filters.searchQuery, selectedSpot]
+  );
+
+  const filmInsights = useMemo(
+    () => getLocalInsights({
+      regionId: activeRegionId,
+      category: ['FILM', 'LAB'],
+      searchQuery: filters.searchQuery,
+      selectedSpot,
+    }),
+    [activeRegionId, filters.searchQuery, selectedSpot]
+  );
+
+  const currentInsights = useMemo(() => {
+    switch (sidebarTab) {
+      case 'outfit':
+        return outfitInsights;
+      case 'camera':
+        return cameraInsights;
+      case 'film':
+        return filmInsights;
+      default:
+        return outfitInsights;
     }
-    if (filters.searchQuery.trim()) {
-      const q = filters.searchQuery.toLowerCase();
-      list = list.filter(p =>
-        p.authorName.toLowerCase().includes(q) ||
-        p.caption.toLowerCase().includes(q) ||
-        (p.fullContent || '').toLowerCase().includes(q) ||
-        p.spot.name.toLowerCase().includes(q)
-      );
-    }
-    return list;
-  }, [allPostsWithSpot, postTagFilter, filters.searchQuery]);
+  }, [sidebarTab, outfitInsights, cameraInsights, filmInsights]);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -568,7 +574,13 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                 type="text"
                 value={filters.searchQuery}
                 onChange={(e) => onChangeFilters(prev => ({ ...prev, searchQuery: e.target.value }))}
-                placeholder={sidebarTab === 'spots' ? 'Tìm điểm chụp, cúc họa mi, áo dài...' : 'Tìm bài viết, tác giả, thiết bị...'}
+                placeholder={
+                  sidebarTab === 'outfit'
+                    ? 'Tìm trang phục, áo dài, tiệm thuê đồ...'
+                    : sidebarTab === 'camera'
+                    ? 'Tìm máy ảnh, ống kính 85mm, tiệm thuê...'
+                    : 'Tìm cuộn film, lab tráng scan...'
+                }
                 className="w-full bg-transparent text-sm text-neutral-800 dark:text-neutral-100 placeholder-neutral-400 focus:outline-none font-medium"
               />
             </div>
@@ -616,179 +628,51 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
             })}
           </div>
 
-          {/* iOS-STYLE SEGMENTED SWITCH (🗺️ Điểm Chụp vs 💬 Bài Viết FB) */}
-          <div className="flex items-center p-1 bg-neutral-100/90 dark:bg-neutral-800/90 rounded-xl text-sm font-semibold border border-neutral-200/50 dark:border-neutral-750/50">
+          {/* 3 PHOTOGRAPHY TABS: 👗 Quần áo | 📷 Thuê máy ảnh | 🎞️ Mua film */}
+          <div className="grid grid-cols-3 p-1 bg-neutral-100/90 dark:bg-neutral-800/90 rounded-xl text-xs font-semibold border border-neutral-200/50 dark:border-neutral-750/50 gap-1">
             <button
               type="button"
-              onClick={() => setSidebarTab('spots')}
-              className={`flex-1 flex items-center justify-center space-x-1.5 py-2 rounded-lg transition-all ${sidebarTab === 'spots'
+              onClick={() => setSidebarTab('outfit')}
+              className={`flex items-center justify-center space-x-1 py-2 px-1 rounded-lg transition-all text-center ${sidebarTab === 'outfit'
                   ? 'bg-white dark:bg-neutral-900 text-terracotta font-bold shadow-sm'
                   : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
                 }`}
             >
-              <MapPin className="w-3.5 h-3.5 text-terracotta" />
-              <span>Điểm Chụp ({filteredSpots.length})</span>
+              <span className="truncate">👗 Quần áo ({outfitInsights.length})</span>
             </button>
 
             <button
               type="button"
-              onClick={() => setSidebarTab('posts')}
-              className={`flex-1 flex items-center justify-center space-x-1.5 py-2 rounded-lg transition-all ${sidebarTab === 'posts'
-                  ? 'bg-white dark:bg-neutral-900 text-blue-600 dark:text-blue-400 font-bold shadow-sm'
+              onClick={() => setSidebarTab('camera')}
+              className={`flex items-center justify-center space-x-1 py-2 px-1 rounded-lg transition-all text-center ${sidebarTab === 'camera'
+                  ? 'bg-white dark:bg-neutral-900 text-terracotta font-bold shadow-sm'
                   : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
                 }`}
             >
-              <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-              <span>Bài Viết FB ({filteredPosts.length})</span>
+              <span className="truncate">📷 Thuê máy ({cameraInsights.length})</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setSidebarTab('film')}
+              className={`flex items-center justify-center space-x-1 py-2 px-1 rounded-lg transition-all text-center ${sidebarTab === 'film'
+                  ? 'bg-white dark:bg-neutral-900 text-terracotta font-bold shadow-sm'
+                  : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
+                }`}
+            >
+              <span className="truncate">🎞️ Mua film ({filmInsights.length})</span>
             </button>
           </div>
         </div>
 
-        {/* ─── SCROLLABLE FEED BODY (Large Visual Spot Cards or Facebook Posts) ─── */}
-        <div className="flex-1 overflow-y-auto p-5 space-y-5">
-          {sidebarTab === 'spots' ? (
-            /* TAB 1: LARGE VISUAL SPOTS LIST */
-            filteredSpots.length === 0 ? (
-              <div className="py-12 text-center space-y-2 text-neutral-500">
-                <Sparkles className="w-8 h-8 text-neutral-300 mx-auto" />
-                <p className="font-editorial text-base">Không tìm thấy địa điểm phù hợp</p>
-                <button
-                  type="button"
-                  onClick={onResetFilters}
-                  className="text-xs font-mono-spec font-bold text-terracotta hover:underline"
-                >
-                  Xóa bộ lọc để xem lại
-                </button>
-              </div>
-            ) : (
-              filteredSpots.map(spot => (
-                <SpotCard
-                  key={spot.id}
-                  spot={spot}
-                  isSaved={savedSpotIds.includes(spot.id)}
-                  onToggleSave={onToggleSave}
-                  onSelectSpot={(s) => {
-                    onSelectSpot(s);
-                    setActivePhotoIdx(0);
-                    setDetailTab('info');
-                  }}
-                  className={selectedSpot?.id === spot.id ? 'ring-2 ring-terracotta' : ''}
-                />
-              ))
-            )
-          ) : (
-            /* TAB 2: REAL FACEBOOK COMMUNITY POSTS FEED */
-            filteredPosts.length === 0 ? (
-              <div className="py-12 text-center space-y-2 text-neutral-500">
-                <MessageSquare className="w-8 h-8 text-neutral-300 mx-auto" />
-                <p className="font-editorial text-base">Chưa có bài viết nào phù hợp</p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setPostTagFilter('ALL');
-                    onChangeFilters(prev => ({ ...prev, searchQuery: '' }));
-                  }}
-                  className="text-xs font-mono-spec font-bold text-blue-600 hover:underline"
-                >
-                  Xem lại tất cả bài viết
-                </button>
-              </div>
-            ) : (
-              filteredPosts.map(post => (
-                <div
-                  key={post.id}
-                  className="p-4 rounded-xl border border-neutral-200/80 dark:border-neutral-800 bg-white dark:bg-neutral-850/80 hover:border-blue-400/60 dark:hover:border-blue-500/60 transition-all space-y-3 shadow-xs"
-                >
-                  {/* Author Header */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <img
-                        src={post.authorAvatar}
-                        alt={post.authorName}
-                        className="w-9 h-9 rounded-full object-cover border border-neutral-200 dark:border-neutral-700"
-                      />
-                      <div>
-                        <div className="text-sm font-bold text-neutral-900 dark:text-white flex items-center space-x-1.5">
-                          <span>{post.authorName}</span>
-                          <span className="text-[11px] px-1.5 py-0.5 bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 rounded font-mono-spec font-semibold">
-                            Aphoto
-                          </span>
-                        </div>
-                        <div className="text-xs text-neutral-400 font-mono-spec">
-                          {post.postDate}
-                        </div>
-                      </div>
-                    </div>
-
-                    <a
-                      href={post.postUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-neutral-400 hover:text-blue-600 dark:hover:text-blue-400 p-1"
-                      title="Mở bài viết gốc trên Facebook"
-                    >
-                      <ExternalLink className="w-3.5 h-3.5" />
-                    </a>
-                  </div>
-
-                  {/* Caption & Post Content */}
-                  <p className="text-sm text-neutral-700 dark:text-neutral-300 line-clamp-3 leading-relaxed font-sans">
-                    {post.fullContent || post.caption}
-                  </p>
-
-                  {/* Photo Preview Strip */}
-                  {post.galleryUrls && post.galleryUrls.length > 0 && (
-                    <div className="grid grid-cols-3 gap-1.5 rounded-lg overflow-hidden">
-                      {post.galleryUrls.slice(0, 3).map((img, imgIdx) => (
-                        <div key={imgIdx} className="relative aspect-4/3 bg-neutral-200 dark:bg-neutral-800 overflow-hidden">
-                          <img
-                            src={img}
-                            alt=""
-                            className="w-full h-full object-cover hover:scale-105 transition-transform"
-                            loading="lazy"
-                          />
-                          {imgIdx === 2 && (post.galleryUrls || []).length > 3 && (
-                            <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white text-xs font-mono-spec font-bold">
-                              +{(post.galleryUrls || []).length - 3}
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Camera Settings Snippet */}
-                  {post.cameraSettings && (
-                    <div className="text-xs font-mono-spec text-neutral-500 dark:text-neutral-400 flex items-center space-x-1.5 truncate bg-neutral-50 dark:bg-neutral-800/60 px-2 py-1 rounded">
-                      <Camera className="w-3 h-3 text-terracotta shrink-0" />
-                      <span className="truncate">{post.cameraSettings}</span>
-                    </div>
-                  )}
-
-                  {/* Spot Badge & Focus Map Action */}
-                  <div className="flex items-center justify-between pt-1 border-t border-neutral-100 dark:border-neutral-800">
-                    <span className="text-xs font-medium text-neutral-600 dark:text-neutral-300 truncate max-w-[240px] flex items-center">
-                      <MapPin className="w-3 h-3 text-terracotta mr-1 shrink-0" />
-                      <span className="truncate">{post.spot.name}</span>
-                    </span>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        onSelectSpot(post.spot);
-                        setActivePhotoIdx(0);
-                        setDetailTab('posts');
-                      }}
-                      className="text-sm font-semibold text-terracotta hover:underline flex items-center space-x-1"
-                    >
-                      <span>Xem trên bản đồ</span>
-                      <ChevronRight className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
-              ))
-            )
-          )}
+        {/* ─── SCROLLABLE FEED BODY (Quần áo / Thuê máy ảnh / Mua film) ─── */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          <LocalInsightFeed
+            insights={currentInsights}
+            onResetFilters={() => {
+              onChangeFilters(prev => ({ ...prev, searchQuery: '' }));
+            }}
+          />
         </div>
       </div>
 
@@ -1124,34 +1008,48 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
           <div className="w-full flex items-center justify-between font-mono-spec">
 
             {/* Mobile Tab Pill Switcher */}
-            <div className="flex flex-1 items-center space-x-1 p-1 bg-neutral-100 dark:bg-neutral-800 rounded-xl mr-2">
+            <div className="grid grid-cols-3 flex-1 p-1 bg-neutral-100 dark:bg-neutral-800 rounded-xl mr-2 gap-1 text-center">
               <button
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
-                  setSidebarTab('spots');
+                  setSidebarTab('outfit');
                   if (mobileSnap === 'peek') setMobileSnap('half');
                 }}
-                className={`flex-1 py-2.5 rounded-lg text-xs md:text-sm font-bold transition-all ${sidebarTab === 'spots'
+                className={`py-2 rounded-lg text-xs font-bold transition-all truncate ${sidebarTab === 'outfit'
                     ? 'bg-white dark:bg-neutral-900 text-terracotta shadow-sm'
                     : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-white'
                   }`}
               >
-                📍 Điểm chụp ({filteredSpots.length})
+                👗 Quần áo ({outfitInsights.length})
               </button>
               <button
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
-                  setSidebarTab('posts');
+                  setSidebarTab('camera');
                   if (mobileSnap === 'peek') setMobileSnap('half');
                 }}
-                className={`flex-1 py-2.5 rounded-lg text-xs md:text-sm font-bold transition-all ${sidebarTab === 'posts'
-                    ? 'bg-white dark:bg-neutral-900 text-blue-600 shadow-sm'
+                className={`py-2 rounded-lg text-xs font-bold transition-all truncate ${sidebarTab === 'camera'
+                    ? 'bg-white dark:bg-neutral-900 text-terracotta shadow-sm'
                     : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-white'
                   }`}
               >
-                📸 Bài viết FB ({filteredPosts.length})
+                📷 Thuê máy ({cameraInsights.length})
+              </button>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSidebarTab('film');
+                  if (mobileSnap === 'peek') setMobileSnap('half');
+                }}
+                className={`py-2 rounded-lg text-xs font-bold transition-all truncate ${sidebarTab === 'film'
+                    ? 'bg-white dark:bg-neutral-900 text-terracotta shadow-sm'
+                    : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-white'
+                  }`}
+              >
+                🎞️ Mua film ({filmInsights.length})
               </button>
             </div>
 
@@ -1165,217 +1063,15 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
           </div>
         </div>
 
-        {/* Mobile Sub-Filters conditional on Tab (visible in half / full snaps) */}
-        {mobileSnap !== 'peek' && (
-          <div className="px-3 pt-2 pb-1.5 border-b border-neutral-100 dark:border-neutral-800 shrink-0">
-            {sidebarTab === 'spots' ? (
-              <div className="space-y-1.5">
-                {/* Month Quick Slider (T1 - T12) on Mobile */}
-                <div className="flex items-center space-x-1 overflow-x-auto no-scrollbar py-0.5">
-                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(m => {
-                    const isSelected = filters.month === m;
-                    return (
-                      <button
-                        key={m}
-                        type="button"
-                        onClick={() => onChangeFilters(prev => ({ ...prev, month: prev.month === m ? null : m }))}
-                        className={`w-9 h-9 rounded-full text-xs font-mono-spec font-bold shrink-0 flex items-center justify-center transition-all ${isSelected
-                            ? 'bg-terracotta text-white shadow-xs scale-105'
-                            : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400'
-                          }`}
-                      >
-                        T{m}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* Status Pills */}
-                <div className="flex items-center space-x-2 text-xs font-mono-spec mt-2 pb-1">
-                  <button
-                    type="button"
-                    onClick={() => onChangeFilters(prev => ({ ...prev, status: 'ALL' }))}
-                    className={`px-3 py-1.5 rounded-full ${filters.status === 'ALL'
-                        ? 'bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 font-bold'
-                        : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400'
-                      }`}
-                  >
-                    Tất cả
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onChangeFilters(prev => ({ ...prev, status: 'PEAK' }))}
-                    className={`px-3 py-1.5 rounded-full ${filters.status === 'PEAK'
-                        ? 'bg-terracotta text-white font-bold'
-                        : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400'
-                      }`}
-                  >
-                    ★ Đang rộ
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onChangeFilters(prev => ({ ...prev, onlyNearby: !prev.onlyNearby }))}
-                    className={`px-3 py-1.5 rounded-full ${filters.onlyNearby
-                        ? 'bg-emerald-600 text-white font-bold'
-                        : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400'
-                      }`}
-                  >
-                    Gần tôi
-                  </button>
-                </div>
-              </div>
-            ) : (
-              /* Mobile Post Tags */
-              <div className="flex items-center justify-between text-xs">
-                <div className="flex items-center space-x-1 overflow-x-auto no-scrollbar py-0.5">
-                  {['ALL', 'Cúc họa mi', 'Hoàng hôn', 'Áo dài', 'Vintage'].map(tag => (
-                    <button
-                      key={tag}
-                      type="button"
-                      onClick={() => setPostTagFilter(tag)}
-                      className={`px-2 py-0.5 rounded-full text-[11px] font-mono-spec transition-all whitespace-nowrap ${postTagFilter === tag
-                          ? 'bg-blue-600 text-white font-bold'
-                          : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400'
-                        }`}
-                    >
-                      {tag === 'ALL' ? 'Tất cả' : `#${tag}`}
-                    </button>
-                  ))}
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => onOpenAddPostModal()}
-                  className="text-[11px] font-mono-spec font-bold text-blue-600 dark:text-blue-400 hover:underline shrink-0 pl-1"
-                >
-                  + Thêm bài
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Mobile Feed Spots or Posts List */}
+        {/* Mobile Feed */}
         <div className="flex-1 overflow-y-auto p-4 space-y-3">
-          {sidebarTab === 'spots' ? (
-            filteredSpots.map(spot => {
-              const isSelected = selectedSpot?.id === spot.id;
-              const statusInfo = getStatusBadgeInfo(spot.seasonalTrend?.status || 'PEAK', spot.seasonalTrend?.daysLeftInPeak || 0);
-
-              return (
-                <div
-                  key={spot.id}
-                  onClick={() => {
-                    onSelectSpot(spot);
-                    setActivePhotoIdx(0);
-                  }}
-                  className={`p-3.5 rounded-xl border flex space-x-3 transition-colors cursor-pointer ${isSelected
-                      ? 'bg-amber-50 dark:bg-neutral-800 border-terracotta shadow-md ring-1 ring-terracotta/40'
-                      : 'bg-white dark:bg-neutral-850 border-neutral-200 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700'
-                    }`}
-                >
-                  <div className="relative w-24 h-20 rounded-lg overflow-hidden bg-neutral-200 shrink-0">
-                    <img
-                      src={spot.coverImageUrl}
-                      alt={spot.name}
-                      className="w-full h-full object-cover"
-                      loading="lazy"
-                    />
-                    <span className={`absolute top-0.5 left-0.5 text-[8px] font-mono-spec font-bold px-1 py-0.2 rounded ${statusInfo.classNames}`}>
-                      {statusInfo.label}
-                    </span>
-                  </div>
-
-                  <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
-                    <div>
-                      <div className="text-[10px] font-mono-spec text-terracotta uppercase font-bold truncate">
-                        {spot.seasonalTrend?.trendTitle}
-                      </div>
-                      <h4 className="font-editorial text-sm font-bold text-neutral-900 dark:text-white truncate">
-                        {spot.name}
-                      </h4>
-                      <p className="text-[11px] text-neutral-500 truncate mt-0.5">
-                        {spot.address}
-                      </p>
-                    </div>
-
-                    <div className="flex items-center justify-between text-[10px] font-mono-spec text-neutral-400 pt-1">
-                      <span>{spot.distanceKm ? `${spot.distanceKm} km` : 'Hà Nội'}</span>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onToggleSave(spot.id);
-                        }}
-                        className="p-1 hover:text-terracotta"
-                      >
-                        <Bookmark className={`w-3.5 h-3.5 ${savedSpotIds.includes(spot.id) ? 'text-terracotta fill-terracotta' : ''}`} />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })
-          ) : (
-            filteredPosts.map(post => (
-              <div
-                key={post.id}
-                onClick={() => {
-                  onSelectSpot(post.spot);
-                  setActivePhotoIdx(0);
-                  setMobileSnap('peek');
-                }}
-                className="p-3 rounded-xl border border-neutral-200/80 dark:border-neutral-800 bg-white dark:bg-neutral-850 space-y-2 shadow-xs"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <img
-                      src={post.authorAvatar}
-                      alt={post.authorName}
-                      className="w-6 h-6 rounded-full object-cover"
-                    />
-                    <div>
-                      <div className="text-xs font-bold text-neutral-800 dark:text-neutral-200">
-                        {post.authorName}
-                      </div>
-                      <div className="text-[10px] text-neutral-400 font-mono-spec">
-                        {post.postDate}
-                      </div>
-                    </div>
-                  </div>
-
-                  <span className="text-[10px] px-1.5 py-0.2 bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 rounded font-mono-spec">
-                    Aphoto
-                  </span>
-                </div>
-
-                <p className="text-xs text-neutral-700 dark:text-neutral-300 line-clamp-2 leading-relaxed">
-                  {post.fullContent || post.caption}
-                </p>
-
-                {post.galleryUrls && post.galleryUrls.length > 0 && (
-                  <div className="grid grid-cols-3 gap-1 rounded-lg overflow-hidden">
-                    {post.galleryUrls.slice(0, 3).map((img, i) => (
-                      <div key={i} className="aspect-4/3 bg-neutral-200 overflow-hidden">
-                        <img src={img} alt="" className="w-full h-full object-cover" loading="lazy" />
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                <div className="flex items-center justify-between pt-1 border-t border-neutral-100 dark:border-neutral-800 text-[11px]">
-                  <span className="text-neutral-600 dark:text-neutral-400 font-medium truncate flex items-center">
-                    <MapPin className="w-3 h-3 text-terracotta mr-1 shrink-0" />
-                    <span className="truncate">{post.spot.name}</span>
-                  </span>
-
-                  <span className="text-terracotta font-bold shrink-0">
-                    Xem vị trí →
-                  </span>
-                </div>
-              </div>
-            ))
-          )}
+          <LocalInsightFeed
+            insights={currentInsights}
+            compact
+            onResetFilters={() => {
+              onChangeFilters(prev => ({ ...prev, searchQuery: '' }));
+            }}
+          />
         </div>
       </motion.div>
 
