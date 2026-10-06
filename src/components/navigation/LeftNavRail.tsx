@@ -75,136 +75,123 @@ export const LeftNavRail: React.FC<LeftNavRailProps> = ({
       {/* ========================================================================= */}
       {/* 1. DESKTOP NAVIGATION RAIL — 76px, matches the lg:pl-[76px] content offset */}
       {/* ========================================================================= */}
-      <aside className="hidden lg:flex fixed top-0 left-0 bottom-0 z-[var(--z-rail)] w-[76px] select-none flex-col items-center justify-between border-r border-neutral-200 bg-white py-5">
-        {/* ─── TOP: brand mark + primary navigation ─── */}
-        <div className="flex w-full flex-col items-center gap-4">
-          {/* Brand / Home button */}
+      <aside className="hidden lg:flex fixed top-0 left-0 bottom-0 z-[var(--z-rail)] w-[76px] select-none flex-col items-center justify-between border-r border-neutral-200 bg-white py-5 dark:border-neutral-800 dark:bg-neutral-950">
+        <div className="flex w-full flex-col items-center gap-5">
           <button
             type="button"
             onClick={() => onChangeView('map')}
             aria-label="Chụp Gì Bây Giờ — về trang bản đồ"
-            className="group flex h-9 w-9 items-center justify-center rounded-xl bg-neutral-900 text-amber-400 transition-transform duration-200 hover:scale-105 active:scale-95"
+            title="Về bản đồ"
+            className="flex h-10 w-10 items-center justify-center rounded-xl bg-neutral-900 text-amber-400 transition-colors hover:bg-neutral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-terracotta focus-visible:ring-offset-2 dark:focus-visible:ring-offset-neutral-950"
           >
-            <Camera className="h-4.5 w-4.5" strokeWidth={2.2} />
+            <Camera className="h-[18px] w-[18px]" strokeWidth={2.2} />
           </button>
 
-          <span className="h-px w-10 bg-neutral-100" aria-hidden="true" />
+          <span className="h-px w-9 bg-neutral-200 dark:bg-neutral-800" aria-hidden="true" />
 
-          {/* Primary nav items */}
-          <nav className="flex w-full flex-col items-center gap-0.5" aria-label="Điều hướng chính">
+          <nav className="flex w-full flex-col items-center gap-1" aria-label="Điều hướng chính">
             {NAV_ITEMS.map((item) => {
               const Icon = item.icon;
               const isActive = activeView === item.id;
               return (
-                <motion.button
+                <button
                   key={item.id}
                   type="button"
                   onClick={() => onChangeView(item.id)}
+                  aria-label={item.label}
                   aria-current={isActive ? 'page' : undefined}
-                  whileHover={{ y: -2 }}
-                  transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                  title={item.label}
                   className={[
-                    'group relative flex w-full flex-col items-center gap-1 py-2.5 transition-colors duration-200',
-                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-terracotta focus-visible:ring-offset-2 focus-visible:ring-offset-white',
+                    'group relative flex h-11 w-11 items-center justify-center rounded-xl transition-colors duration-150',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-terracotta focus-visible:ring-offset-2 dark:focus-visible:ring-offset-neutral-950',
+                    isActive
+                      ? 'bg-neutral-100 text-neutral-900 dark:bg-neutral-800 dark:text-white'
+                      : 'text-neutral-500 hover:bg-neutral-50 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-900 dark:hover:text-white',
                   ].join(' ')}
                 >
-                  {/* Active indicator — thin bar on left edge */}
                   {isActive && (
                     <motion.span
                       layoutId="desktopNavIndicator"
                       transition={{ type: 'spring', stiffness: 420, damping: 34 }}
-                      className="absolute left-0 top-[26px] -translate-y-1/2 w-1 h-5 rounded-r-full bg-neutral-900"
+                      className="absolute -left-[13px] h-5 w-[3px] rounded-r-full bg-terracotta"
                       aria-hidden="true"
                     />
                   )}
-
-                  {/* Icon pill — active gets a soft background */}
-                  <span
-                    className={[
-                      'flex h-8 w-8 items-center justify-center rounded-2xl transition-colors duration-200',
-                      isActive
-                        ? 'bg-neutral-100 text-neutral-900'
-                        : 'text-neutral-400 group-hover:bg-neutral-50 group-hover:text-neutral-700',
-                    ].join(' ')}
-                  >
-                    <Icon className="h-5 w-5" strokeWidth={isActive ? 2.2 : 1.7} />
-                  </span>
-
-                  {/* Label — always visible, never truncated */}
-                  <span
-                    className={[
-                      'text-[10px] font-medium leading-tight select-none',
-                      isActive ? 'text-neutral-900' : 'text-neutral-400 group-hover:text-neutral-600',
-                    ].join(' ')}
-                  >
+                  <Icon className="h-[21px] w-[21px]" strokeWidth={isActive ? 2.1 : 1.8} />
+                  <span className="pointer-events-none absolute left-[calc(100%+10px)] z-20 whitespace-nowrap rounded-md bg-neutral-900 px-2.5 py-1.5 text-xs font-medium text-white opacity-0 shadow-md transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
                     {item.label}
                   </span>
-                </motion.button>
+                </button>
               );
             })}
-
-            {/* "Đã lưu" as the 5th nav item */}
-            <motion.button
-              type="button"
-              onClick={onOpenSavedModal}
-              whileHover={{ y: -2 }}
-              transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-              className="group relative flex w-full flex-col items-center gap-1 py-2.5 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-terracotta focus-visible:ring-offset-2 focus-visible:ring-offset-white"
-            >
-              <span className="relative flex h-8 w-8 items-center justify-center rounded-2xl text-neutral-400 transition-colors duration-200 group-hover:bg-neutral-50 group-hover:text-neutral-700">
-                <Bookmark className="h-5 w-5 text-terracotta" strokeWidth={1.7} />
-                {savedCount > 0 && (
-                  <span className="absolute -right-1 -top-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-terracotta px-0.5 text-[8px] font-semibold tabular-nums text-white">
-                    {savedCount}
-                  </span>
-                )}
-              </span>
-              <span className="text-[10px] font-medium leading-tight text-neutral-400 group-hover:text-neutral-600 select-none">
-                Đã lưu
-              </span>
-            </motion.button>
           </nav>
+
+          <span className="h-px w-9 bg-neutral-200 dark:bg-neutral-800" aria-hidden="true" />
+
+          <button
+            type="button"
+            onClick={onOpenSavedModal}
+            aria-label={`Đã lưu${savedCount > 0 ? `, ${savedCount} địa điểm` : ''}`}
+            title={`Đã lưu${savedCount > 0 ? ` (${savedCount})` : ''}`}
+            className="group relative flex h-11 w-11 items-center justify-center rounded-xl text-neutral-500 transition-colors duration-150 hover:bg-neutral-50 hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-terracotta focus-visible:ring-offset-2 dark:text-neutral-400 dark:hover:bg-neutral-900 dark:hover:text-white dark:focus-visible:ring-offset-neutral-950"
+          >
+            <Bookmark className="h-[21px] w-[21px]" strokeWidth={1.8} />
+            {savedCount > 0 && (
+              <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-terracotta px-1 text-[9px] font-semibold tabular-nums text-white">
+                {savedCount}
+              </span>
+            )}
+            <span className="pointer-events-none absolute left-[calc(100%+10px)] z-20 whitespace-nowrap rounded-md bg-neutral-900 px-2.5 py-1.5 text-xs font-medium text-white opacity-0 shadow-md transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+              Đã lưu
+            </span>
+          </button>
         </div>
 
-        {/* ─── BOTTOM: utilities ─── */}
         <div className="flex w-full flex-col items-center gap-3">
-          {/* Film filter shortcut (conditional) */}
           {onSelectFilmFilter && (
             <button
               type="button"
               onClick={onSelectFilmFilter}
-              className="flex h-8 w-8 items-center justify-center rounded-xl text-amber-500 transition-colors duration-200 hover:bg-amber-50 hover:text-amber-600"
+              aria-label="Lọc theo màu film"
+              title="Lọc theo màu film"
+              className="group relative flex h-10 w-10 items-center justify-center rounded-xl text-neutral-500 transition-colors duration-150 hover:bg-neutral-50 hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-terracotta focus-visible:ring-offset-2 dark:text-neutral-400 dark:hover:bg-neutral-900 dark:hover:text-white dark:focus-visible:ring-offset-neutral-950"
             >
-              <Film className="h-5 w-5" strokeWidth={1.7} />
+              <Film className="h-5 w-5" strokeWidth={1.8} />
+              <span className="pointer-events-none absolute left-[calc(100%+10px)] z-20 whitespace-nowrap rounded-md bg-neutral-900 px-2.5 py-1.5 text-xs font-medium text-white opacity-0 shadow-md transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+                Lọc theo màu film
+              </span>
             </button>
           )}
 
-          {/* Compact weather widget */}
           <button
             type="button"
             onClick={onToggleAtmospheric}
+            aria-label={`Thời tiết ${temperature} độ — ${isAtmosphericActive ? 'tắt' : 'bật'} hiệu ứng thời tiết`}
             aria-pressed={isAtmosphericActive}
+            title={`Thời tiết ${temperature}° · ${isAtmosphericActive ? 'Đang bật hiệu ứng' : 'Bật hiệu ứng'}`}
             className={[
-              'flex flex-col items-center gap-0.5 rounded-xl px-2.5 py-2 transition-colors duration-200',
+              'flex min-h-11 min-w-11 flex-col items-center justify-center gap-1 rounded-xl px-2 py-1.5 transition-colors duration-150',
               isAtmosphericActive
-                ? 'bg-amber-50 text-amber-600'
-                : 'bg-neutral-50 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600',
+                ? 'bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300'
+                : 'text-neutral-500 hover:bg-neutral-50 hover:text-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-900 dark:hover:text-white',
             ].join(' ')}
           >
-            <WeatherIcon className="h-4 w-4" strokeWidth={1.8} />
+            <WeatherIcon className="h-[18px] w-[18px]" strokeWidth={1.8} />
             <span className="text-[10px] font-medium tabular-nums leading-none">{temperature}°</span>
           </button>
 
-          {/* Add spot — circular amber button */}
-          <motion.button
+          <button
             type="button"
             onClick={onOpenSubmitSpotModal}
-            whileTap={{ scale: 0.92 }}
             aria-label="Đóng góp điểm chụp mới"
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-500 text-white shadow-sm transition-colors duration-200 hover:bg-amber-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2"
+            title="Thêm địa điểm"
+            className="group relative flex h-10 w-10 items-center justify-center rounded-full bg-amber-500 text-white transition-colors duration-150 hover:bg-amber-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-neutral-950"
           >
-            <Plus className="h-5 w-5" strokeWidth={2.4} />
-          </motion.button>
+            <Plus className="h-5 w-5" strokeWidth={2.2} />
+            <span className="pointer-events-none absolute left-[calc(100%+10px)] z-20 whitespace-nowrap rounded-md bg-neutral-900 px-2.5 py-1.5 text-xs font-medium text-white opacity-0 shadow-md transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+              Thêm địa điểm
+            </span>
+          </button>
         </div>
       </aside>
 
