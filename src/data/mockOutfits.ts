@@ -175,18 +175,13 @@ export const MOCK_POST_OUTFITS: PostOutfit[] = [
  * Lấy danh sách outfits cho 1 bài post hoặc 1 địa điểm
  */
 export const getOutfitsForPost = (postId: string): PostOutfit[] => {
-  const matches = MOCK_POST_OUTFITS.filter(o => o.postId === postId);
-  if (matches.length > 0) return matches;
-  // Fallback: trả về outfit mặc định theo ngữ cảnh
-  return [MOCK_POST_OUTFITS[0]];
+  return MOCK_POST_OUTFITS.filter(o => o.postId === postId);
 };
 
 export const getOutfitsForSpot = (spotId: string): PostOutfit[] => {
-  const matches = MOCK_POST_OUTFITS.filter(o => o.spotId === spotId);
-  if (matches.length > 0) return matches;
-  return [MOCK_POST_OUTFITS[0]];
+  return MOCK_POST_OUTFITS.filter(o => o.spotId === spotId);
 };
 
 export const getOutfitByImage = (imageUrl: string): PostOutfit | undefined => {
-  return MOCK_POST_OUTFITS.find(o => o.imageUrl === imageUrl) || MOCK_POST_OUTFITS[0];
+  return MOCK_POST_OUTFITS.find(o => o.imageUrl === imageUrl);
 };

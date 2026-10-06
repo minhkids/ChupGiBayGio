@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Bookmark, Sparkles, MapPin } from 'lucide-react';
 import type { Spot } from '../../types';
@@ -17,6 +17,7 @@ export const ModernSpotCard: React.FC<ModernSpotCardProps> = ({
   onToggleSave,
   onSelectSpot,
 }) => {
+  const [imageFailed, setImageFailed] = useState(false);
   const statusInfo = getStatusBadgeInfo(spot.seasonalTrend.status, spot.seasonalTrend.daysLeftInPeak);
 
   return (
@@ -28,13 +29,18 @@ export const ModernSpotCard: React.FC<ModernSpotCardProps> = ({
     >
       {/* Khung ảnh tỷ lệ 4:5 tràn viền (Modern Curated Aesthetic) */}
       <div className="relative aspect-[4/5] w-full overflow-hidden bg-neutral-100 dark:bg-neutral-800">
-        <motion.img
+        {!imageFailed ? <motion.img
           layoutId={`spot-cover-img-${spot.id}`}
           src={spot.coverImageUrl}
           alt={spot.name}
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105 will-change-transform"
           loading="lazy"
+          onError={() => setImageFailed(true)}
         />
+          : <div role="img" aria-label={`Không tải được ảnh: ${spot.name}`} className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-neutral-200 px-5 text-center text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400">
+            <MapPin className="h-7 w-7 opacity-50" aria-hidden="true" />
+            <span className="text-xs font-medium">Chưa có ảnh khả dụng</span>
+          </div>}
         
         {/* Subtle cinematic gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-black/25 pointer-events-none" />
@@ -51,6 +57,12 @@ export const ModernSpotCard: React.FC<ModernSpotCardProps> = ({
             </span>
           )}
         </div>
+
+        {spot.seasonalTrend.isTrending && (
+          <div className="absolute top-12 left-3.5 rounded-full border border-amber-200/40 bg-amber-500/90 px-2.5 py-1 text-[10px] font-bold text-white shadow-sm backdrop-blur-md">
+            Đang được quan tâm · {spot.seasonalTrend.trendScore}/100
+          </div>
+        )}
 
         {/* Save / Bookmark Button */}
         {onToggleSave && (

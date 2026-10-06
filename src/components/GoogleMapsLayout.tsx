@@ -614,12 +614,11 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
             {/* Cover Photo Gallery Banner with Visual Outfit Tap-to-Shop */}
             <div className="relative h-52 bg-neutral-900 shrink-0">
               <TapToShopImage
-                src={selectedSpot.galleryUrls?.[activePhotoIdx] || selectedSpot.coverImageUrl}
-                alt={selectedSpot.name}
-                spotId={selectedSpot.id}
-                aspectRatio="h-52"
-                imageClassName="w-full h-full object-cover"
-              />
+                              src={selectedSpot.galleryUrls?.[activePhotoIdx] || selectedSpot.coverImageUrl}
+                              alt={selectedSpot.name}
+                              aspectRatio="h-52"
+                              imageClassName="w-full h-full object-cover"
+                            />
 
               {/* Dismiss Button ✕ */}
               <button
@@ -1056,12 +1055,11 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
               {/* Cover Photo with Visual Outfit Tap-to-Shop */}
               <div className="relative h-48 rounded-2xl overflow-hidden bg-neutral-900 shrink-0 shadow-md">
                 <TapToShopImage
-                  src={selectedSpot.galleryUrls?.[activePhotoIdx] || selectedSpot.coverImageUrl}
-                  alt={selectedSpot.name}
-                  spotId={selectedSpot.id}
-                  aspectRatio="h-48"
-                  imageClassName="w-full h-full object-cover"
-                />
+                                  src={selectedSpot.galleryUrls?.[activePhotoIdx] || selectedSpot.coverImageUrl}
+                                  alt={selectedSpot.name}
+                                  aspectRatio="h-48"
+                                  imageClassName="w-full h-full object-cover"
+                                />
 
                 <span className="absolute top-2.5 left-2.5 px-2.5 py-1 rounded-full bg-terracotta text-white text-[11px] font-semibold shadow-md">
                   {selectedSpot.seasonalTrend?.status === 'PEAK' ? 'Đang rộ' : (selectedSpot.seasonalTrend?.status || 'Đang rộ')}

@@ -66,6 +66,7 @@ export const FacebookPostCard: React.FC<FacebookPostCardProps> = ({
                 src={post.authorAvatar || '/facebook_media/avatar_0.jpg'}
                 alt={post.authorName}
                 className="w-10 h-10 rounded-full object-cover border border-slateInk"
+                onError={(event) => { event.currentTarget.style.visibility = 'hidden'; }}
               />
               <span className="absolute -bottom-1 -right-1 w-4 h-4 bg-[#1877F2] text-white rounded-full flex items-center justify-center text-[10px] font-bold border border-white">
                 f
@@ -175,13 +176,12 @@ export const FacebookPostCard: React.FC<FacebookPostCardProps> = ({
         {allImages.length === 1 && (
           <div className="relative aspect-[16/10] overflow-hidden group">
             <TapToShopImage
-              src={allImages[0]}
-              alt={post.caption || 'Ảnh check-in'}
-              postId={post.id}
-              spotId={spot?.id}
-              aspectRatio="aspect-[16/10]"
-              imageClassName="transition-transform duration-300 group-hover:scale-103"
-            />
+                          src={allImages[0]}
+                          alt={post.caption || 'Ảnh check-in'}
+                          postId={post.id}
+                          aspectRatio="aspect-[16/10]"
+                          imageClassName="transition-transform duration-300 group-hover:scale-103"
+                        />
             <button
               type="button"
               onClick={() => setActivePhotoModal(allImages[0])}
@@ -205,6 +205,7 @@ export const FacebookPostCard: React.FC<FacebookPostCardProps> = ({
                   src={img}
                   alt={`Photo ${idx + 1}`}
                   className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  onError={(event) => { event.currentTarget.style.visibility = 'hidden'; }}
                 />
               </div>
             ))}
@@ -221,6 +222,7 @@ export const FacebookPostCard: React.FC<FacebookPostCardProps> = ({
                 src={allImages[0]}
                 alt="Main post photo"
                 className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                onError={(event) => { event.currentTarget.style.visibility = 'hidden'; }}
               />
             </div>
             <div className="grid grid-rows-2 gap-0.5 h-full">
@@ -234,6 +236,7 @@ export const FacebookPostCard: React.FC<FacebookPostCardProps> = ({
                     src={img}
                     alt={`Photo ${idx + 2}`}
                     className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    onError={(event) => { event.currentTarget.style.visibility = 'hidden'; }}
                   />
                   {idx === 1 && allImages.length > 3 && (
                     <div className="absolute inset-0 bg-slateInk/60 text-white font-bold text-lg flex items-center justify-center font-mono-spec">

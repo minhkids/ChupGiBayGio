@@ -3,13 +3,12 @@ import { ShoppingBag, Eye, EyeOff } from 'lucide-react';
 import type { PostOutfit } from '../../types';
 import { VisualOutfitHotspot } from './VisualOutfitHotspot';
 import { OutfitTapToShopModal } from './OutfitTapToShopModal';
-import { fetchPostOutfits, getAllMockOutfits } from '../../services/outfitService';
+import { fetchPostOutfits } from '../../services/outfitService';
 
 interface TapToShopImageProps {
   src: string;
   alt: string;
   postId?: string;
-  spotId?: string;
   outfits?: PostOutfit[];
   className?: string;
   imageClassName?: string;
@@ -21,46 +20,33 @@ export const TapToShopImage: React.FC<TapToShopImageProps> = ({
   src,
   alt,
   postId,
-  spotId,
   outfits: propOutfits,
   className = '',
   imageClassName = '',
   aspectRatio = 'aspect-4/3',
   showBadge = true,
 }) => {
-  const [fetchedOutfits, setFetchedOutfits] = useState<PostOutfit[]>([]);
+  const [fetchedResult, setFetchedResult] = useState<{ key: string; outfits: PostOutfit[] }>({ key: '', outfits: [] });
   const [selectedOutfit, setSelectedOutfit] = useState<PostOutfit | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isHotspotVisible, setIsHotspotVisible] = useState(true);
+  const [failedImageSrc, setFailedImageSrc] = useState('');
 
   // Derive outfits: props take priority, async-fetched as fallback
+  const requestKey = `${postId || ''}:${src}`;
+  const fetchedOutfits = fetchedResult.key === requestKey ? fetchedResult.outfits : [];
   const outfits = (propOutfits && propOutfits.length > 0) ? propOutfits : fetchedOutfits;
 
   // Fetch or match outfits when no propOutfits
-  // eslint-disable-next-line react/set-state-in-effect — async data fetching
   useEffect(() => {
-    if (propOutfits && propOutfits.length > 0) return;
+    if ((propOutfits && propOutfits.length > 0) || !postId) return;
 
-    if (postId) {
-      fetchPostOutfits(postId).then(data => {
-        if (data && data.length > 0) {
-          setFetchedOutfits(data);
-        }
-      });
-    } else {
-      const allMocks = getAllMockOutfits();
-      const matched = allMocks.filter(o => o.imageUrl === src || (spotId && o.spotId === spotId));
-      if (matched.length > 0) {
-        setFetchedOutfits(matched);
-      } else {
-        setFetchedOutfits([{
-          ...allMocks[0],
-          id: `outfit-auto-${Math.random()}`,
-          imageUrl: src,
-        }]);
-      }
-    }
-  }, [postId, spotId, src, propOutfits]);
+    let isCurrent = true;
+    void fetchPostOutfits(postId).then(data => {
+      if (isCurrent) setFetchedResult({ key: requestKey, outfits: data.filter(outfit => outfit.imageUrl === src) });
+    });
+    return () => { isCurrent = false; };
+  }, [postId, src, requestKey, propOutfits]);
 
   const handleOpenOutfit = (outfit: PostOutfit) => {
     setSelectedOutfit(outfit);
@@ -73,18 +59,23 @@ export const TapToShopImage: React.FC<TapToShopImageProps> = ({
     <div className={`relative overflow-hidden group select-none ${className}`}>
       {/* 1. Base Image Container */}
       <div className={`relative w-full ${aspectRatio} overflow-hidden bg-neutral-100 dark:bg-neutral-800`}>
-        <img
+        {failedImageSrc !== src ? <img
           src={src}
           alt={alt}
           className={`w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105 ${imageClassName}`}
           loading="lazy"
+          onError={() => setFailedImageSrc(src)}
         />
+          : <div role="img" aria-label={`Không tải được ảnh: ${alt}`} className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-neutral-100 px-4 text-center text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400">
+            <ShoppingBag className="h-6 w-6 opacity-50" aria-hidden="true" />
+            <span className="text-xs">Ảnh hiện không khả dụng</span>
+          </div>}
 
         {/* Subtle vignette gradient when hovered */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
 
         {/* 2. Visual Outfit Hotspots (Rendered right at % coordinates) */}
-        {hasOutfits && isHotspotVisible && (
+        {failedImageSrc !== src && hasOutfits && isHotspotVisible && (
           outfits.map((outfit) => (
             <VisualOutfitHotspot
               key={outfit.id}
@@ -95,7 +86,7 @@ export const TapToShopImage: React.FC<TapToShopImageProps> = ({
         )}
 
         {/* 3. Floating Tap-to-Shop Badge Toggle */}
-        {hasOutfits && showBadge && (
+        {failedImageSrc !== src && hasOutfits && showBadge && (
           <div className="absolute top-2.5 right-2.5 z-20 flex items-center space-x-1.5">
             <button
               type="button"

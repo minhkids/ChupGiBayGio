@@ -16,16 +16,13 @@ export async function fetchPostOutfits(postId: string): Promise<PostOutfit[]> {
       const res = await fetch(`${API_BASE}/api/posts/${postId}/outfit`);
       if (res.ok) {
         const data = (await res.json()) as OutfitApiResponse;
-        if (data.outfits && data.outfits.length > 0) {
-          return data.outfits;
-        }
+        return (data.outfits || []).filter(outfit => outfit.postId === postId);
       }
     }
   } catch (err) {
-    console.warn(`[OutfitService] Lỗi gọi API /api/posts/${postId}/outfit, dùng mock data:`, err);
+    console.warn(`[OutfitService] Không thể tải outfit cho bài viết ${postId}:`, err);
   }
 
-  // Fallback về mock data
   return getOutfitsForPost(postId);
 }
 
@@ -38,13 +35,11 @@ export async function fetchSpotOutfits(spotId: string): Promise<PostOutfit[]> {
       const res = await fetch(`${API_BASE}/api/spots/${spotId}/outfits`);
       if (res.ok) {
         const data = (await res.json()) as OutfitApiResponse;
-        if (data.outfits && data.outfits.length > 0) {
-          return data.outfits;
-        }
+        return (data.outfits || []).filter(outfit => outfit.spotId === spotId);
       }
     }
   } catch (err) {
-    console.warn(`[OutfitService] Lỗi gọi API /api/spots/${spotId}/outfits, dùng mock data:`, err);
+    console.warn(`[OutfitService] Không thể tải outfit cho địa điểm ${spotId}:`, err);
   }
 
   return getOutfitsForSpot(spotId);

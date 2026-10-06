@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Navigation, Bookmark } from 'lucide-react';
 import type { Spot } from '../../types';
 import { getStatusBadgeInfo } from '../../utils/season';
@@ -18,6 +18,7 @@ export const SpotListItem: React.FC<SpotListItemProps> = ({
   onSelect,
   onToggleSave,
 }) => {
+  const [imageFailed, setImageFailed] = useState(false);
   const statusInfo = getStatusBadgeInfo(
     spot.seasonalTrend?.status || 'PEAK',
     spot.seasonalTrend?.daysLeftInPeak || 0
@@ -34,12 +35,16 @@ export const SpotListItem: React.FC<SpotListItemProps> = ({
     >
       {/* Photo Thumbnail (3:2 Ratio) */}
       <div className="relative w-28 h-20 rounded-lg overflow-hidden bg-neutral-200 dark:bg-neutral-800 shrink-0">
-        <img
+        {!imageFailed ? <img
           src={spot.coverImageUrl}
           alt={spot.name}
           className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
           loading="lazy"
+          onError={() => setImageFailed(true)}
         />
+          : <div role="img" aria-label={`Không tải được ảnh: ${spot.name}`} className="absolute inset-0 flex items-center justify-center bg-neutral-200 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400">
+            <Navigation className="h-5 w-5 opacity-50" aria-hidden="true" />
+          </div>}
 
         {/* Glassmorphism Status Badge */}
         <span className="absolute top-1 left-1 text-[10px] font-mono-spec font-bold px-2 py-0.5 rounded-full backdrop-blur-md bg-black/40 text-white border border-white/20 shadow-sm">
