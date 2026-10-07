@@ -1,18 +1,23 @@
+import { PinReferenceButton } from '../planner/PinReferenceButton';
 import React from 'react';
 import { Film, Sparkles, Aperture, Sliders, MapPin, Store } from 'lucide-react';
 import type { Spot } from '../../types';
 import { recommendFilmForSpot } from '../../utils/filmAdvisor';
 
+import { openNearestFilmShops } from '../../hooks/useNearestLabs';
+
 interface FilmSpecsCardProps {
   spot: Spot;
   className?: string;
   onSelectFilmFilter?: (filmId: string) => void;
+  onOpenNearestLabs?: (filmName: string) => void;
 }
 
 export const FilmSpecsCard: React.FC<FilmSpecsCardProps> = ({
   spot,
   className = '',
-  onSelectFilmFilter
+  onSelectFilmFilter,
+  onOpenNearestLabs
 }) => {
   const recommendation = recommendFilmForSpot(spot);
   const { film, recommendedSettings, rationale } = recommendation;
@@ -56,10 +61,11 @@ export const FilmSpecsCard: React.FC<FilmSpecsCardProps> = ({
       {film.sampleImageUrl && (
         <div className="relative mb-3 rounded-xl overflow-hidden aspect-video border border-amber-200/40 dark:border-neutral-800 group">
           <img 
-            src={film.sampleImageUrl} 
-            alt={`Ảnh mẫu ${film.fullName}`} 
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
-          />
+                      src={film.sampleImageUrl} 
+                      alt={`Ảnh mẫu ${film.fullName}`} 
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                    />
+                    <PinReferenceButton imageUrl={film.sampleImageUrl} label={`Ảnh mẫu ${film.fullName}`} />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent flex items-end p-2">
             <span className="text-xs text-white/90 bg-black/40 backdrop-blur-md px-2 py-0.5 rounded-full border border-white/20">
               🎞️ Ảnh demo nước màu thực tế
@@ -127,12 +133,27 @@ export const FilmSpecsCard: React.FC<FilmSpecsCardProps> = ({
         </div>
       )}
 
+      {/* Nearest Film Lab Finder Button */}
+      <button
+        type="button"
+        onClick={() => {
+          if (onOpenNearestLabs) {
+            onOpenNearestLabs(film.fullName);
+          } else {
+            openNearestFilmShops(film.fullName);
+          }
+        }}
+        className="w-full mt-2 py-2.5 px-3 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-800 dark:text-amber-300 text-xs font-bold transition-all border border-amber-500/40 flex items-center justify-center space-x-1.5 shadow-xs cursor-pointer"
+      >
+        <span>📍 Tìm Lab gần đây còn sẵn cuộn này</span>
+      </button>
+
       {/* Optional Filter Action Trigger */}
       {onSelectFilmFilter && (
         <button
           type="button"
           onClick={() => onSelectFilmFilter(film.id)}
-          className="w-full py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 text-xs font-semibold transition-colors flex items-center justify-center space-x-1 cursor-pointer"
+          className="w-full mt-2 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 text-xs font-semibold transition-colors flex items-center justify-center space-x-1 cursor-pointer"
         >
           <Sliders className="w-3 h-3" />
           <span>Lọc địa điểm phù hợp với cuộn {film.name}</span>

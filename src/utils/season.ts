@@ -21,7 +21,8 @@ export const CONCEPT_METADATA: Record<ConceptTag, { label: string; iconName: str
   STREET: { label: 'Đường Phố Sống Động', iconName: 'Footprints', description: 'Góc phố cà phê, đời sống thường nhật' },
   CYBERPUNK: { label: 'Đêm Đô Thị & Flash', iconName: 'Zap', description: 'Ánh sáng neon, cầu đêm, bờ sông hiện đại' },
   MINIMAL: { label: 'Tối Giản & Hiện Đại', iconName: 'Layers', description: 'Kiến trúc hình khối, bảo tàng nghệ thuật' },
-  KIEN_TRUC: { label: 'Kiến Trúc & Di Sản', iconName: 'Landmark', description: 'Công trình biểu tượng trăm năm' }
+  KIEN_TRUC: { label: 'Kiến Trúc & Di Sản', iconName: 'Landmark', description: 'Công trình biểu tượng trăm năm' },
+  CHRISTMAS: { label: 'Giáng Sinh & Đông', iconName: 'Gift', description: 'Không gian trang trí Noel, cây thông, đèn lồng, không khí lễ hội' }
 };
 
 export function isSpotActiveInMonth(startMonth: number, endMonth: number, targetMonth: number): boolean {

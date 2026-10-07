@@ -49,11 +49,11 @@ const PLATE =
   'focus-visible:ring-offset-2 focus-visible:ring-offset-paper-light';
 
 const PLATE_IDLE =
-  'border-slateInk/25 bg-paper-card text-slateInk ' +
-  'hover:-translate-y-px hover:border-slateInk hover:bg-paper-warm hover:shadow-hard';
+  'border-[#DDD5C7] bg-[#ECE4D0] text-[#554D43] ' +
+  'hover:-translate-y-px hover:text-[#2C2621] hover:bg-[#E0D5BE]';
 
 const PLATE_ACTIVE =
-  'border-slateInk bg-slateInk text-paper-light shadow-hard';
+  'border-[#2C2621] bg-[#2C2621] text-white shadow-sm';
 
 export const FilterBar: React.FC<FilterBarProps> = ({
   filters,
@@ -129,7 +129,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
     showAdvanced || filters.timeOfDay !== 'ALL' || filters.concept !== 'ALL' || filters.cost !== 'ALL';
 
   return (
-    <div className="sticky top-0 z-30 border-b border-paper-border bg-paper-light/95 backdrop-blur-md select-none">
+    <div className="sticky top-0 z-30 border-b border-[#E2DAD0] bg-[#FAF8F4]/90 backdrop-blur-md select-none">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 space-y-3">
         
         {/* Top Compact Search & Filter Controls Row */}
@@ -145,7 +145,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
               onChange={(e) => onChangeFilters({ ...filters, searchQuery: e.target.value })}
               placeholder="Tìm theo tên điểm, cúc họa mi, áo dài, vintage..."
               aria-label="Tìm kiếm điểm chụp"
-              className="w-full h-11 pl-11 pr-10 bg-paper-card border border-slateInk/25 text-sm text-slateInk placeholder:text-slateInk-light placeholder:font-mono-spec placeholder:text-[11px] placeholder:uppercase placeholder:tracking-[0.14em] focus:outline-none focus:border-slateInk focus:shadow-hard-terracotta transition-all"
+              className="w-full h-11 pl-11 pr-10 bg-white border border-[#DDD5C7] rounded-xl shadow-sm text-sm text-[#2C2621] placeholder:text-[#8C8377] placeholder:font-mono-spec placeholder:text-[11px] focus:outline-none focus:border-[#C76B3C] transition-all"
             />
             {filters.searchQuery && (
               <button
@@ -329,7 +329,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
                 Concept &amp; phong cách chụp
               </div>
               <div className="flex flex-wrap gap-2">
-                {(['ALL', 'AO_DAI', 'VINTAGE', 'HOA_CO', 'STREET', 'NANG_THO', 'FILM'] as (ConceptTag | 'ALL')[]).map(c => (
+                {(['ALL', 'AO_DAI', 'VINTAGE', 'HOA_CO', 'STREET', 'NANG_THO', 'FILM', 'CHRISTMAS'] as (ConceptTag | 'ALL')[]).map(c => (
                   <button
                     key={c}
                     type="button"

@@ -1,3 +1,4 @@
+import { PinReferenceButton } from '../planner/PinReferenceButton';
 import React, { useState } from 'react';
 import { 
   Sparkles, 
@@ -205,10 +206,11 @@ export const MoodboardView: React.FC<MoodboardViewProps> = ({ spots, onSelectSpo
             >
               <div className="relative aspect-[4/5] bg-slateInk overflow-hidden">
                 <img 
-                  src={inspo.thumbnailUrl} 
-                  alt={inspo.authorName} 
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                />
+                                  src={inspo.thumbnailUrl} 
+                                  alt={inspo.authorName} 
+                                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                />
+                          <PinReferenceButton imageUrl={inspo.thumbnailUrl} label={`Ảnh tham khảo tại ${spot.name}`} />
                 <div className="absolute top-2 left-2 px-2 py-0.5 text-[10px] font-mono-spec font-bold bg-slateInk/90 text-white border border-white/20">
                   {inspo.platform}
                 </div>

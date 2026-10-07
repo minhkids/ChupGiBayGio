@@ -1,5 +1,5 @@
 @import './styles/design-tokens.css';
-@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&family=Fredoka:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -17,26 +17,26 @@
   }
 
   body {
-    background-color: var(--paper-bg);
-    color: var(--slate-ink);
-    font-family: 'Quicksand', 'Fredoka', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    background-color: var(--editorial-bg);
+    color: var(--editorial-text);
+    font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     letter-spacing: normal;
   }
 
   h1, h2, h3, h4, .font-editorial, .font-display {
-    font-family: 'Fredoka', 'Quicksand', system-ui, -apple-system, sans-serif;
+    font-family: var(--font-sans);
     font-weight: 700;
     letter-spacing: normal;
   }
 
   .font-body {
-    font-family: 'Quicksand', 'Fredoka', system-ui, sans-serif;
+    font-family: var(--font-sans);
   }
 
   .font-mono-spec {
-    font-family: 'Quicksand', system-ui, sans-serif;
+    font-family: var(--font-mono);
     font-feature-settings: 'tnum' 1;
     font-variant-numeric: tabular-nums;
     letter-spacing: normal;
@@ -49,14 +49,14 @@
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #F4EFE6;
+  background: var(--editorial-bg);
 }
 ::-webkit-scrollbar-thumb {
-  background: #C85A32;
+  background: var(--editorial-border);
   border-radius: 0;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #A54320;
+  background: var(--editorial-muted);
 }
 
 /* Viewfinder crosshairs & photography reticle */
@@ -66,7 +66,7 @@
 .reticle-corner::before {
   content: "+";
   position: absolute;
-  font-family: 'Fredoka', 'Quicksand', system-ui, sans-serif;
+  font-family: var(--font-mono);
   font-size: 14px;
   font-weight: 700;
   line-height: 1;
@@ -97,7 +97,7 @@
 
 /* Leaflet map customizations */
 .leaflet-container {
-  font-family: 'Quicksand', 'Fredoka', system-ui, sans-serif !important;
+  font-family: var(--font-sans) !important;
   background-color: #F4EFE6 !important;
 }
 
@@ -125,7 +125,7 @@
 .editorial-stamp {
   border: 1.5px dashed currentColor;
   text-transform: uppercase;
-  font-family: 'Fredoka', 'Quicksand', system-ui, sans-serif;
+  font-family: var(--font-sans);
   font-size: 0.7rem;
   font-weight: 700;
   padding: 2px 6px;

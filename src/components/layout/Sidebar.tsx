@@ -1,3 +1,4 @@
+import { PinReferenceButton } from '../planner/PinReferenceButton';
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, X } from 'lucide-react';
@@ -45,8 +46,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
       className={`
         hidden lg:flex flex-col fixed top-0 bottom-0 left-[76px] z-[var(--z-sidebar)]
         w-[var(--sidebar-width)] max-w-[var(--sidebar-width-max)]
-        bg-white/95 dark:bg-neutral-900/95
-        border-r border-neutral-200/80 dark:border-neutral-800
+        bg-[#E8DEC7]
+        border-r border-[#D8CFBD]
         shadow-2xl backdrop-blur-md overflow-hidden
         transition-transform var(--transition-base) ease-out
         ${isCollapsed ? '-translate-x-full pointer-events-none' : 'translate-x-0'}
@@ -57,7 +58,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <button
         type="button"
         onClick={onToggleCollapse}
-        className="absolute -right-7 top-1/2 -translate-y-1/2 w-7 h-16 bg-white dark:bg-neutral-900 border-y border-r border-neutral-200 dark:border-neutral-800 rounded-r-xl shadow-md flex items-center justify-center cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-800 hover:w-8 text-neutral-600 dark:text-neutral-300 z-50 transition-all pointer-events-auto group"
+        className="absolute -right-7 top-1/2 -translate-y-1/2 w-7 h-16 bg-[#E8DEC7] border-y border-r border-[#D8CFBD] rounded-r-xl shadow-md flex items-center justify-center cursor-pointer hover:bg-[#DDD3BD] hover:w-8 text-[#554D43] z-50 transition-all pointer-events-auto group"
         title="Thu gọn danh sách"
       >
         <ChevronLeft className="w-4 h-4 group-hover:scale-110 transition-transform" />
@@ -166,6 +167,7 @@ export const Panel: React.FC<PanelProps> = ({
             alt={spot.name}
             className="w-full h-full object-cover"
           />
+          <PinReferenceButton imageUrl={spot.galleryUrls?.[activePhotoIdx] || spot.coverImageUrl} label={spot.name} className="absolute top-2 right-14" />
 
           {/* Dismiss Button ✕ */}
           <button

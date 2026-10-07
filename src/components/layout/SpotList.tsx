@@ -1,3 +1,4 @@
+import { PinReferenceButton } from '../planner/PinReferenceButton';
 import React from 'react';
 import { Bookmark, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -36,8 +37,8 @@ const SpotItem: React.FC<SpotItemProps> = ({
       className={`
         p-3.5 rounded-xl border flex space-x-3 transition-colors cursor-pointer
         ${isSelected
-          ? 'bg-amber-50 dark:bg-neutral-800 border-terracotta shadow-md ring-1 ring-terracotta/40'
-          : 'bg-white dark:bg-neutral-850 border-neutral-200 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700'
+          ? 'bg-[#FAF8F4] border-[#C76B3C] shadow-md ring-1 ring-[#C76B3C]/30'
+          : 'bg-[#FAF8F4] border-[#D8CFBD] hover:border-[#C9BDA8]'
         }
       `}
     >
@@ -48,6 +49,7 @@ const SpotItem: React.FC<SpotItemProps> = ({
           className="w-full h-full object-cover"
           loading="lazy"
         />
+          <PinReferenceButton imageUrl={spot.coverImageUrl} label={spot.name} />
         <span className={`absolute top-0.5 left-0.5 text-[8px] font-mono-spec font-bold px-1 py-0.2 rounded ${statusInfo.classNames}`}>
           {statusInfo.label}
         </span>
@@ -58,10 +60,10 @@ const SpotItem: React.FC<SpotItemProps> = ({
           <div className="text-[10px] font-mono-spec text-terracotta uppercase font-bold truncate">
             {spot.seasonalTrend?.trendTitle}
           </div>
-          <h4 className="font-editorial text-sm font-bold text-neutral-900 dark:text-white truncate">
+          <h4 className="font-editorial text-sm font-bold text-[#2C2621] truncate">
             {spot.name}
           </h4>
-          <p className="text-[11px] text-neutral-500 truncate mt-0.5">
+          <p className="text-xs text-[#6E655B] truncate mt-0.5">
             {spot.address}
           </p>
         </div>

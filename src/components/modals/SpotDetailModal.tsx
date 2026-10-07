@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { PinReferenceButton } from '../planner/PinReferenceButton';
 import { 
   X, 
   MapPin, 
@@ -13,16 +14,19 @@ import {
   MessageSquarePlus, 
   ChevronLeft, 
   ChevronRight,
-  PlusCircle
+  PlusCircle,
+  ClipboardList
 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import type { Spot } from '../../types';
+import type { Spot, Photographer } from '../../types';
+import { useShootPlan } from '../../context/ShootPlanContext';
 import { getStatusBadgeInfo, MONTH_SHORT_LABELS } from '../../utils/season';
 import { formatCoordinates, formatDistance } from '../../utils/geo';
 import { FacebookPostCard } from '../cards/FacebookPostCard';
 import { FilmSpecsCard } from '../cards/FilmSpecsCard';
 import { OutfitAdvisorCard } from '../cards/OutfitAdvisorCard';
 import { CameraGearAdvisorCard } from '../cards/CameraGearAdvisorCard';
+import { SpotPhotographersSection } from '../photographers/SpotPhotographersSection';
 import { PoseCamera } from '../features/PoseCamera';
 import { cameraSpring, modalShutterVariants, backdropVariants } from '../../utils/motion-tokens';
 import { POSES, type PoseItem } from '../../data/poses';
@@ -34,6 +38,8 @@ interface SpotDetailModalProps {
   onToggleSave: (spotId: string) => void;
   onOpenReportModal: (spot: Spot) => void;
   onOpenAddPostModal?: (spotId: string) => void;
+  onSelectPhotographer?: (photographer: Photographer) => void;
+  onOpenPhotographerDirectory?: () => void;
 }
 
 export const SpotDetailModal: React.FC<SpotDetailModalProps> = ({
@@ -42,13 +48,16 @@ export const SpotDetailModal: React.FC<SpotDetailModalProps> = ({
   isSaved,
   onToggleSave,
   onOpenReportModal,
-  onOpenAddPostModal
+  onOpenAddPostModal,
+  onSelectPhotographer,
+  onOpenPhotographerDirectory,
 }) => {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
-    const [copiedCoords, setCopiedCoords] = useState(false);
-    const [showPoseCamera, setShowPoseCamera] = useState(false);
-    const [selectedPose, setSelectedPose] = useState<PoseItem | null>(null);
-    const currentMonth = useMemo(() => new Date().getMonth() + 1, []); // eslint-disable-line react/purity — runs once
+  const [copiedCoords, setCopiedCoords] = useState(false);
+  const [showPoseCamera, setShowPoseCamera] = useState(false);
+  const [selectedPose, setSelectedPose] = useState<PoseItem | null>(null);
+  const shootPlan = useShootPlan();
+  const currentMonth = useMemo(() => new Date().getMonth() + 1, []); // eslint-disable-line react/purity — runs once
 
   // Find a matching pose for the spot
   const findMatchingPose = (currentSpot: Spot): PoseItem => {
@@ -116,6 +125,29 @@ export const SpotDetailModal: React.FC<SpotDetailModalProps> = ({
           </div>
 
           <div className="flex items-center space-x-2">
+            {/* Nút + Kế hoạch & Dự toán */}
+            <button
+              onClick={() => spot && shootPlan?.toggleSpot(spot)}
+              className={`px-2.5 py-1 border border-slateInk flex items-center shadow-hard text-xs cursor-pointer font-bold ${
+                spot && shootPlan?.isSpotPlanned(spot.id)
+                  ? 'bg-amber-400 text-neutral-950 border-amber-500'
+                  : 'bg-paper-light text-slateInk hover:bg-amber-50'
+              }`}
+              title={spot && shootPlan?.isSpotPlanned(spot.id) ? 'Bỏ khỏi kế hoạch' : 'Thêm vào Kế hoạch & Dự toán'}
+            >
+              {spot && shootPlan?.isSpotPlanned(spot.id) ? (
+                <>
+                  <Check className="w-3.5 h-3.5 mr-1 stroke-[3]" />
+                  Đã Lên Kế Hoạch
+                </>
+              ) : (
+                <>
+                  <ClipboardList className="w-3.5 h-3.5 mr-1 text-amber-600" />
+                  + Kế Hoạch
+                </>
+              )}
+            </button>
+
             <button
               onClick={openPoseCamera}
               aria-label="Mở camera hướng dẫn tạo dáng"
@@ -234,6 +266,7 @@ export const SpotDetailModal: React.FC<SpotDetailModalProps> = ({
           {/* Section: Image Gallery & Film Aspect Viewer (Shared Element Transition) */}
           <div className="space-y-2">
             <div className="relative aspect-[16/9] sm:aspect-[21/9] bg-slateInk border border-slateInk overflow-hidden shadow-hard">
+              <PinReferenceButton imageUrl={allImages[activeImageIndex]} label={spot.name} />
               <motion.img
                 layoutId={activeImageIndex === 0 ? `spot-cover-img-${spot.id}` : undefined}
                 src={allImages[activeImageIndex]}
@@ -381,6 +414,18 @@ export const SpotDetailModal: React.FC<SpotDetailModalProps> = ({
 
           {/* Section: Outfit Advisor */}
           <OutfitAdvisorCard spot={spot} />
+
+          {/* Section: Nhiếp ảnh gia chuyên chụp góc này */}
+          {onSelectPhotographer && (
+            <div className="border border-slateInk bg-paper-card p-4 shadow-hard">
+              <SpotPhotographersSection
+                spotId={spot.id}
+                spotName={spot.name}
+                onSelectPhotographer={onSelectPhotographer}
+                onOpenDirectory={onOpenPhotographerDirectory}
+              />
+            </div>
+          )}
 
           {/* Section: Bài viết thực tế từ Facebook Group Aphoto & Cảm hứng */}
           {spot.inspirationPosts && spot.inspirationPosts.length > 0 && (

@@ -17,7 +17,7 @@ export const REGIONS: Region[] = [
     lat: 21.0378,
     lng: 105.8396,
     zoom: 13.5,
-    currentSeasonalHighlight: 'Thu Hà Nội: Xe hoa Phan Đình Phùng & Cúc họa mi',
+    currentSeasonalHighlight: 'Thu Đông Hà Nội: Cúc họa mi & Không khí Giáng sinh phố cổ',
   },
   {
     id: 'hcm',

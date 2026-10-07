@@ -1,6 +1,7 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { X, FlipHorizontal, Download, CameraOff, RotateCcw, Scaling } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { PinReferenceButton, poseReferenceImage } from '../planner/PinReferenceButton';
 
 /**
  * Ghost Pose Camera — camera stream + interactive SVG wireframe overlay.
@@ -195,6 +196,11 @@ export const PoseCamera: React.FC<PoseCameraProps> = ({ pose, onClose }) => {
 
       {/* Viewfinder */}
       <div className="relative flex-1 overflow-hidden bg-black flex items-center justify-center">
+        <PinReferenceButton
+          imageUrl={capturedImage || poseReferenceImage(pose)}
+          label={capturedImage ? `Ảnh thử dáng: ${pose.name}` : `Dáng chụp: ${pose.name}`}
+          className="absolute top-20 right-4"
+        />
         {errorCopy ? (
           <div className="max-w-sm px-6 text-center">
             <CameraOff className="w-10 h-10 mx-auto text-amberFilm" strokeWidth={1.5} />

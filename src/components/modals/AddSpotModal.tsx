@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { PinReferenceButton } from '../planner/PinReferenceButton';
 import { 
   X, 
   MapPin, 
@@ -106,7 +107,7 @@ export const AddSpotModal: React.FC<AddSpotModalProps> = ({
   if (!isOpen) return null;
 
   /**
-   * Handle AI Extraction from Social Link / Text
+   * Read spot details from a social link or post text.
    */
   const handleExtractFromLink = async () => {
     if (!postUrl.trim() && !rawText.trim()) return;
@@ -430,7 +431,7 @@ export const AddSpotModal: React.FC<AddSpotModalProps> = ({
                 {isExtracting ? (
                   <>
                     <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                    <span>Đang AI trích xuất...</span>
+                    <span>Đang trích xuất bài viết...</span>
                   </>
                 ) : (
                   <>
@@ -441,7 +442,7 @@ export const AddSpotModal: React.FC<AddSpotModalProps> = ({
               </button>
             </div>
 
-            {/* AI Extraction Status Banner */}
+            {/* Extraction status */}
             <AnimatePresence>
               {extractSuccess && (
                 <motion.div
@@ -453,7 +454,7 @@ export const AddSpotModal: React.FC<AddSpotModalProps> = ({
                   <div className="space-y-1">
                     <p className="font-bold">Đã phân tích và trích xuất dữ liệu thành công!</p>
                     <p className="text-[11px] text-neutral-600 dark:text-neutral-300 leading-relaxed">
-                      Hệ thống LLM đã tự động điền: tiêu đề gợi ý, bộ ảnh tham khảo, phong cách (concept) và thông số máy ảnh.
+                      Thông tin về địa điểm, ảnh tham khảo, phong cách và thiết bị đã được điền sẵn. Vui lòng kiểm tra lại trước khi gửi.
                     </p>
                   </div>
                 </motion.div>
@@ -633,6 +634,7 @@ export const AddSpotModal: React.FC<AddSpotModalProps> = ({
                       }`}
                     >
                       <img src={url} alt={`Ảnh trích xuất ${idx + 1}`} className="w-full h-full object-cover" />
+                      <PinReferenceButton imageUrl={url} label={`Ảnh trích xuất ${idx + 1}`} className="absolute bottom-1 left-1" />
                       {selectedCoverUrl === url && (
                         <div className="absolute top-1 right-1 bg-amber-500 text-neutral-950 p-0.5 rounded-full">
                           <Check className="w-3 h-3 font-bold" />

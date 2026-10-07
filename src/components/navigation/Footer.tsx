@@ -3,7 +3,7 @@ import { Camera, Database, Film } from 'lucide-react';
 
 export const Footer: React.FC = () => {
   return (
-    <footer className="border-t-2 border-slateInk bg-paper-warm text-slateInk pt-12 pb-8 px-4 sm:px-6">
+    <footer className="border-t border-[#E2DAD0] bg-[#ECE4D0] text-[#2C2621] pt-12 pb-8 px-4 sm:px-6">
       <div className="max-w-7xl mx-auto space-y-8">
         
         {/* Top Colophon Row */}
@@ -12,7 +12,7 @@ export const Footer: React.FC = () => {
           {/* Brand & Manifesto */}
           <div className="md:col-span-2 space-y-3">
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 border border-slateInk bg-terracotta text-white flex items-center justify-center font-bold">
+              <div className="w-8 h-8 border border-[#D0C4AA] bg-[#C76B3C] text-white flex items-center justify-center font-bold">
                 <Camera className="w-4 h-4" />
               </div>
               <span className="font-editorial text-2xl font-bold tracking-tight">
@@ -21,7 +21,7 @@ export const Footer: React.FC = () => {
             </div>
 
             <p className="text-xs text-slateInk-muted font-sans leading-relaxed max-w-md">
-              Nền tảng tra cứu, bản đồ hóa địa điểm check-in & chụp ảnh theo mùa, thời gian thực và xu hướng tại Việt Nam. Xây dựng dựa trên nguyên tắc thiết kế <strong>Anti-AI Editorial Aesthetic</strong> mang hơi thở của một tạp chí ảnh in độc lập (Photo Zine).
+              Bản đồ những góc chụp đẹp theo mùa, ghi lại giờ nắng, màu film và kinh nghiệm từ người chụp tại chỗ.
             </p>
 
             <div className="flex items-center space-x-3 text-xs font-mono-spec text-slateInk-muted">
@@ -51,19 +51,19 @@ export const Footer: React.FC = () => {
             </ul>
           </div>
 
-          {/* Anti-AI Design Principle box */}
-          <div className="border border-slateInk bg-paper-light p-3 space-y-2 shadow-hard">
-            <span className="editorial-stamp text-terracotta border-terracotta block w-fit">
-              ANTI-AI DIRECTIVE
+          {/* Field notes */}
+          <div className="border border-[#D8CFBD] bg-[#FAF8F4] p-3 space-y-2">
+            <span className="editorial-stamp text-[#C76B3C] border-[#C76B3C] block w-fit">
+              GHI CHÉP THỰC ĐỊA
             </span>
-            <p className="text-[11px] font-sans text-slateInk leading-snug">
-              Kiên quyết tránh các khuôn mẫu AI thông thường: bo tròn viên thuốc, đổ bóng mờ mịt và màu gradient tím neon. Áp dụng viền mảnh sắc nét, màu giấy in ngà ấm và typography serif kinh điển.
+            <p className="text-[11px] font-sans text-[#6E655B] leading-snug">
+              Mùa hoa và ánh sáng thay đổi theo ngày. Hãy kiểm tra thông tin mới nhất trước khi lên đường.
             </p>
           </div>
         </div>
 
         {/* Bottom Bar */}
-        <div className="pt-6 border-t border-paper-border flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-mono-spec text-slateInk-muted">
+        <div className="pt-6 border-t border-[#D8CFBD] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-mono-spec text-[#8C8377]">
           <div>
             &copy; 2026 CHUPGIBAYGIO.COM • PHÁT TRIỂN VÌ CỘNG ĐỒNG NHIẾP ẢNH VIỆT NAM
           </div>

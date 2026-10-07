@@ -112,7 +112,7 @@ export const FacebookFeedView: React.FC<FacebookFeedViewProps> = ({
               className="px-4 py-2 border-2 border-slateInk bg-terracotta text-white font-mono-spec text-xs font-bold shadow-hard hover:bg-terracotta-dark flex items-center transition-colors"
             >
               <Sparkles className="w-3.5 h-3.5 mr-1.5" />
-              ⚡ Bóc Tách Bằng OpenRouter (AI)
+              Bóc tách nội dung bài đăng
             </button>
 
             <a
@@ -131,9 +131,9 @@ export const FacebookFeedView: React.FC<FacebookFeedViewProps> = ({
         <div className="bg-paper-warm border-t border-slateInk px-4 py-2 flex flex-wrap items-center justify-between gap-2 text-[11px] font-mono-spec">
           <div className="flex items-center space-x-2 text-slateInk">
             <span className="w-2 h-2 rounded-full bg-olive animate-pulse" />
-            <span className="font-bold">PIPELINE OPENROUTER & MAPBOX HÀ NỘI BBOX</span>
+            <span className="font-bold">CẬP NHẬT ĐỊA ĐIỂM THEO KHU VỰC</span>
             <span className="text-slateInk-muted">•</span>
-            <span className="text-slateInk-muted">Model: openai/gpt-4o-mini (Fallback: claude-3.5-haiku)</span>
+            <span className="text-slateInk-muted">Thông tin do cộng đồng đóng góp</span>
           </div>
 
           <div className="flex items-center space-x-2 text-slateInk-muted">
@@ -142,7 +142,7 @@ export const FacebookFeedView: React.FC<FacebookFeedViewProps> = ({
               BBox: [105.7, 20.9, 106.0, 21.1]
             </span>
             <span>•</span>
-            <span className="text-olive font-bold">Auto Slang Normalizer: ON</span>
+            <span className="text-olive font-bold">Chuẩn hóa tên gọi địa phương</span>
           </div>
         </div>
       </div>

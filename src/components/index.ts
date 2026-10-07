@@ -51,3 +51,17 @@ export { AutofocusLoader } from './animations/AutofocusLoader';
 export { OutfitTapToShopModal } from './outfit/OutfitTapToShopModal';
 export { TapToShopImage } from './outfit/TapToShopImage';
 export { VisualOutfitHotspot } from './outfit/VisualOutfitHotspot';
+
+// Photographers Directory & Booking
+export { PhotographerCard } from './photographers/PhotographerCard';
+export { PhotographerDock } from './photographers/PhotographerDock';
+export { PhotographerModal } from './photographers/PhotographerModal';
+export { SpotPhotographersSection } from './photographers/SpotPhotographersSection';
+
+// Shoot Planner & Budget Estimator
+export { ShootPlannerDrawer } from './planner/ShootPlannerDrawer';
+
+// Navigation & Services Hub
+export { ModernLeftRail } from './layout/ModernLeftRail';
+export { ShootServicesHubDrawer } from './layout/ShootServicesHubDrawer';
+export { NearestFilmShopsDrawer } from './layout/NearestFilmShopsDrawer';

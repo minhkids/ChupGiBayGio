@@ -134,7 +134,7 @@ export const AddFacebookPostModal: React.FC<AddFacebookPostModalProps> = ({
       groupName: 'Hội Đam Mê Nhiếp Ảnh - Aphoto',
       groupUrl: 'https://www.facebook.com/groups/528320614043286',
       postUrl: postUrl.trim() || 'https://www.facebook.com/groups/528320614043286',
-      postDate: 'Vừa xong (AI Synced)',
+      postDate: 'Vừa xong',
       caption: rawText.slice(0, 100),
       fullContent: rawText.trim(),
       thumbnailUrl: defaultThumbnail,
@@ -158,7 +158,7 @@ export const AddFacebookPostModal: React.FC<AddFacebookPostModalProps> = ({
   return (
     <div className="fixed inset-0 z-[var(--z-modal)] overflow-y-auto bg-slateInk/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 animate-in fade-in duration-200">
       <div 
-        className="relative bg-paper-light border-2 border-slateInk w-full max-w-2xl shadow-hard-lg overflow-hidden reticle-corner reticle-tl reticle-br flex flex-col max-h-[92vh]"
+        className="relative bg-paper-light text-slateInk [color-scheme:light] border-2 border-slateInk w-full max-w-2xl shadow-hard-lg overflow-hidden reticle-corner reticle-tl reticle-br flex flex-col max-h-[92vh]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Top Header Bar */}
@@ -190,7 +190,7 @@ export const AddFacebookPostModal: React.FC<AddFacebookPostModalProps> = ({
             }`}
           >
             <Sparkles className="w-4 h-4" />
-            <span>AI BÓC TÁCH OPENROUTER (GPT-4O-MINI)</span>
+            <span>TRÍCH XUẤT BÀI VIẾT</span>
           </button>
 
           <button
@@ -211,13 +211,13 @@ export const AddFacebookPostModal: React.FC<AddFacebookPostModalProps> = ({
             <CheckCircle2 className="w-14 h-14 text-olive mx-auto animate-bounce" />
             <h3 className="font-editorial text-2xl font-bold text-slateInk">Phân Tích & Gắn Pin Thành Công!</h3>
             <p className="text-xs text-slateInk-muted font-sans max-w-md mx-auto">
-              Bài viết đã được OpenRouter xử lý ngữ nghĩa, chuẩn hóa tọa độ Hà Nội và đồng bộ trực tiếp lên hệ thống bản đồ Mapbox.
+              Bài viết đã được xử lý và gắn vào địa điểm bạn chọn trên bản đồ.
             </p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="overflow-y-auto p-4 sm:p-6 space-y-4 text-xs font-sans flex-1">
             
-            {/* AI OpenRouter Mode Header & Quick Samples */}
+            {/* Post extraction and example reviews */}
             {activeTab === 'ai' && (
               <div className="space-y-3 border-b border-paper-border pb-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -234,7 +234,7 @@ export const AddFacebookPostModal: React.FC<AddFacebookPostModalProps> = ({
                     className="flex items-center space-x-1 text-[11px] font-mono-spec text-slateInk hover:text-terracotta self-start sm:self-auto"
                   >
                     <Key className="w-3.5 h-3.5 text-terracotta" />
-                    <span>{openRouterKey ? 'Đã có OpenRouter Key' : 'Cấu hình API Key (Tùy chọn)'}</span>
+                    {openRouterKey ? 'Đã kết nối dịch vụ trích xuất' : 'Cấu hình kết nối (Tùy chọn)'}
                   </button>
                 </div>
 
@@ -337,21 +337,21 @@ export const AddFacebookPostModal: React.FC<AddFacebookPostModalProps> = ({
                   <Sparkles className={`w-4 h-4 ${isAnalyzing ? 'animate-spin' : ''}`} />
                   <span>
                     {isAnalyzing 
-                      ? 'ĐANG GỌI OPENROUTER API & CHUẨN HÓA ĐỊA DANH HÀ NỘI...' 
-                      : '⚡ PHÂN TÍCH BẰNG OPENROUTER (GPT-4O-MINI)'}
+                      ? 'ĐANG ĐỌC BÀI VIẾT VÀ CHUẨN HÓA ĐỊA DANH...'
+                      : 'LẤY THÔNG TIN TỪ BÀI VIẾT'}
                   </span>
                 </button>
               </div>
             )}
 
-            {/* AI Extraction Result Card */}
+            {/* Extracted post details */}
             {aiResult && (
               <div className="p-3.5 bg-paper-warm border-2 border-slateInk shadow-hard space-y-2.5 animate-in fade-in duration-200">
                 <div className="flex items-center justify-between border-b border-paper-border pb-2">
                   <div className="flex items-center space-x-1.5">
                     <span className="w-2 h-2 rounded-full bg-olive animate-pulse" />
                     <span className="font-mono-spec font-bold text-xs uppercase text-slateInk">
-                      KẾT QUẢ BÓC TÁCH OPENROUTER ({aiResult.confidence_score * 100}% CONFIDENCE)
+                      THÔNG TIN ĐỌC TỪ BÀI VIẾT ({aiResult.confidence_score * 100}% ĐỘ TIN CẬY)
                     </span>
                   </div>
                   <span className="px-1.5 py-0.2 bg-slateInk text-white font-mono-spec text-[10px] uppercase">
@@ -472,7 +472,7 @@ export const AddFacebookPostModal: React.FC<AddFacebookPostModalProps> = ({
                 type="submit"
                 className="w-full py-2.5 bg-slateInk text-white font-mono-spec text-xs font-bold shadow-hard hover:bg-slateInk-soft transition-colors flex items-center justify-center space-x-1.5"
               >
-                <span>XÁC NHẬN ĐỒNG BỘ BÀI VIẾT & GẮN PIN MAPBOX</span>
+                <span>LƯU BÀI VIẾT & GHIM LÊN BẢN ĐỒ</span>
                 <span>→</span>
               </button>
             </div>

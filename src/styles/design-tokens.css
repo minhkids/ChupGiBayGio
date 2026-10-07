@@ -5,6 +5,15 @@
  */
 
 :root {
+  /* Warm darkroom palette; retain legacy paper tokens for light cards. */
+  --editorial-bg: #141312;
+  --editorial-surface: #1C1A18;
+  --editorial-border: #2E2A27;
+  --kodak-amber: #F59E0B;
+  --editorial-text: #F3EFE9;
+  --editorial-muted: #A99E91;
+  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Consolas, monospace;
   /* =========================================================================
    * Z-INDEX SCALE — Single authority for all stacking contexts
    * Use these tokens everywhere; never hardcode z-index in components.

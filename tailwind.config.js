@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+  darkMode: 'class',
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
@@ -7,6 +8,13 @@ export default {
   theme: {
     extend: {
       colors: {
+        editorial: { bg: '#141312', surface: '#1C1A18', border: '#2E2A27' },
+        'kodak-amber': '#F59E0B',
+        neutral: {
+          50: '#FAF8F5', 100: '#F3EFE9', 200: '#E5DFD6', 300: '#CFC6BB',
+          400: '#A99E91', 500: '#82776B', 600: '#645A50', 700: '#49413A',
+          800: '#2E2A27', 900: '#1C1A18', 950: '#141312',
+        },
         paper: {
           light: '#FBF9F5',
           warm: '#F4EFE6',
@@ -41,11 +49,11 @@ export default {
         }
       },
       fontFamily: {
-        sans: ['"Quicksand"', '"Fredoka"', 'system-ui', '-apple-system', 'sans-serif'],
-        serif: ['"Quicksand"', 'Georgia', 'serif'],
-        mono: ['"Quicksand"', 'system-ui', 'monospace'],
-        display: ['"Fredoka"', '"Quicksand"', 'system-ui', '-apple-system', 'sans-serif'],
-        body: ['"Quicksand"', '"Fredoka"', 'system-ui', 'sans-serif'],
+        sans: ['"Plus Jakarta Sans"', 'system-ui', '-apple-system', 'sans-serif'],
+        serif: ['Georgia', '"Times New Roman"', 'serif'],
+        mono: ['"IBM Plex Mono"', 'ui-monospace', 'SFMono-Regular', 'Consolas', 'monospace'],
+        display: ['"Plus Jakarta Sans"', 'system-ui', '-apple-system', 'sans-serif'],
+        body: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
       },
       boxShadow: {
         'hard': '2px 2px 0px #141413',

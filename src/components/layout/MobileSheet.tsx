@@ -1,8 +1,10 @@
+import { PinReferenceButton } from '../planner/PinReferenceButton';
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Navigation, Bookmark, Share2, Flag, ExternalLink, Camera, Clock, Sparkles, X } from 'lucide-react';
 import type { Spot } from '../../types';
 import { getStatusBadgeInfo } from '../../utils/season';
+import { CONCEPT_METADATA } from '../../utils/season';
 import type { LayoutCallbacks, SharedUIState } from './shared-types';
 
 interface MobileSheetProps {
@@ -100,6 +102,7 @@ export const MobileSheet: React.FC<MobileSheetProps> = ({
               alt={spot.name}
               className="w-full h-full object-cover"
             />
+          <PinReferenceButton imageUrl={spot.galleryUrls?.[activePhotoIdx] || spot.coverImageUrl} label={spot.name} />
 
             <span className={`absolute top-2.5 left-2.5 px-2 py-0.5 rounded-md bg-terracotta text-white font-mono-spec text-[10px] font-bold shadow-md ${statusInfo.classNames}`}>
               {spot.seasonalTrend?.status === 'PEAK' ? 'ĐANG RỘ (PEAK)' : (spot.seasonalTrend?.status || 'PEAK')}
@@ -220,7 +223,7 @@ export const MobileSheet: React.FC<MobileSheetProps> = ({
                 <div className="flex flex-wrap gap-1 mt-1">
                   {spot.seasonalTrend?.conceptTags.map((tag, tIdx) => (
                     <span key={tIdx} className="px-2 py-0.5 bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-200 rounded text-[10px]">
-                      #{tag}
+                      {CONCEPT_METADATA[tag]?.label || `#${tag}`}
                     </span>
                   ))}
                 </div>

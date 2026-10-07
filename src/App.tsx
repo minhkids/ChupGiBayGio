@@ -356,7 +356,7 @@ export function App() {
   }
 
   return (
-    <div className="min-h-screen flex bg-neutral-50 dark:bg-neutral-950 font-sans transition-colors">
+    <div className="min-h-screen flex bg-[#F7F5F0] font-sans text-[#2C2621] transition-colors">
       
       {/* 1. Left Vertical Navigation Rail (Fixed 76px on far left edge) */}
       <LeftNavRail
@@ -375,7 +375,7 @@ export function App() {
       />
 
       {/* 2. Main Body Container (Offset by pl-[76px] on desktop, pb-20 for mobile bottom tab bar) */}
-      <div className="flex-1 lg:pl-[76px] flex flex-col min-w-0 pb-20 lg:pb-0">
+      <div className="flex-1 lg:pl-[76px] flex flex-col min-w-0 pb-20 lg:pb-0 bg-[#F7F5F0]">
         
         {/* Sticky Filter & Search Bar — chỉ thuộc view Tạp chí (grid).
             Các view khác (Cảm hứng, Màu Film) không render bộ lọc. */}
@@ -389,24 +389,24 @@ export function App() {
         )}
 
       {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 py-6 space-y-6">
+      <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 py-6 space-y-6 bg-[#F7F5F0]">
 
         {/* VIEW 2: Editorial Masonry / Grid Directory */}
         {activeView === 'grid' && (
           <div className="space-y-6">
             
             {/* View headline & summary */}
-            <div className="flex flex-col sm:flex-row sm:items-end justify-between border-b-2 border-slateInk pb-4 gap-2">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between border-b border-[#E2DAD0] pb-4 gap-2">
               <div>
-                <span className="font-mono-spec text-xs font-bold text-terracotta uppercase tracking-wider block">
+                <span className="font-mono-spec text-xs font-bold text-[#C76B3C] uppercase tracking-wider block">
                   BỘ SƯU TẬP TẠP CHÍ ẢNH THEO MÙA
                 </span>
-                <h2 className="font-editorial text-2xl sm:text-4xl font-extrabold text-slateInk mt-0.5">
+                <h2 className="font-bold text-2xl md:text-3xl tracking-tight text-[#2C2621] mt-0.5">
                   {filters.month ? `Tiêu Điểm Tháng ${filters.month} — Mùa Hoa Nở & Xu Hướng` : 'Tất Cả Điểm Chụp Đẹp Trong Năm'}
                 </h2>
               </div>
 
-              <div className="flex items-center space-x-2 text-xs font-mono-spec text-slateInk-muted">
+              <div className="flex items-center space-x-2 text-xs font-mono-spec text-[#8C8377]">
                 <span>LƯỚI TỶ LỆ 3:2</span>
                 <span>•</span>
                 <span>{filteredSpots.length} ĐỊA ĐIỂM</span>
@@ -415,10 +415,10 @@ export function App() {
 
             {/* Grid of Spots with Staggered Item Transition */}
             {filteredSpots.length === 0 ? (
-              <div className="p-12 text-center bg-paper-warm border-2 border-slateInk space-y-3 my-6">
+              <div className="p-12 text-center bg-[#FAF8F4] border border-[#E2DAD0] rounded-2xl space-y-3 my-6">
                 <AlertCircle className="w-10 h-10 text-terracotta mx-auto" />
-                <h3 className="font-editorial text-2xl font-bold text-slateInk">Không có địa điểm nào khớp với bộ lọc</h3>
-                <p className="text-xs text-slateInk-muted font-sans max-w-sm mx-auto">
+                <h3 className="font-editorial text-2xl font-bold text-[#2C2621]">Không có địa điểm nào khớp với bộ lọc</h3>
+                <p className="text-xs text-[#6E655B] font-sans max-w-sm mx-auto">
                   Hãy thử mở rộng tháng chụp, tắt bộ lọc cự ly hoặc xóa từ khóa tìm kiếm.
                 </p>
                 <button

@@ -85,9 +85,9 @@ export const SpotFilters: React.FC<SpotFiltersProps> = ({
   const showFilters = !isMobile || mobileSnap !== 'peek';
 
   return (
-    <div className={`p-3.5 border-b border-neutral-200/80 dark:border-neutral-800 shrink-0 space-y-2.5 bg-white/70 dark:bg-neutral-900/70 backdrop-blur-sm ${className}`}>
+    <div className={`p-3.5 border-b border-[#D8CFBD] shrink-0 space-y-2.5 bg-[#E8DEC7] ${className}`}>
       {/* ROW 1: Search Bar + Clear/Reset Actions */}
-      <div className="h-11 w-full rounded-full bg-neutral-100/90 dark:bg-neutral-800/90 border border-neutral-200/80 dark:border-neutral-700/80 px-3.5 flex items-center justify-between transition-all focus-within:ring-2 focus-within:ring-terracotta/40 focus-within:bg-white dark:focus-within:bg-neutral-850">
+      <div className="h-11 w-full rounded-2xl bg-[#FAF8F4] border border-[#D8CFBD] shadow-sm px-3.5 flex items-center justify-between transition-colors focus-within:ring-2 focus-within:ring-[#C76B3C]/30">
         <div className="flex items-center space-x-2 flex-1 min-w-0">
           <Search className="w-4 h-4 text-neutral-400 shrink-0" />
           <input
@@ -95,7 +95,7 @@ export const SpotFilters: React.FC<SpotFiltersProps> = ({
             value={filters.searchQuery}
             onChange={(e) => onChangeFilters(prev => ({ ...prev, searchQuery: e.target.value }))}
             placeholder={sidebarTab === 'spots' ? 'Tìm điểm chụp, cúc họa mi, áo dài...' : 'Tìm bài viết, tác giả, thiết bị...'}
-            className="w-full bg-transparent text-xs text-neutral-800 dark:text-neutral-100 placeholder-neutral-400 focus:outline-none font-medium"
+            className="w-full bg-transparent text-xs text-[#2C2621] placeholder-[#8C8377] focus:outline-none font-medium"
           />
         </div>
 
@@ -132,8 +132,8 @@ export const SpotFilters: React.FC<SpotFiltersProps> = ({
               type="button"
               onClick={() => handleChipClick(chip, onChangeFilters)}
               className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap shadow-xs transition-all shrink-0 ${active
-                  ? 'bg-neutral-900 text-white dark:bg-white dark:text-neutral-950 font-bold scale-105 shadow-sm'
-                  : 'bg-white/90 dark:bg-neutral-800/90 text-neutral-700 dark:text-neutral-300 border border-neutral-200/80 dark:border-neutral-700/80 hover:bg-white dark:hover:bg-neutral-750'
+                  ? 'bg-[#C76B3C] text-white font-bold shadow-sm'
+                  : 'bg-[#FAF8F4] text-[#6E655B] border border-[#D8CFBD] hover:text-[#2C2621]'
                 }`}
             >
               {chip.label}
@@ -145,13 +145,13 @@ export const SpotFilters: React.FC<SpotFiltersProps> = ({
       {showFilters && (
         <>
           {/* iOS-STYLE SEGMENTED SWITCH (🗺️ Điểm Chụp vs 💬 Bài Viết FB) */}
-          <div className="flex items-center p-1 bg-neutral-100/90 dark:bg-neutral-800/90 rounded-xl text-xs font-semibold border border-neutral-200/50 dark:border-neutral-750/50">
+          <div className="flex items-center p-1 bg-[#DDD3BD] rounded-xl text-xs font-semibold">
             <button
               type="button"
               onClick={() => setSidebarTab('spots')}
               className={`flex-1 flex items-center justify-center space-x-1.5 py-1.5 rounded-lg transition-all ${sidebarTab === 'spots'
-                  ? 'bg-white dark:bg-neutral-900 text-terracotta font-bold shadow-sm'
-                  : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
+                  ? 'bg-[#FAF8F4] text-[#2C2621] font-bold shadow-sm'
+                  : 'text-[#6E655B] hover:text-[#2C2621]'
                 }`}
             >
               <MapPin className="w-3.5 h-3.5 text-terracotta" />
@@ -162,8 +162,8 @@ export const SpotFilters: React.FC<SpotFiltersProps> = ({
               type="button"
               onClick={() => setSidebarTab('posts')}
               className={`flex-1 flex items-center justify-center space-x-1.5 py-1.5 rounded-lg transition-all ${sidebarTab === 'posts'
-                  ? 'bg-white dark:bg-neutral-900 text-blue-600 dark:text-blue-400 font-bold shadow-sm'
-                  : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
+                  ? 'bg-[#FAF8F4] text-[#2C2621] font-bold shadow-sm'
+                  : 'text-[#6E655B] hover:text-[#2C2621]'
                 }`}
             >
               <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />

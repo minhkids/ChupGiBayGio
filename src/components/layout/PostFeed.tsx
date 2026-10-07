@@ -70,7 +70,6 @@ const PostItem: React.FC<PostItemProps> = ({
                 alt=""
                 className="w-full h-full object-cover hover:scale-105 transition-transform"
                 loading="lazy"
-                onError={(event) => { event.currentTarget.style.visibility = 'hidden'; }}
               />
               {imgIdx === 2 && (post.galleryUrls || []).length > 3 && (
                 <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white text-xs font-mono-spec font-bold">
@@ -188,7 +187,7 @@ const PostFeedMobile: React.FC<PostFeedMobileProps> = ({
             <div className="grid grid-cols-3 gap-1 rounded-lg overflow-hidden">
               {post.galleryUrls.slice(0, 3).map((img, i) => (
                 <div key={i} className="aspect-4/3 bg-neutral-200 overflow-hidden">
-                  <img src={img} alt="" className="w-full h-full object-cover" loading="lazy" onError={(event) => { event.currentTarget.style.visibility = 'hidden'; }} />
+                  <img src={img} alt="" className="w-full h-full object-cover" loading="lazy" />
                 </div>
               ))}
             </div>

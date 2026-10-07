@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
+import { PinReferenceButton } from '../planner/PinReferenceButton';
 import { Film, Store, Sparkles } from 'lucide-react';
 import { FILM_STOCKS } from '../../utils/filmAdvisor';
+import { openNearestFilmShops } from '../../hooks/useNearestLabs';
 
 export const FilmGalleryView: React.FC = () => {
   const [copiedHex, setCopiedHex] = useState<string | null>(null);
@@ -14,14 +16,14 @@ export const FilmGalleryView: React.FC = () => {
   const films = Object.values(FILM_STOCKS);
 
   return (
-    <div className="absolute inset-0 bg-neutral-50 dark:bg-neutral-950 overflow-y-auto w-full custom-scrollbar">
+    <div className="absolute inset-0 bg-[#F7F5F0] overflow-y-auto w-full custom-scrollbar text-[#2C2621]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 pb-24">
         <div className="mb-8 lg:mb-12">
-          <h1 className="text-3xl sm:text-4xl font-black text-neutral-900 dark:text-white tracking-tight flex items-center gap-3">
+          <h1 className="text-3xl sm:text-4xl font-bold text-[#2C2621] tracking-tight flex items-center gap-3">
             <Film className="w-8 h-8 text-amber-500" />
             Các Cuộn Film Nổi Tiếng
           </h1>
-          <p className="mt-3 text-sm sm:text-base text-neutral-600 dark:text-neutral-400 max-w-2xl">
+          <p className="mt-3 text-sm sm:text-base text-[#6E655B] max-w-2xl">
             Khám phá đặc trưng màu sắc, thông số và các địa điểm chụp phù hợp nhất cho từng loại film.
           </p>
         </div>
@@ -30,10 +32,11 @@ export const FilmGalleryView: React.FC = () => {
           {films.map((film) => (
             <div 
               key={film.id}
-              className={`flex flex-col rounded-3xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 overflow-hidden shadow-sm hover:shadow-xl transition-shadow duration-300`}
+              className="flex flex-col rounded-3xl border border-[#E2DAD0] bg-white overflow-hidden shadow-[0_4px_20px_rgba(44,38,33,0.04)] hover:shadow-[0_8px_30px_rgba(44,38,33,0.08)] transition-shadow duration-300"
             >
               {/* Header / Hero Image */}
-              <div className="relative h-48 w-full bg-neutral-200 dark:bg-neutral-800 shrink-0">
+              <div className="relative h-48 w-full bg-[#EFE9DF] shrink-0 border-b border-[#EFE9DF]">
+                {film.sampleImageUrl && <PinReferenceButton imageUrl={film.sampleImageUrl} label={`Ảnh mẫu ${film.fullName}`} />}
                 {film.sampleImageUrl ? (
                   <img src={film.sampleImageUrl} alt={`Sample ${film.fullName}`} className="w-full h-full object-cover" />
                 ) : (
@@ -60,13 +63,13 @@ export const FilmGalleryView: React.FC = () => {
               {/* Body */}
               <div className="p-5 flex flex-col flex-1 gap-5">
                 <div>
-                  <p className="text-sm text-neutral-700 dark:text-neutral-300 italic mb-4">
+                  <p className="text-sm text-[#6E655B] italic mb-4">
                     "{film.description}"
                   </p>
                   
                   {/* Color Palette */}
                   <div className="space-y-2">
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-500 flex items-center gap-1.5">
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-[#8C8377] flex items-center gap-1.5">
                       <Sparkles className="w-3.5 h-3.5" /> Tone Màu Đặc Trưng
                     </h3>
                     <div className="flex rounded-xl overflow-hidden shadow-inner h-8">
@@ -90,13 +93,13 @@ export const FilmGalleryView: React.FC = () => {
                 </div>
 
                 {/* Info block */}
-                <div className="mt-auto space-y-4 pt-4 border-t border-neutral-100 dark:border-neutral-800">
+                <div className="mt-auto space-y-4 pt-4 border-t border-[#E2DAD0]">
                   {/* Time/Season */}
                   <div className="space-y-1.5">
-                    <h3 className="text-[11px] font-bold uppercase tracking-wider text-neutral-500">
+                    <h3 className="text-[11px] font-bold uppercase tracking-wider text-[#8C8377]">
                       Thời điểm chụp lý tưởng
                     </h3>
-                    <p className="text-sm text-neutral-800 dark:text-neutral-200">
+                    <p className="text-sm text-[#2C2621]">
                       {film.recommendedTime || 'Linh hoạt mọi thời điểm'}
                     </p>
                   </div>
@@ -109,14 +112,23 @@ export const FilmGalleryView: React.FC = () => {
                       </h3>
                       <ul className="space-y-2">
                         {film.nearbyShops.map((shop, i) => (
-                          <li key={i} className="text-xs bg-neutral-50 dark:bg-neutral-800/50 p-2 rounded-lg">
-                            <strong className="block text-neutral-800 dark:text-neutral-200">{shop.name}</strong>
-                            <span className="text-neutral-500 block truncate">{shop.address}</span>
+                          <li key={i} className="text-xs bg-[#FAF8F4] border border-[#D8CFBD] p-2 rounded-lg">
+                            <strong className="block text-[#2C2621]">{shop.name}</strong>
+                            <span className="text-[#6E655B] block truncate">{shop.address}</span>
                           </li>
                         ))}
                       </ul>
                     </div>
                   )}
+
+                  {/* Button to open Nearest Film Labs drawer */}
+                  <button
+                    type="button"
+                    onClick={() => openNearestFilmShops(film.fullName)}
+                    className="w-full mt-3 py-2 px-3 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 text-xs font-semibold transition-colors flex items-center justify-center space-x-1.5 border border-amber-500/30 cursor-pointer"
+                  >
+                    <span>📍 Tìm Lab gần đây còn sẵn cuộn này</span>
+                  </button>
                 </div>
               </div>
             </div>

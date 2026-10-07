@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { db } from '../../services/db';
 import type { PoseItem } from '../../types';
 import { PoseCamera } from '../features/PoseCamera';
+import { PinReferenceButton, poseReferenceImage } from '../planner/PinReferenceButton';
 import { modalShutterVariants, backdropVariants } from '../../utils/motion-tokens';
 
 interface PoseLibraryModalProps {
@@ -79,10 +80,11 @@ export const PoseLibraryModal: React.FC<PoseLibraryModalProps> = ({ onClose }) =
               <div className="p-4 overflow-y-auto flex-1 bg-neutral-50">
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                   {filteredPoses.map(pose => (
+                    <div key={pose.id} className="relative">
                     <button
-                      key={pose.id}
+                      type="button"
                       onClick={() => setSelectedPose(pose)}
-                      className="group flex flex-col items-center bg-white border border-slateInk/20 rounded-xl p-3 hover:border-terracotta hover:shadow-hard transition-all text-left"
+                      className="group w-full h-full flex flex-col items-center bg-white border border-slateInk/20 rounded-xl p-3 hover:border-terracotta hover:shadow-hard transition-all text-left"
                     >
                       <div className="w-full aspect-square bg-slate-100 rounded-full flex items-center justify-center mb-3 relative overflow-hidden border border-slateInk/10">
                         <svg 
@@ -104,6 +106,8 @@ export const PoseLibraryModal: React.FC<PoseLibraryModalProps> = ({ onClose }) =
                         <p className="text-xs text-slateInk-muted line-clamp-2">{pose.tips}</p>
                       </div>
                     </button>
+                    <PinReferenceButton imageUrl={poseReferenceImage(pose)} label={`Dáng chụp: ${pose.name}`} />
+                    </div>
                   ))}
                   {filteredPoses.length === 0 && (
                     <div className="col-span-full py-8 text-center text-slateInk-muted font-sans text-sm">

@@ -1,3 +1,4 @@
+import { PinReferenceButton } from '../planner/PinReferenceButton';
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
@@ -64,6 +65,7 @@ export const Panel: React.FC<PanelProps> = ({
             alt={spot.name}
             className="w-full h-full object-cover"
           />
+          <PinReferenceButton imageUrl={spot.galleryUrls?.[activePhotoIdx] || spot.coverImageUrl} label={spot.name} className="absolute top-2 right-14" />
 
           {/* Dismiss Button ✕ */}
           <button

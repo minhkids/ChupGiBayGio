@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search,
@@ -32,6 +32,10 @@ import { getLocalInsights } from '../data/localInsights';
 import { LocalInsightFeed } from './views/LocalInsightFeed';
 import { POSES, type PoseItem } from '../data/poses';
 import { TapToShopImage } from './outfit/TapToShopImage';
+import { NearestFilmShopsDrawer } from './layout/NearestFilmShopsDrawer';
+import { ShootServicesHubDrawer, type ServicesTab } from './layout/ShootServicesHubDrawer';
+import type { FilmLab } from '../data/filmLabsData';
+import { SingleFilmLabCard } from './layout/SingleFilmLabCard';
 
 interface GoogleMapsLayoutProps {
   spots: Spot[];
@@ -106,6 +110,46 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
   // camera is mounted here rather than reusing SpotDetailModal).
   const [showPoseCamera, setShowPoseCamera] = useState(false);
   const [selectedPose, setSelectedPose] = useState<PoseItem | null>(null);
+
+  // State quản lý Drawer Tìm Lab & Điểm mua film gần nhất
+  const [isAllLabsDrawerOpen, setIsAllLabsDrawerOpen] = useState(false);
+  const [filmFilterForLabs, setFilmFilterForLabs] = useState('');
+  const [selectedLabForMap, setSelectedLabForMap] = useState<FilmLab | null>(null);
+  const [focusedCoordinates, setFocusedCoordinates] = useState<{ lat: number; lng: number; zoom?: number } | null>(null);
+
+  // State quản lý Shoot Services Hub Drawer (Trang phục + Thợ chụp + Tiệm film)
+  const [isServicesHubOpen, setIsServicesHubOpen] = useState(false);
+  const [servicesHubTab, setServicesHubTab] = useState<ServicesTab>('outfit');
+
+  // Lắng nghe sự kiện toàn cục mở Shoot Services Hub (từ tab, nút dịch vụ...)
+  useEffect(() => {
+    const handleOpenHub = (e: Event) => {
+      const customEvent = e as CustomEvent<{ tab?: ServicesTab }>;
+      if (customEvent.detail?.tab) {
+        setServicesHubTab(customEvent.detail.tab);
+      }
+      setIsServicesHubOpen(true);
+    };
+
+    window.addEventListener('chupgi:open-services-hub', handleOpenHub);
+    return () => window.removeEventListener('chupgi:open-services-hub', handleOpenHub);
+  }, []);
+
+  // Lắng nghe sự kiện toàn cục mở Drawer Lab gần nhất (từ nút cuộn film, chi tiết điểm, ...)
+  useEffect(() => {
+    const handleOpenLabs = (e: Event) => {
+      const customEvent = e as CustomEvent<{ filmName?: string }>;
+      if (customEvent.detail?.filmName) {
+        setFilmFilterForLabs(customEvent.detail.filmName);
+      } else {
+        setFilmFilterForLabs('');
+      }
+      setIsAllLabsDrawerOpen(true);
+    };
+
+    window.addEventListener('chupgi:open-nearest-labs', handleOpenLabs);
+    return () => window.removeEventListener('chupgi:open-nearest-labs', handleOpenLabs);
+  }, []);
 
   // Find a matching pose for a spot
   const findMatchingPose = (spot: Spot): PoseItem => {
@@ -235,8 +279,13 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
           activeRegionId={activeRegionId}
           onSelectRegion={onSelectRegion}
           uiTheme={uiTheme}
-                    onToggleUiTheme={onToggleUiTheme}
-                  />
+          onToggleUiTheme={onToggleUiTheme}
+          onOpenNearestLabs={() => {
+            setFilmFilterForLabs('');
+            setIsAllLabsDrawerOpen(true);
+          }}
+          onOpenServices={() => setIsServicesHubOpen(prev => !prev)}
+        />
       </div>
 
       {/* ========================================================================= */}
@@ -256,6 +305,13 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
           isPickingLocation={isPickingLocation}
           pickedLocation={pickedLocation}
           onPickLocation={onPickLocation}
+          selectedFilmLab={selectedLabForMap}
+          onSelectFilmLab={(lab) => {
+            setSelectedLabForMap(lab);
+            setIsAllLabsDrawerOpen(false);
+            setFocusedCoordinates({ lat: lab.lat, lng: lab.lng, zoom: 15 });
+          }}
+          focusedCoordinates={focusedCoordinates}
         />
       </div>
 
@@ -309,7 +365,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                     ? 'Tìm máy ảnh, lens, tiệm thuê...'
                     : 'Tìm cuộn film, lab tráng scan...'
                 }
-                className="w-full bg-transparent text-sm text-neutral-800 dark:text-neutral-100 placeholder-neutral-400 focus:outline-none font-medium"
+                className="w-full bg-transparent text-sm text-[#2C2621] placeholder-[#8C8377] focus:outline-none font-medium"
               />
             </div>
 
@@ -488,24 +544,24 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
       {/* 3. LAYER 3: CONTENT PANEL SIDEBAR (w-[420px] NEXT TO NAV RAIL AT left-[76px]) */}
       {/* ========================================================================= */}
       <div
-        className={`hidden lg:flex flex-col fixed top-0 bottom-0 left-[76px] z-30 w-[440px] max-w-[calc(100vw-76px)] bg-white/95 dark:bg-neutral-900/95 border-r border-neutral-200/80 dark:border-neutral-800 shadow-2xl backdrop-blur-md overflow-hidden transition-transform duration-300 ease-out ${isSidebarCollapsed ? '-translate-x-full pointer-events-none' : 'translate-x-0'
+        className={`hidden lg:flex flex-col fixed top-0 bottom-0 left-[76px] z-30 w-[440px] max-w-[calc(100vw-76px)] bg-[#E8DEC7] border-r border-[#D8CFBD] text-[#2C2621] shadow-2xl overflow-hidden transition-transform duration-300 ease-out ${isSidebarCollapsed ? '-translate-x-full pointer-events-none' : 'translate-x-0'
           }`}
       >
         {/* Collapse Toggle Floating Tab Button [‹] */}
         <button
           type="button"
           onClick={() => setIsSidebarCollapsed(true)}
-          className="absolute -right-7 top-1/2 -translate-y-1/2 w-7 h-16 bg-white dark:bg-neutral-900 border-y border-r border-neutral-200 dark:border-neutral-800 rounded-r-xl shadow-md flex items-center justify-center cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-800 hover:w-8 text-neutral-600 dark:text-neutral-300 z-50 transition-all pointer-events-auto group"
+          className="absolute -right-7 top-1/2 -translate-y-1/2 w-7 h-16 bg-[#E8DEC7] border-y border-r border-[#D8CFBD] rounded-r-xl shadow-md flex items-center justify-center cursor-pointer hover:bg-[#DDD3BD] hover:w-8 text-[#554D43] z-50 transition-all pointer-events-auto group"
           title="Thu gọn danh sách"
         >
           <ChevronLeft className="w-4 h-4 group-hover:scale-110 transition-transform" />
         </button>
 
         {/* ─── STICKY HEADER (EXACTLY 2 CLEAN FILTER ROWS + iOS SEGMENTED SWITCH) ─── */}
-        <div className="px-5 py-4 border-b border-neutral-200/80 dark:border-neutral-800 shrink-0 space-y-3.5 bg-white/70 dark:bg-neutral-900/70 backdrop-blur-sm">
+        <div className="px-5 py-4 border-b border-[#D8CFBD] shrink-0 space-y-3.5 bg-[#E8DEC7]">
 
           {/* ROW 1: Search Bar + Clear/Reset Actions */}
-          <div className="h-12 w-full rounded-full bg-neutral-100/90 dark:bg-neutral-800/90 border border-neutral-200/80 dark:border-neutral-700/80 px-4 flex items-center justify-between transition-all focus-within:ring-2 focus-within:ring-terracotta/40 focus-within:bg-white dark:focus-within:bg-neutral-850">
+          <div className="h-12 w-full rounded-2xl bg-[#FAF8F4] border border-[#D8CFBD] shadow-sm px-4 flex items-center justify-between transition-colors focus-within:ring-2 focus-within:ring-[#C76B3C]/30 focus-within:border-[#C76B3C]">
             <div className="flex items-center space-x-2 flex-1 min-w-0">
               <Search className="w-4 h-4 text-neutral-400 shrink-0" />
               <input
@@ -519,7 +575,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                     ? 'Tìm máy ảnh, ống kính 85mm, tiệm thuê...'
                     : 'Tìm cuộn film, lab tráng scan...'
                 }
-                className="w-full bg-transparent text-sm text-neutral-800 dark:text-neutral-100 placeholder-neutral-400 focus:outline-none font-medium"
+                className="w-full bg-transparent text-sm text-[#2C2621] placeholder-[#8C8377] focus:outline-none font-medium"
               />
             </div>
 
@@ -549,13 +605,13 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
 
 
           {/* 3 PHOTOGRAPHY TABS: 👗 Quần áo | 📷 Thuê máy ảnh | 🎞️ Mua film */}
-          <div className="grid grid-cols-3 p-1 bg-neutral-100/90 dark:bg-neutral-800/90 rounded-xl text-xs font-semibold border border-neutral-200/50 dark:border-neutral-750/50 gap-1">
+          <div className="grid grid-cols-3 p-1 bg-[#DDD3BD] rounded-xl text-xs font-semibold gap-1">
             <button
               type="button"
               onClick={() => setSidebarTab('outfit')}
               className={`flex items-center justify-center space-x-1 py-2 px-1 rounded-lg transition-all text-center ${sidebarTab === 'outfit'
-                  ? 'bg-white dark:bg-neutral-900 text-terracotta font-bold shadow-sm'
-                  : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
+                  ? 'bg-[#FAF8F4] text-[#2C2621] font-bold shadow-sm'
+                  : 'text-[#6E655B] hover:text-[#2C2621] font-medium'
                 }`}
             >
               <span className="truncate">👗 Quần áo ({outfitInsights.length})</span>
@@ -565,8 +621,8 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
               type="button"
               onClick={() => setSidebarTab('camera')}
               className={`flex items-center justify-center space-x-1 py-2 px-1 rounded-lg transition-all text-center ${sidebarTab === 'camera'
-                  ? 'bg-white dark:bg-neutral-900 text-terracotta font-bold shadow-sm'
-                  : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
+                  ? 'bg-[#FAF8F4] text-[#2C2621] font-bold shadow-sm'
+                  : 'text-[#6E655B] hover:text-[#2C2621] font-medium'
                 }`}
             >
               <span className="truncate">📷 Thuê máy ({cameraInsights.length})</span>
@@ -576,13 +632,33 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
               type="button"
               onClick={() => setSidebarTab('film')}
               className={`flex items-center justify-center space-x-1 py-2 px-1 rounded-lg transition-all text-center ${sidebarTab === 'film'
-                  ? 'bg-white dark:bg-neutral-900 text-terracotta font-bold shadow-sm'
-                  : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
+                  ? 'bg-[#FAF8F4] text-[#2C2621] font-bold shadow-sm'
+                  : 'text-[#6E655B] hover:text-[#2C2621] font-medium'
                 }`}
             >
               <span className="truncate">🎞️ Mua film ({filmInsights.length})</span>
             </button>
           </div>
+
+          {/* Quick CTA to open Nearest Film Labs Finder */}
+          {sidebarTab === 'film' && (
+            <button
+              type="button"
+              onClick={() => {
+                setFilmFilterForLabs('');
+                setIsAllLabsDrawerOpen(true);
+              }}
+              className="w-full mt-2.5 py-2 px-3 rounded-xl bg-gradient-to-r from-amber-500/15 to-orange-500/15 border border-amber-500/30 hover:border-amber-500 text-amber-700 dark:text-amber-300 flex items-center justify-between text-xs font-bold transition-all shadow-xs group"
+            >
+              <span className="flex items-center space-x-1.5">
+                <span className="text-base group-hover:scale-110 transition-transform">📍</span>
+                <span>Tìm Lab gần tôi (GPS & Lọc film)</span>
+              </span>
+              <span className="text-[10px] font-mono-spec px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-600 dark:text-amber-300">
+                Mở Drawer →
+              </span>
+            </button>
+          )}
         </div>
 
         {/* ─── SCROLLABLE FEED BODY (Quần áo / Thuê máy ảnh / Mua film) ─── */}
@@ -614,11 +690,12 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
             {/* Cover Photo Gallery Banner with Visual Outfit Tap-to-Shop */}
             <div className="relative h-52 bg-neutral-900 shrink-0">
               <TapToShopImage
-                              src={selectedSpot.galleryUrls?.[activePhotoIdx] || selectedSpot.coverImageUrl}
-                              alt={selectedSpot.name}
-                              aspectRatio="h-52"
-                              imageClassName="w-full h-full object-cover"
-                            />
+                src={selectedSpot.galleryUrls?.[activePhotoIdx] || selectedSpot.coverImageUrl}
+                alt={selectedSpot.name}
+                spotId={selectedSpot.id}
+                aspectRatio="h-52"
+                imageClassName="w-full h-full object-cover"
+              />
 
               {/* Dismiss Button ✕ */}
               <button
@@ -784,6 +861,10 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                   <FilmSpecsCard
                     spot={selectedSpot}
                     onSelectFilmFilter={(filmId) => onChangeFilters(prev => ({ ...prev, filmId }))}
+                    onOpenNearestLabs={(filmName) => {
+                      setFilmFilterForLabs(filmName || '');
+                      setIsAllLabsDrawerOpen(true);
+                    }}
                   />
 
                   {/* PHOTOGRAPHY TIPS (Ống kính, Giờ vàng, Concept) */}
@@ -1055,11 +1136,12 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
               {/* Cover Photo with Visual Outfit Tap-to-Shop */}
               <div className="relative h-48 rounded-2xl overflow-hidden bg-neutral-900 shrink-0 shadow-md">
                 <TapToShopImage
-                                  src={selectedSpot.galleryUrls?.[activePhotoIdx] || selectedSpot.coverImageUrl}
-                                  alt={selectedSpot.name}
-                                  aspectRatio="h-48"
-                                  imageClassName="w-full h-full object-cover"
-                                />
+                  src={selectedSpot.galleryUrls?.[activePhotoIdx] || selectedSpot.coverImageUrl}
+                  alt={selectedSpot.name}
+                  spotId={selectedSpot.id}
+                  aspectRatio="h-48"
+                  imageClassName="w-full h-full object-cover"
+                />
 
                 <span className="absolute top-2.5 left-2.5 px-2.5 py-1 rounded-full bg-terracotta text-white text-[11px] font-semibold shadow-md">
                   {selectedSpot.seasonalTrend?.status === 'PEAK' ? 'Đang rộ' : (selectedSpot.seasonalTrend?.status || 'Đang rộ')}
@@ -1144,6 +1226,16 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                   {selectedSpot.description}
                 </p>
               </div>
+
+              {/* FILM PHOTOGRAPHY ADVISOR SPEC CARD (Mobile) */}
+              <FilmSpecsCard
+                spot={selectedSpot}
+                onSelectFilmFilter={(filmId) => onChangeFilters(prev => ({ ...prev, filmId }))}
+                onOpenNearestLabs={(filmName) => {
+                  setFilmFilterForLabs(filmName || '');
+                  setIsAllLabsDrawerOpen(true);
+                }}
+              />
 
               {/* Photography Guide */}
               <div className="space-y-3 pt-1">
@@ -1235,6 +1327,43 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
           onClose={() => { setShowPoseCamera(false); setSelectedPose(null); }}
         />
       )}
+
+      {/* Shoot Services & Gear Hub Drawer (Trang phục + Thợ chụp + Tiệm film) */}
+      <ShootServicesHubDrawer
+        isOpen={isServicesHubOpen}
+        onClose={() => setIsServicesHubOpen(false)}
+        initialTab={servicesHubTab}
+        onFlyToLab={(lab) => {
+          setSelectedLabForMap(lab);
+          setIsServicesHubOpen(false);
+          setFocusedCoordinates({ lat: lab.lat, lng: lab.lng, zoom: 16 });
+        }}
+        selectedLabId={selectedLabForMap?.id}
+      />
+
+      {/* Nearest Film Shops & Labs Finder Drawer */}
+      <NearestFilmShopsDrawer
+        isOpen={isAllLabsDrawerOpen}
+        onClose={() => setIsAllLabsDrawerOpen(false)}
+        filterFilm={filmFilterForLabs}
+        selectedLabId={selectedLabForMap?.id}
+        onFlyToLab={(lab) => {
+          setSelectedLabForMap(lab);
+          setIsAllLabsDrawerOpen(false);
+          setFocusedCoordinates({ lat: lab.lat, lng: lab.lng, zoom: 16 });
+        }}
+      />
+
+      <AnimatePresence>
+        {selectedLabForMap && !isAllLabsDrawerOpen && (
+          <SingleFilmLabCard
+            key={selectedLabForMap.id}
+            lab={selectedLabForMap}
+            userCoords={filters.userCoords}
+            onClose={() => setSelectedLabForMap(null)}
+          />
+        )}
+      </AnimatePresence>
 
     </div>
   );

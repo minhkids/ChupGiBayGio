@@ -66,7 +66,7 @@ export const VisualOutfitHotspot: React.FC<VisualOutfitHotspotProps> = ({
               {outfit.itemName}
             </p>
             {outfit.priceEstimate && (
-              <span className="text-[11px] font-bold text-emerald-400 block mt-1 tabular-nums">
+              <span className="text-[11px] font-bold text-amber-400 block mt-1 tabular-nums">
                 {outfit.priceEstimate}
               </span>
             )}

@@ -1,4 +1,4 @@
-import type { Spot, FilterState, InspirationPost, ConceptTag, BestTimeOfDay, SpotStatus } from '../../types';
+import type { Spot, FilterState, InspirationPost, ConceptTag, BestTimeOfDay, SpotStatus, Photographer } from '../../types';
 
 /**
  * Shared types for layout primitives
@@ -24,6 +24,8 @@ export interface LayoutCallbacks {
   onOpenSubmitSpotModal: () => void;
   handleOpenDirections: (spot: Spot) => void;
   handleShareSpot: (spot: Spot) => void;
+  onSelectPhotographer?: (photographer: Photographer) => void;
+  onOpenPhotographerDirectory?: () => void;
 }
 
 export interface SharedUIState {
@@ -74,7 +76,7 @@ export interface SpotDetailContentProps {
   detailTab: DetailTab;
   setDetailTab: (tab: DetailTab) => void;
   savedSpotIds: string[];
-  callbacks: Pick<LayoutCallbacks, 'onToggleSave' | 'handleOpenDirections' | 'handleShareSpot' | 'onOpenReportModal' | 'onOpenAddPostModal'>;
+  callbacks: Pick<LayoutCallbacks, 'onToggleSave' | 'handleOpenDirections' | 'handleShareSpot' | 'onOpenReportModal' | 'onOpenAddPostModal' | 'onSelectPhotographer' | 'onOpenPhotographerDirectory'>;
   className?: string;
 }
 

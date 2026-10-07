@@ -1,11 +1,15 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { PinReferenceButton } from '../planner/PinReferenceButton';
 import L from 'leaflet';
 import type { Spot } from '../../types';
 import { REGIONS } from '../../data/regions';
 import { getStatusBadgeInfo } from '../../utils/season';
 import { Compass, Layers, Key, Check, ExternalLink } from 'lucide-react';
+import { FILM_LABS, type FilmLab } from '../../data/filmLabsData';
 
 interface SpotMapProps {
+  editorial?: boolean;
   spots: Spot[];
   activeRegionId: string;
   selectedSpot: Spot | null;
@@ -15,11 +19,16 @@ interface SpotMapProps {
   isPickingLocation?: boolean;
   pickedLocation?: { lat: number; lng: number; address?: string } | null;
   onPickLocation?: (coords: { lat: number; lng: number }) => void;
+  filmLabs?: FilmLab[];
+  selectedFilmLab?: FilmLab | null;
+  onSelectFilmLab?: (lab: FilmLab) => void;
+  focusedCoordinates?: { lat: number; lng: number; zoom?: number } | null;
 }
 
 type TileProvider = 'osm' | 'esri' | 'carto';
 
 export const SpotMap: React.FC<SpotMapProps> = ({
+  editorial = false,
   spots,
   activeRegionId,
   selectedSpot,
@@ -28,12 +37,18 @@ export const SpotMap: React.FC<SpotMapProps> = ({
   className = '',
   isPickingLocation = false,
   pickedLocation = null,
-  onPickLocation
+  onPickLocation,
+  filmLabs,
+  selectedFilmLab,
+  onSelectFilmLab,
+  focusedCoordinates
 }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
+  const [popupReference, setPopupReference] = useState<{ container: HTMLElement; spot: Spot } | null>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const tileLayerRef = useRef<L.TileLayer | null>(null);
   const markersLayerRef = useRef<L.LayerGroup | null>(null);
+  const filmLabsLayerRef = useRef<L.LayerGroup | null>(null);
   const userMarkerRef = useRef<L.Marker | null>(null);
 
   const CARTO_DEFAULT_KEY = 'cb1_469u_1_6a12a7c07d0c9adf82fe0c70';
@@ -123,6 +138,8 @@ export const SpotMap: React.FC<SpotMapProps> = ({
 
     const markersLayer = L.layerGroup().addTo(map);
     markersLayerRef.current = markersLayer;
+    const filmLabsLayer = L.layerGroup().addTo(map);
+    filmLabsLayerRef.current = filmLabsLayer;
     mapInstanceRef.current = map;
 
     // Observe container resizing to automatically invalidateSize
@@ -198,6 +215,15 @@ export const SpotMap: React.FC<SpotMapProps> = ({
 
     spots.forEach((spot) => {
       const isSelected = selectedSpot?.id === spot.id;
+      if (editorial) {
+        const safeName = spot.name.replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character] || character);
+        const pinHtml = `<span class="editorial-map-pin${isSelected ? ' is-selected' : ''}"><span class="editorial-map-dot"></span><span class="editorial-map-label">${safeName}</span></span>`;
+        const icon = L.divIcon({ className: 'editorial-marker', html: pinHtml, iconSize: [20, 20], iconAnchor: [10, 10] });
+        L.marker([spot.lat, spot.lng], { icon, title: spot.name, alt: spot.name, zIndexOffset: isSelected ? 1000 : 0 })
+          .on('click', () => { if (!isPickingLocation) onSelectSpot(spot); })
+          .addTo(markersLayerRef.current!);
+        return;
+      }
       const status = spot.seasonalTrend.status;
       const statusInfo = getStatusBadgeInfo(status, spot.seasonalTrend.daysLeftInPeak);
 
@@ -239,6 +265,7 @@ export const SpotMap: React.FC<SpotMapProps> = ({
         <div style="width: 250px; font-family: 'Manrope', system-ui, sans-serif;" class="overflow-hidden">
           <div style="position: relative; height: 120px; background-color: #1C1D1F;">
             <img src="${spot.coverImageUrl}" style="width: 100%; height: 100%; object-fit: cover;" alt="${spot.name}" />
+            <div data-reference-pin></div>
             <span style="position: absolute; top: 6px; left: 6px; font-family: 'IBM Plex Mono', monospace; font-size: 9px; font-weight: 700; background: ${markerBg}; color: #fff; padding: 2px 5px; border: 1px solid #1C1D1F;">
               ${statusInfo.label}
             </span>
@@ -266,6 +293,8 @@ export const SpotMap: React.FC<SpotMapProps> = ({
       });
 
       marker.on('popupopen', () => {
+        const container = marker.getPopup()?.getElement()?.querySelector<HTMLElement>('[data-reference-pin]');
+        if (container) setPopupReference({ container, spot });
         const btn = document.getElementById(`view-spot-${spot.id}`);
         if (btn) {
           btn.onclick = () => onSelectSpot(spot);
@@ -273,6 +302,7 @@ export const SpotMap: React.FC<SpotMapProps> = ({
       });
 
       marker.addTo(markersLayerRef.current!);
+      marker.on('popupclose', () => setPopupReference(current => current?.spot.id === spot.id ? null : current));
     });
 
     // Handle user location marker
@@ -297,7 +327,54 @@ export const SpotMap: React.FC<SpotMapProps> = ({
         .bindPopup(`<strong style="font-family: 'IBM Plex Mono', monospace">Vị trí của bạn</strong>`)
         .addTo(mapInstanceRef.current);
     }
-  }, [spots, selectedSpot, userCoords, onSelectSpot]);
+  }, [spots, selectedSpot, userCoords, onSelectSpot, editorial, isPickingLocation]);
+
+  // Render Film Lab Markers Layer (cuộn film hoặc ống kính màu hổ phách)
+  useEffect(() => {
+    if (!mapInstanceRef.current || !filmLabsLayerRef.current) return;
+    filmLabsLayerRef.current.clearLayers();
+
+    const labs = filmLabs || FILM_LABS;
+    labs.forEach((lab) => {
+      const isSelected = selectedFilmLab?.id === lab.id;
+
+      const labIconHtml = `
+        <div class="relative cursor-pointer transition-transform hover:scale-125 ${isSelected ? 'scale-125 z-50' : 'z-30'}" title="${lab.name} - ${lab.address}">
+          <div style="background-color: #FAF8F4; border: 2px solid #C76B3C; box-shadow: 0 2px 10px rgba(199, 107, 60, 0.35);" 
+               class="w-7 h-7 rounded-full flex items-center justify-center text-[#C76B3C] font-mono text-[11px] font-bold">
+            🎞️
+          </div>
+          <div class="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[5px] border-t-[#C76B3C] mx-auto"></div>
+        </div>
+      `;
+
+      const customLabIcon = L.divIcon({
+        className: 'film-lab-marker',
+        html: labIconHtml,
+        iconSize: [28, 33],
+        iconAnchor: [14, 33],
+        popupAnchor: [0, -32]
+      });
+
+      const marker = L.marker([lab.lat, lab.lng], { icon: customLabIcon, title: lab.name });
+
+      marker.on('click', () => {
+        onSelectFilmLab?.(lab);
+      });
+
+      marker.addTo(filmLabsLayerRef.current!);
+    });
+  }, [filmLabs, selectedFilmLab, onSelectFilmLab]);
+
+  // Handle focused coordinates (e.g. fly to film lab on map)
+  useEffect(() => {
+    if (!mapInstanceRef.current || !focusedCoordinates) return;
+    mapInstanceRef.current.flyTo(
+      [focusedCoordinates.lat, focusedCoordinates.lng],
+      focusedCoordinates.zoom ?? 16,
+      { duration: 1.2 }
+    );
+  }, [focusedCoordinates]);
 
   // Reference for temporary picked location marker
   const pickedMarkerRef = useRef<L.Marker | null>(null);
@@ -394,9 +471,13 @@ export const SpotMap: React.FC<SpotMapProps> = ({
     <div className={`relative w-full h-full bg-neutral-100 overflow-hidden ${className}`}>
       {/* Map Container */}
       <div ref={mapContainerRef} className="w-full h-full z-10" />
+      {popupReference && createPortal(
+        <PinReferenceButton imageUrl={popupReference.spot.coverImageUrl} label={popupReference.spot.name} />,
+        popupReference.container,
+      )}
 
       {/* Layer & Provider Switcher - positioned at bottom right */}
-      <div className="absolute bottom-4 right-14 z-20 hidden sm:flex items-center space-x-1 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-md border border-neutral-200/80 dark:border-neutral-800 rounded-xl p-1 shadow-md font-mono-spec text-xs">
+      {!editorial && <><div className="absolute bottom-4 right-14 z-20 hidden sm:flex items-center space-x-1 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-md border border-neutral-200/80 dark:border-neutral-800 rounded-xl p-1 shadow-md font-mono-spec text-xs">
         <button
           type="button"
           onClick={() => handleSwitchProvider('osm')}
@@ -448,22 +529,22 @@ export const SpotMap: React.FC<SpotMapProps> = ({
       </div>
 
       {/* Map Legend Overlay - bottom right expandable or compact */}
-      <div className="absolute bottom-16 right-14 z-20 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-md border border-neutral-200/80 dark:border-neutral-800 p-2.5 rounded-xl shadow-md font-mono-spec text-[11px] space-y-1.5 hidden md:block max-w-[200px]">
-        <div className="font-bold text-neutral-800 dark:text-neutral-200 border-b border-neutral-200 dark:border-neutral-700 pb-1 uppercase tracking-wider flex items-center">
+      <div className="absolute bottom-16 right-14 z-20 bg-[#FAF8F4]/95 backdrop-blur-md border border-[#D8CFBD] text-[#2C2621] p-3 rounded-2xl shadow-md font-mono-spec text-[11px] space-y-1.5 hidden md:block max-w-[200px]">
+        <div className="font-bold text-[#2C2621] border-b border-[#D8CFBD] pb-1 uppercase tracking-wider flex items-center">
           <Layers className="w-3 h-3 mr-1 text-terracotta" />
           CHÚ THÍCH GHIM
         </div>
         <div className="flex items-center space-x-2">
           <span className="w-3.5 h-3.5 bg-terracotta rounded-none text-white text-[9px] flex items-center justify-center font-bold">★</span>
-          <span className="text-neutral-600 dark:text-neutral-300">Đang Rộ (Peak)</span>
+          <span className="text-[#6E655B]">Đang Rộ (Peak)</span>
         </div>
         <div className="flex items-center space-x-2">
           <span className="w-3.5 h-3.5 bg-amberFilm rounded-none text-neutral-900 text-[9px] flex items-center justify-center font-bold">!</span>
-          <span className="text-neutral-600 dark:text-neutral-300">Sắp Hết Mùa</span>
+          <span className="text-[#6E655B]">Sắp Hết Mùa</span>
         </div>
         <div className="flex items-center space-x-2">
           <span className="w-3.5 h-3.5 bg-olive rounded-none text-white text-[9px] flex items-center justify-center font-bold">+</span>
-          <span className="text-neutral-600 dark:text-neutral-300">Quanh Năm</span>
+          <span className="text-[#6E655B]">Quanh Năm</span>
         </div>
       </div>
 
@@ -474,6 +555,8 @@ export const SpotMap: React.FC<SpotMapProps> = ({
         <span className="text-slateInk-muted">•</span>
         <span className="text-slateInk">{spots.length} ghim hiển thị</span>
       </div>
+
+      </>}
 
       {/* Modal: Setup CARTO API Key */}
       {showKeyModal && (

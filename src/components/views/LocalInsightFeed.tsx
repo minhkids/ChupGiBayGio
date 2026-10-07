@@ -132,28 +132,28 @@ export const LocalInsightFeed: React.FC<LocalInsightFeedProps> = ({
               key={item.id}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="relative p-3.5 rounded-2xl border border-neutral-200/80 dark:border-neutral-800 bg-white dark:bg-neutral-850/80 hover:border-terracotta/40 hover:shadow-md transition-all space-y-2.5 shadow-xs"
+              className="relative rounded-2xl border border-[#D8CFBD] bg-[#FAF8F4] p-4 shadow-sm hover:shadow-md transition-all space-y-2.5 text-[#2C2621]"
             >
               {/* Header: loại + độ hot */}
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-1.5 min-w-0">
                   <span
-                    className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full ${
+                    className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-md ${
                       isDeal
-                        ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60'
-                        : 'bg-orange-50 text-orange-700 dark:bg-orange-950/60 dark:text-orange-300 border border-orange-200/60 dark:border-orange-800/60'
+                        ? 'bg-[#F3EAD7] text-[#8C4A1F] border border-[#DFCDB2]'
+                        : 'bg-[#F3EAD7] text-[#8C4A1F] border border-[#DFCDB2]'
                     }`}
                   >
                     {isDeal ? <Tag className="w-3 h-3" /> : <Flame className="w-3 h-3" />}
                     {isDeal ? 'Ưu đãi' : 'Đang hot'}
                   </span>
                   {item.isNearSelected && (
-                    <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-terracotta/10 text-terracotta border border-terracotta/20 truncate">
+                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-[#F3EAD7] text-[#8C4A1F] border border-[#DFCDB2] truncate">
                       Gần điểm đang chọn
                     </span>
                   )}
                 </div>
-                <span className="text-xs text-neutral-400 font-medium shrink-0">
+                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-[#F3EAD7] text-[#8C4A1F] border border-[#DFCDB2] shrink-0">
                   {CATEGORY_ICON[item.category]}{' '}
                   {INSIGHT_CATEGORIES.find(c => c.id === item.category)?.label.replace(/^\S+\s/, '')}
                 </span>
@@ -161,10 +161,10 @@ export const LocalInsightFeed: React.FC<LocalInsightFeedProps> = ({
 
               {/* Tiêu đề + mô tả */}
               <div>
-                <h4 className="text-[15px] font-bold text-neutral-900 dark:text-neutral-100 leading-snug">
+                <h4 className="text-sm font-bold text-[#2C2621] leading-snug">
                   {item.title}
                 </h4>
-                <p className="text-xs text-neutral-600 dark:text-neutral-300 leading-relaxed mt-1 line-clamp-3">
+                <p className="text-xs text-[#6E655B] leading-relaxed mt-1 line-clamp-3">
                   {item.detail}
                 </p>
               </div>
@@ -174,10 +174,10 @@ export const LocalInsightFeed: React.FC<LocalInsightFeedProps> = ({
                 {(item.priceNow || item.discountLabel) && (
                   <div className="flex items-baseline flex-wrap gap-x-2 gap-y-1">
                     {item.priceNow && (
-                      <span className="text-base font-bold text-terracotta tabular-nums">{item.priceNow}</span>
+                      <span className="text-sm font-bold font-mono text-[#C76B3C] tabular-nums">{item.priceNow}</span>
                     )}
                     {item.priceOld && (
-                      <span className="text-xs text-neutral-400 line-through tabular-nums">{item.priceOld}</span>
+                      <span className="text-xs text-[#8C8377] line-through tabular-nums">{item.priceOld}</span>
                     )}
                     {item.discountLabel && (
                       <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-terracotta text-white shadow-xs">
@@ -191,7 +191,7 @@ export const LocalInsightFeed: React.FC<LocalInsightFeedProps> = ({
                   <button
                     type="button"
                     onClick={() => handleOpenTapToShop(item)}
-                    className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-[#EE4D2D]/10 hover:bg-[#EE4D2D] text-[#EE4D2D] hover:text-white text-xs font-bold transition-all ml-auto"
+                    className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-[#ECE4D0] hover:bg-[#E0D5BE] text-[#2C2621] border border-[#D0C4AA] text-xs font-semibold transition-colors ml-auto"
                     title="Bóc set đồ & tìm trên Shopee / TikTok Shop"
                   >
                     <ShoppingBag className="w-3.5 h-3.5" />
@@ -201,13 +201,13 @@ export const LocalInsightFeed: React.FC<LocalInsightFeedProps> = ({
               </div>
 
               {/* Địa điểm + hiệu lực + chỉ đường */}
-              <div className="flex items-center justify-between gap-2 pt-2 border-t border-neutral-100 dark:border-neutral-800">
+              <div className="flex items-center justify-between gap-2 pt-2 border-t border-neutral-800">
                 <div className="min-w-0 space-y-0.5">
-                  <div className="text-xs font-semibold text-neutral-800 dark:text-neutral-200 flex items-center truncate">
+                  <div className="text-sm font-bold text-[#2C2621] flex items-center truncate">
                     <MapPin className="w-3.5 h-3.5 text-terracotta mr-1 shrink-0" />
                     <span className="truncate">{item.placeName}</span>
                   </div>
-                  <div className="text-[11px] text-neutral-400 truncate">
+                  <div className="text-xs text-[#6E655B] leading-relaxed truncate">
                     {item.areaLabel}
                     {item.validNote && (
                       <>
@@ -221,7 +221,7 @@ export const LocalInsightFeed: React.FC<LocalInsightFeedProps> = ({
                 <button
                   type="button"
                   onClick={() => openPlaceInMaps(item.placeName, item.areaLabel)}
-                  className="text-xs font-semibold text-terracotta hover:text-terracotta-dark hover:underline flex items-center gap-1 shrink-0 py-1 px-2 rounded-lg hover:bg-terracotta/5 transition-colors"
+                  className="text-xs font-medium text-[#554D43] hover:text-[#2C2621] flex items-center gap-1 shrink-0 py-1.5 px-3 rounded-xl bg-[#ECE4D0] hover:bg-[#E0D5BE] border border-[#D0C4AA] transition-colors"
                 >
                   <Navigation className="w-3.5 h-3.5" />
                   Chỉ đường

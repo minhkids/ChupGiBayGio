@@ -15,7 +15,8 @@ export type ConceptTag =
   | 'STREET' 
   | 'CYBERPUNK' 
   | 'MINIMAL' 
-  | 'KIEN_TRUC';
+  | 'KIEN_TRUC'
+  | 'CHRISTMAS';
 
 export interface SeasonalTrend {
   id: string;
@@ -243,3 +244,7 @@ export interface PostOutfit {
   similarItems: SimilarProduct[];
   aiNotes?: string;
 }
+
+export * from './photographer';
+export * from './planner';
+

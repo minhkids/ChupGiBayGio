@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Shirt, MapPin, Phone, ExternalLink, Camera, Info } from 'lucide-react';
+import { Shirt, MapPin, Phone, ExternalLink, Camera } from 'lucide-react';
 import type { Spot } from '../../types';
 import { db } from '../../services/db';
 import { calculateDistanceKm, formatDistance } from '../../utils/geo';
@@ -24,14 +24,10 @@ export const OutfitAdvisorCard: React.FC<OutfitAdvisorCardProps> = ({ spot }) =>
     <div className="rounded-2xl bg-neutral-50/80 p-4 border border-neutral-200/70 space-y-4">
       <div className="flex items-center space-x-2 text-xs font-mono-spec font-bold uppercase text-slateInk border-b border-paper-border pb-2">
         <Shirt className="w-4 h-4 text-terracotta" />
-        <span>GỢI Ý TRANG PHỤC THEO BỐI CẢNH</span>
+        <span>GỢI Ý TRANG PHỤC & NƠI THUÊ (OUTFIT ADVISOR)</span>
       </div>
 
       <div className="space-y-3">
-        <div className="flex items-start gap-2 rounded-xl border border-sky-200 bg-sky-50 px-3 py-2 text-xs leading-relaxed text-sky-900 dark:border-sky-900/60 dark:bg-sky-950/30 dark:text-sky-200">
-          <Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-          <p>Đây là gợi ý phối đồ dựa trên bối cảnh và bảng màu địa điểm, không phải trang phục được nhận diện hoặc đánh giá từ ảnh cộng đồng.</p>
-        </div>
         {/* Concept & Outfit Recommendations */}
         <div>
           <span className="text-xs font-mono-spec font-bold text-slateInk block mb-1">

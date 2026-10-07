@@ -1,4 +1,5 @@
 import React from 'react';
+import { PinReferenceButton } from '../planner/PinReferenceButton';
 import { X, Bookmark, Trash2, ArrowUpRight, MapPin } from 'lucide-react';
 import type { Spot } from '../../types';
 
@@ -59,11 +60,14 @@ export const SavedSpotsModal: React.FC<SavedSpotsModalProps> = ({
                     onClose();
                   }}
                 >
+                  <div className="relative shrink-0">
+                  <PinReferenceButton imageUrl={spot.coverImageUrl} label={spot.name} className="absolute top-1 right-1" />
                   <img
                     src={spot.coverImageUrl}
                     alt={spot.name}
                     className="w-14 h-14 object-cover border border-slateInk shrink-0"
                   />
+                  </div>
                   <div className="min-w-0">
                     <span className="text-[10px] font-mono-spec text-terracotta font-bold uppercase block truncate">
                       {spot.seasonalTrend.trendTitle}

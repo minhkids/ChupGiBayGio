@@ -1,8 +1,11 @@
+import { PinReferenceButton } from '../planner/PinReferenceButton';
 import React from 'react';
 import { Navigation, Share2, Flag, Bookmark, Camera, Clock, Sparkles, ExternalLink } from 'lucide-react';
 import type { Spot } from '../../types';
 import { getStatusBadgeInfo } from '../../utils/season';
+import { CONCEPT_METADATA } from '../../utils/season';
 import type { SpotDetailContentProps } from './shared-types';
+import { SpotPhotographersSection } from '../photographers/SpotPhotographersSection';
 
 interface QuickActionsProps {
   spot: Spot;
@@ -118,7 +121,7 @@ const PhotographyTips: React.FC<PhotographyTipsProps> = ({ spot }) => {
           <div className="flex flex-wrap gap-1 mt-1">
             {spot.seasonalTrend?.conceptTags.map((tag, tIdx) => (
               <span key={tIdx} className="px-2 py-0.5 bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800/60 rounded-md text-[10px]">
-                #{tag}
+                {CONCEPT_METADATA[tag]?.label || `#${tag}`}
               </span>
             ))}
           </div>
@@ -141,6 +144,15 @@ const SpotDetailInfoTab: React.FC<SpotDetailInfoTabProps> = ({ spot, callbacks }
       <BloomCondition spot={spot} />
       {/* FilmSpecsCard is imported dynamically to avoid circular deps */}
       <PhotographyTips spot={spot} />
+      {/* Nhiếp ảnh gia chuyên chụp góc này */}
+      {callbacks.onSelectPhotographer && (
+        <SpotPhotographersSection
+          spotId={spot.id}
+          spotName={spot.name}
+          onSelectPhotographer={callbacks.onSelectPhotographer}
+          onOpenDirectory={callbacks.onOpenPhotographerDirectory}
+        />
+      )}
     </>
   );
 };
@@ -230,6 +242,7 @@ export const SpotDetailContent: React.FC<SpotDetailContentProps> = ({
           alt={spot.name}
           className="w-full h-full object-cover"
         />
+          <PinReferenceButton imageUrl={allImages[activePhotoIdx] || spot.coverImageUrl} label={spot.name} />
 
         {/* Status Badge */}
         <span className={`absolute top-3 left-3 px-2.5 py-1 rounded-md bg-terracotta text-white font-mono-spec text-[10px] font-bold shadow-md uppercase tracking-wider ${statusInfo.classNames}`}>
