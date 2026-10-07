@@ -22,8 +22,8 @@ import type { LucideIcon } from 'lucide-react';
 import type { WeatherData } from '../../hooks/useWeather';
 
 interface LeftNavRailProps {
-  activeView: 'map' | 'grid' | 'moodboard' | 'film';
-  onChangeView: (view: 'map' | 'grid' | 'moodboard' | 'film') => void;
+  activeView: 'map' | 'grid' | 'moodboard' | 'film' | 'services';
+  onChangeView: (view: 'map' | 'grid' | 'moodboard' | 'film' | 'services') => void;
   savedCount: number;
   onOpenSavedModal: () => void;
   onOpenSubmitSpotModal: () => void;
@@ -36,16 +36,17 @@ interface LeftNavRailProps {
   onToggleUiTheme?: () => void;
   onSelectFilmFilter?: () => void;
   onOpenNearestLabs?: () => void;
-  onOpenServices?: () => void;
+
 }
 
-type ViewId = 'map' | 'grid' | 'moodboard' | 'film';
+type ViewId = 'map' | 'grid' | 'moodboard' | 'film' | 'services';
 
 const NAV_ITEMS: { id: ViewId; label: string; short: string; icon: LucideIcon }[] = [
   { id: 'map', label: 'Bản đồ', short: 'Bản đồ', icon: Map },
   { id: 'grid', label: 'Tạp chí', short: 'Tạp chí', icon: BookOpen },
   { id: 'moodboard', label: 'Cảm hứng', short: 'Cảm hứng', icon: Palette },
   { id: 'film', label: 'Màu Film', short: 'Màu Film', icon: Layers },
+  { id: 'services', label: 'Dịch vụ', short: 'Dịch vụ', icon: ShoppingBag },
 ];
 
 const WEATHER_ICONS: Record<string, LucideIcon> = {
@@ -70,7 +71,7 @@ export const LeftNavRail: React.FC<LeftNavRailProps> = ({
   onToggleAtmospheric,
   onSelectFilmFilter,
   onOpenNearestLabs,
-  onOpenServices,
+
 }) => {
   const WeatherIcon = WEATHER_ICONS[weather.effect] ?? CloudSun;
   const temperature = Math.round(weather.temperature);
@@ -176,24 +177,7 @@ export const LeftNavRail: React.FC<LeftNavRailProps> = ({
               </span>
             </motion.button>
 
-            {/* "Dịch vụ" (Shoot Services Hub) as 6th nav item */}
-            {onOpenServices && (
-              <motion.button
-                type="button"
-                onClick={onOpenServices}
-                whileHover={{ y: -2 }}
-                transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-                className="group relative flex w-full flex-col items-center gap-1 py-2.5 transition-colors duration-200 focus-visible:outline-none"
-                title="Dịch vụ & Trang bị (Trang phục, Thợ chụp, Tiệm film)"
-              >
-                <span className="relative flex h-8 w-8 items-center justify-center rounded-2xl bg-[#F3EAD7] text-[#C76B3C] transition-colors duration-200 group-hover:bg-[#DFCDB2]">
-                  <ShoppingBag className="h-5 w-5" strokeWidth={1.7} />
-                </span>
-                <span className="text-[10px] font-medium leading-tight text-amber-600 dark:text-amber-400 select-none">
-                  Dịch vụ
-                </span>
-              </motion.button>
-            )}
+
           </nav>
         </div>
 

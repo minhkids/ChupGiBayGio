@@ -25,12 +25,13 @@ const SavedSpotsModal = lazy(() => import('./components/modals/SavedSpotsModal')
 const AddFacebookPostModal = lazy(() => import('./components/modals/AddFacebookPostModal').then(m => ({ default: m.AddFacebookPostModal })));
 const MoodboardView = lazy(() => import('./components/views/MoodboardView').then(m => ({ default: m.MoodboardView })));
 const FilmGalleryView = lazy(() => import('./components/views/FilmGalleryView').then(m => ({ default: m.FilmGalleryView })));
+const ServicesHubView = lazy(() => import('./components/layout/ServicesHubView').then(m => ({ default: m.ServicesHubView })));
 const SpotDetailModal = lazy(() => import('./components/modals/SpotDetailModal').then(m => ({ default: m.SpotDetailModal })));
 
 export function App() {
   const [spots, setSpots] = useState<Spot[]>(db.spots.getAll());
   const [activeRegionId, setActiveRegionId] = useState<string>('hanoi');
-  const [activeView, setActiveView] = useState<'map' | 'grid' | 'moodboard' | 'film'>('map');
+  const [activeView, setActiveView] = useState<'map' | 'grid' | 'moodboard' | 'film' | 'services'>('map');
   const [uiTheme, setUiTheme] = useState<'modern' | 'editorial'>('modern');
   const currentMonth = useMemo(() => new Date().getMonth() + 1, []); // eslint-disable-line react/purity — runs once at mount
 
@@ -473,6 +474,12 @@ export function App() {
         {activeView === 'film' && (
           <Suspense fallback={<div className="p-8 text-center">Đang tải gallery film...</div>}>
           <FilmGalleryView />
+          </Suspense>
+        )}
+
+        {activeView === 'services' && (
+          <Suspense fallback={<div className="p-8 text-center">Đang tải dịch vụ...</div>}>
+            <ServicesHubView onClose={() => setActiveView('map')} />
           </Suspense>
         )}
 

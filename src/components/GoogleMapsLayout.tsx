@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { lazy, Suspense, useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search,
@@ -33,9 +33,11 @@ import { LocalInsightFeed } from './views/LocalInsightFeed';
 import { POSES, type PoseItem } from '../data/poses';
 import { TapToShopImage } from './outfit/TapToShopImage';
 import { NearestFilmShopsDrawer } from './layout/NearestFilmShopsDrawer';
-import { ShootServicesHubDrawer, type ServicesTab } from './layout/ShootServicesHubDrawer';
+import type { ServicesTab } from './layout/ShootServicesHubDrawer';
 import type { FilmLab } from '../data/filmLabsData';
 import { SingleFilmLabCard } from './layout/SingleFilmLabCard';
+
+const ShootServicesHubDrawer = lazy(() => import('./layout/ShootServicesHubDrawer').then(m => ({ default: m.ShootServicesHubDrawer })));
 
 interface GoogleMapsLayoutProps {
   spots: Spot[];
@@ -49,8 +51,8 @@ interface GoogleMapsLayoutProps {
   onResetFilters: () => void;
   activeRegionId: string;
   onSelectRegion: (regionId: string) => void;
-  activeView: 'map' | 'grid' | 'moodboard' | 'film';
-  onChangeView: (view: 'map' | 'grid' | 'moodboard' | 'film') => void;
+  activeView: 'map' | 'grid' | 'moodboard' | 'film' | 'services';
+  onChangeView: (view: 'map' | 'grid' | 'moodboard' | 'film' | 'services') => void;
   onOpenSubmitSpotModal: () => void;
   onOpenSavedModal: () => void;
   onOpenReportModal: (spot: Spot) => void;
@@ -284,7 +286,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
             setFilmFilterForLabs('');
             setIsAllLabsDrawerOpen(true);
           }}
-          onOpenServices={() => setIsServicesHubOpen(prev => !prev)}
+
         />
       </div>
 
@@ -1329,6 +1331,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
       )}
 
       {/* Shoot Services & Gear Hub Drawer (Trang phục + Thợ chụp + Tiệm film) */}
+      <Suspense fallback={null}>
       <ShootServicesHubDrawer
         isOpen={isServicesHubOpen}
         onClose={() => setIsServicesHubOpen(false)}
@@ -1340,6 +1343,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
         }}
         selectedLabId={selectedLabForMap?.id}
       />
+      </Suspense>
 
       {/* Nearest Film Shops & Labs Finder Drawer */}
       <NearestFilmShopsDrawer

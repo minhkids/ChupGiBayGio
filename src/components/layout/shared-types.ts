@@ -6,7 +6,7 @@ import type { Spot, FilterState, InspirationPost, ConceptTag, BestTimeOfDay, Spo
 export type SidebarTab = 'spots' | 'posts';
 export type DetailTab = 'info' | 'posts';
 export type DrawerSnap = 'peek' | 'half' | 'full';
-export type ViewMode = 'map' | 'grid' | 'moodboard' | 'film';
+export type ViewMode = 'map' | 'grid' | 'moodboard' | 'film' | 'services';
 
 // Re-export commonly used types
 export type { Spot, FilterState, InspirationPost, ConceptTag, BestTimeOfDay, SpotStatus };

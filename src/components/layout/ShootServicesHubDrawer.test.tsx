@@ -1,10 +1,26 @@
 // @vitest-environment jsdom
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { afterEach, describe, it, expect, vi } from 'vitest';
+import { cleanup, render, screen, fireEvent } from '@testing-library/react';
 import { ShootServicesHubDrawer } from './ShootServicesHubDrawer';
 import { ShootPlanProvider } from '../../context/ShootPlanContext';
 
 describe('ShootServicesHubDrawer', () => {
+  afterEach(cleanup);
+
+  it('renders a dedicated, full-width services page layout', () => {
+    render(
+      <ShootPlanProvider>
+        <ShootServicesHubDrawer isOpen onClose={() => undefined} standalone />
+      </ShootPlanProvider>
+    );
+
+    expect(screen.getByRole('heading', { name: 'Chuẩn bị cho buổi chụp' })).toBeDefined();
+    expect(screen.getByText('Tìm outfit và tiệm thuê')).toBeDefined();
+    expect(screen.getByText('Chọn phong cách và ngân sách')).toBeDefined();
+    expect(screen.getByText('Tìm film và lab gần bạn')).toBeDefined();
+    expect(screen.getByRole('complementary').className).toContain('lg:right-0');
+  });
+
   it('renders and switches across all 3 service tabs (Trang phục, Thợ chụp, Mua film)', () => {
     const onClose = vi.fn();
 

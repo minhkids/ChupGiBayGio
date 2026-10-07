@@ -37,6 +37,7 @@ interface ShootServicesHubDrawerProps {
   onSelectPhotographer?: (photographer: Photographer) => void;
   onFlyToLab?: (lab: FilmLab) => void;
   selectedLabId?: string | null;
+  standalone?: boolean;
 }
 
 // Preset tags for visual outfit search
@@ -55,7 +56,8 @@ export const ShootServicesHubDrawer: React.FC<ShootServicesHubDrawerProps> = ({
   initialTab = 'outfit',
   onSelectPhotographer,
   onFlyToLab,
-  selectedLabId
+  selectedLabId,
+  standalone = false
 }) => {
   const [activeTab, setActiveTab] = useState<ServicesTab>(initialTab);
   const shootPlan = useShootPlan();
@@ -136,107 +138,104 @@ export const ShootServicesHubDrawer: React.FC<ShootServicesHubDrawerProps> = ({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-40 lg:pointer-events-none">
+      <div className={`fixed inset-0 z-40 lg:pointer-events-none ${standalone ? 'bottom-20 lg:bottom-0' : ''}`}>
         {/* Mobile backdrop */}
-        <motion.div
+        {!standalone && <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
           className="fixed inset-0 bg-black/60 backdrop-blur-xs lg:hidden pointer-events-auto"
-        />
+        />}
 
         {/* Drawer Panel */}
         <motion.aside
-          initial={{ x: -440, opacity: 0 }}
+          initial={standalone ? { opacity: 0 } : { x: -440, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
-          exit={{ x: -440, opacity: 0 }}
+          exit={standalone ? { opacity: 0 } : { x: -440, opacity: 0 }}
           transition={{ type: 'spring', damping: 28, stiffness: 320 }}
-          className="fixed top-0 bottom-0 left-0 w-full sm:w-[420px] lg:left-[var(--rail-width,76px)] lg:w-[420px] z-40 bg-[#E8DEC7] text-[#2C2621] border-r border-[#D8CFBD] shadow-2xl flex flex-col font-sans select-none overflow-hidden pointer-events-auto"
+          className={`fixed top-0 ${standalone ? 'bottom-20 lg:bottom-0' : 'bottom-0'} left-0 w-full z-40 bg-[#E8DEC7] text-[#2C2621] border-r border-[#D8CFBD] shadow-2xl flex flex-col font-sans select-none overflow-hidden pointer-events-auto ${standalone ? 'lg:left-[76px] lg:right-0 lg:w-auto' : 'sm:w-[420px] lg:left-[var(--rail-width,76px)] lg:w-[420px]'}`}
         >
           {/* ─── DRAWER HEADER ─── */}
-          <header className="px-5 py-4 border-b border-[#D8CFBD] bg-[#FAF8F4]/90 backdrop-blur-md flex items-center justify-between shrink-0">
+          <header className={standalone ? 'px-6 sm:px-10 lg:px-14 py-6 lg:py-9 border-b border-[#E2DAD0] bg-[#FAF8F4] flex items-start justify-between gap-6 shrink-0' : 'px-5 py-4 border-b border-[#D8CFBD] bg-[#FAF8F4]/90 backdrop-blur-md flex items-center justify-between shrink-0'}>
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-xl bg-[#F3EAD7] border border-[#DFCDB2] flex items-center justify-center text-[#C76B3C] shadow-sm">
+              <div className={`${standalone ? 'w-12 h-12 rounded-2xl' : 'w-10 h-10 rounded-xl'} bg-[#F3EAD7] border border-[#DFCDB2] flex items-center justify-center text-[#C76B3C] shadow-sm shrink-0`}>
                 <ShoppingBag className="w-5 h-5" strokeWidth={1.8} />
               </div>
               <div>
                 <div className="flex items-center space-x-2">
-                  <span className="text-[10px] font-mono-spec tracking-wider uppercase text-[#C76B3C] font-bold">
-                    SHOOT HUB
-                  </span>
-                  <span className="text-[10px] px-1.5 py-0.2 bg-[#ECE4D0] text-[#6E655B] rounded font-mono-spec">
-                    3 Dịch vụ
-                  </span>
+                  <span className="text-[10px] font-mono-spec tracking-wider uppercase text-[#C76B3C] font-bold">{standalone ? 'DỊCH VỤ CHO BUỔI CHỤP' : 'SHOOT HUB'}</span>
+                  {!standalone && <span className="text-[10px] px-1.5 py-0.2 bg-[#ECE4D0] text-[#6E655B] rounded font-mono-spec">3 Dịch vụ</span>}
                 </div>
-                <h2 className="text-base font-bold text-[#2C2621] flex items-center space-x-1.5 mt-0.5">
-                  <span>Trang Bị & Dịch Vụ Buổi Chụp</span>
+                <h2 className={`${standalone ? 'text-2xl sm:text-3xl lg:text-4xl mt-2' : 'text-base mt-0.5'} font-bold tracking-tight text-[#2C2621]`}>
+                  {standalone ? 'Chuẩn bị cho buổi chụp' : 'Trang Bị & Dịch Vụ Buổi Chụp'}
                 </h2>
+                {standalone && <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[#6E655B]">Chọn trang phục, tìm người đồng hành hoặc chuẩn bị film — mọi thứ cần cho buổi chụp ở cùng một nơi.</p>}
               </div>
             </div>
 
             <button
               type="button"
               onClick={onClose}
-              className="w-8 h-8 rounded-full bg-[#ECE4D0] hover:bg-[#E0D5BE] text-[#6E655B] hover:text-[#2C2621] flex items-center justify-center transition-colors"
-              title="Đóng trang bị"
-              aria-label="Đóng"
+              className={`${standalone ? 'h-10 px-4 gap-2 rounded-xl border border-[#D8CFBD] bg-white hover:bg-[#F3EAD7]' : 'w-8 h-8 rounded-full bg-[#ECE4D0] hover:bg-[#E0D5BE]'} text-[#6E655B] hover:text-[#2C2621] flex items-center justify-center transition-colors shrink-0`}
+              title={standalone ? 'Quay lại bản đồ' : 'Đóng trang bị'}
+              aria-label={standalone ? 'Quay lại bản đồ' : 'Đóng'}
             >
-              <X className="w-4 h-4" />
+              {standalone ? <><X className="w-4 h-4" /><span className="text-sm font-semibold">Bản đồ</span></> : <X className="w-4 h-4" />}
             </button>
           </header>
 
           {/* ─── 3 SEGMENTED CONTROL TABS ─── */}
-          <div className="p-3 bg-[#E8DEC7] border-b border-[#D8CFBD] shrink-0">
-            <div className="grid grid-cols-3 p-1 bg-[#DDD3BD] rounded-xl border border-[#D8CFBD] text-xs font-semibold gap-1">
+          <div className={standalone ? 'px-6 sm:px-10 lg:px-14 py-5 bg-[#FAF8F4] border-b border-[#E2DAD0] shrink-0' : 'p-3 bg-[#E8DEC7] border-b border-[#D8CFBD] shrink-0'}>
+            <div className={standalone ? 'grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-6xl' : 'grid grid-cols-3 p-1 bg-[#DDD3BD] rounded-xl border border-[#D8CFBD] text-xs font-semibold gap-1'}>
               <button
                 type="button"
                 onClick={() => setActiveTab('outfit')}
-                className={`flex items-center justify-center space-x-1.5 py-2 px-1 rounded-lg transition-all text-center ${
+                className={`${standalone ? 'min-h-[76px] justify-start px-4 py-3 rounded-2xl border text-left' : 'justify-center space-x-1.5 py-2 px-1 rounded-lg text-center'} flex items-center gap-3 transition-all ${
                   activeTab === 'outfit'
-                    ? 'bg-[#C76B3C] text-white font-bold shadow-md'
-                    : 'text-[#6E655B] hover:text-[#2C2621] hover:bg-[#FAF8F4]'
+                    ? standalone ? 'bg-[#F4E9DA] border-[#C76B3C] text-[#2C2621] shadow-sm' : 'bg-[#C76B3C] text-white font-bold shadow-md'
+                    : standalone ? 'bg-white border-[#E2DAD0] text-[#6E655B] hover:border-[#C76B3C]/50' : 'text-[#6E655B] hover:text-[#2C2621] hover:bg-[#FAF8F4]'
                 }`}
               >
-                <Shirt className="w-3.5 h-3.5" />
-                <span>Trang phục</span>
+                <Shirt className={standalone ? 'w-5 h-5 shrink-0 text-[#C76B3C]' : 'w-3.5 h-3.5'} />
+                <span className="flex flex-col"><span>Trang phục</span>{standalone && <span className="mt-1 text-xs font-normal text-[#6E655B]">Tìm outfit và tiệm thuê</span>}</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setActiveTab('photographers')}
-                className={`flex items-center justify-center space-x-1.5 py-2 px-1 rounded-lg transition-all text-center ${
+                className={`${standalone ? 'min-h-[76px] justify-start px-4 py-3 rounded-2xl border text-left' : 'justify-center space-x-1.5 py-2 px-1 rounded-lg text-center'} flex items-center gap-3 transition-all ${
                   activeTab === 'photographers'
-                    ? 'bg-[#C76B3C] text-white font-bold shadow-md'
-                    : 'text-[#6E655B] hover:text-[#2C2621] hover:bg-[#FAF8F4]'
+                    ? standalone ? 'bg-[#F4E9DA] border-[#C76B3C] text-[#2C2621] shadow-sm' : 'bg-[#C76B3C] text-white font-bold shadow-md'
+                    : standalone ? 'bg-white border-[#E2DAD0] text-[#6E655B] hover:border-[#C76B3C]/50' : 'text-[#6E655B] hover:text-[#2C2621] hover:bg-[#FAF8F4]'
                 }`}
               >
-                <Camera className="w-3.5 h-3.5" />
-                <span>Thợ chụp</span>
+                <Camera className={standalone ? 'w-5 h-5 shrink-0 text-[#C76B3C]' : 'w-3.5 h-3.5'} />
+                <span className="flex flex-col"><span>Thợ chụp</span>{standalone && <span className="mt-1 text-xs font-normal text-[#6E655B]">Chọn phong cách và ngân sách</span>}</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setActiveTab('film')}
-                className={`flex items-center justify-center space-x-1.5 py-2 px-1 rounded-lg transition-all text-center ${
+                className={`${standalone ? 'min-h-[76px] justify-start px-4 py-3 rounded-2xl border text-left' : 'justify-center space-x-1.5 py-2 px-1 rounded-lg text-center'} flex items-center gap-3 transition-all ${
                   activeTab === 'film'
-                    ? 'bg-[#C76B3C] text-white font-bold shadow-md'
-                    : 'text-[#6E655B] hover:text-[#2C2621] hover:bg-[#FAF8F4]'
+                    ? standalone ? 'bg-[#F4E9DA] border-[#C76B3C] text-[#2C2621] shadow-sm' : 'bg-[#C76B3C] text-white font-bold shadow-md'
+                    : standalone ? 'bg-white border-[#E2DAD0] text-[#6E655B] hover:border-[#C76B3C]/50' : 'text-[#6E655B] hover:text-[#2C2621] hover:bg-[#FAF8F4]'
                 }`}
               >
-                <Film className="w-3.5 h-3.5" />
-                <span>Mua film</span>
+                <Film className={standalone ? 'w-5 h-5 shrink-0 text-[#C76B3C]' : 'w-3.5 h-3.5'} />
+                <span className="flex flex-col"><span>Mua film</span>{standalone && <span className="mt-1 text-xs font-normal text-[#6E655B]">Tìm film và lab gần bạn</span>}</span>
               </button>
             </div>
           </div>
 
           {/* ─── TAB CONTENT BODY (SCROLLABLE) ─── */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-5 custom-scrollbar bg-[#F7F5F0] text-[#2C2621]">
+          <div className={`${standalone ? 'flex-1 overflow-y-auto px-6 sm:px-10 lg:px-14 py-6 lg:py-8' : 'p-4 space-y-5'} custom-scrollbar bg-[#F7F5F0] text-[#2C2621]`}>
             {/* ============================================================== */}
             {/* TAB 1: 👗 TRANG PHỤC (BÓC ĐỒ TỪ ẢNH & TIỆM THUÊ HOT) */}
             {/* ============================================================== */}
             {activeTab === 'outfit' && (
-              <div className="space-y-5">
+              <div className={`${standalone ? 'max-w-6xl mx-auto grid grid-cols-1 xl:grid-cols-2 gap-6' : 'space-y-5'}`}>
                 {/* Visual Tap-to-Shop & AI Outfit Finder */}
                 <div className="p-4 rounded-2xl bg-[#FAF8F4] border border-[#D8CFBD] space-y-3.5 shadow-sm">
                   <div className="flex items-center justify-between">
@@ -505,7 +504,7 @@ export const ShootServicesHubDrawer: React.FC<ShootServicesHubDrawerProps> = ({
             {/* TAB 2: 📸 THỢ CHỤP (BỘ LỌC GIÁ, PORTFOLIO & ZALO CHAT) */}
             {/* ============================================================== */}
             {activeTab === 'photographers' && (
-              <div className="space-y-4">
+              <div className={`${standalone ? 'max-w-6xl mx-auto space-y-5' : 'space-y-4'}`}>
                 {/* Search Bar for Photographers */}
                 <div className="relative">
                   <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#6E655B]" />
@@ -582,7 +581,7 @@ export const ShootServicesHubDrawer: React.FC<ShootServicesHubDrawerProps> = ({
                 </div>
 
                 {/* Photographer Cards List */}
-                <div className="space-y-3.5">
+                <div className={standalone ? 'grid grid-cols-1 xl:grid-cols-2 gap-4' : 'space-y-3.5'}>
                   {filteredPhotographers.length === 0 ? (
                     <div className="p-8 text-center text-[#6E655B] text-xs">
                       Không tìm thấy thợ chụp phù hợp với bộ lọc hiện tại.
@@ -720,7 +719,7 @@ export const ShootServicesHubDrawer: React.FC<ShootServicesHubDrawerProps> = ({
             {/* TAB 3: 🎞️ MUA FILM (GPS ĐỊNH VỊ LAB & TIỆM GẦN NHẤT) */}
             {/* ============================================================== */}
             {activeTab === 'film' && (
-              <div className="space-y-4">
+              <div className={`${standalone ? 'max-w-6xl mx-auto space-y-5' : 'space-y-4'}`}>
                 {/* Geolocation Status Banner */}
                 <div className="p-3.5 rounded-2xl bg-[#FAF8F4]/90 border border-neutral-800 flex items-center justify-between text-xs">
                   <div className="flex items-center space-x-2.5 min-w-0">
@@ -774,7 +773,7 @@ export const ShootServicesHubDrawer: React.FC<ShootServicesHubDrawerProps> = ({
                 </div>
 
                 {/* Labs Cards Sorted by Distance */}
-                <div className="space-y-3">
+                <div className={standalone ? 'grid grid-cols-1 xl:grid-cols-2 gap-4' : 'space-y-3'}>
                   {labs.length === 0 ? (
                     <div className="p-8 text-center text-[#6E655B] text-xs">
                       Không tìm thấy tiệm film nào có cuộn film &quot;{filmSearch}&quot;.

@@ -63,5 +63,5 @@ export { ShootPlannerDrawer } from './planner/ShootPlannerDrawer';
 
 // Navigation & Services Hub
 export { ModernLeftRail } from './layout/ModernLeftRail';
-export { ShootServicesHubDrawer } from './layout/ShootServicesHubDrawer';
+
 export { NearestFilmShopsDrawer } from './layout/NearestFilmShopsDrawer';
