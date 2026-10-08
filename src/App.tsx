@@ -14,6 +14,7 @@ import { useMapLocationPicker } from './hooks/useMapLocationPicker';
 import { isSpotActiveInMonth } from './utils/season';
 import { calculateDistanceKm } from './utils/geo';
 import { recommendFilmForSpot } from './utils/filmAdvisor';
+import { readSavedSpotIds } from './utils/savedSpots';
 import { AlertCircle } from 'lucide-react';
 import { containerVariants, itemVariants } from './utils/motion-tokens';
 
@@ -66,10 +67,9 @@ export function App() {
   // Saved / Bookmark spots
   const [savedSpotIds, setSavedSpotIds] = useState<string[]>(() => {
     try {
-      const stored = localStorage.getItem('chupgibaygio_saved');
-      return stored ? JSON.parse(stored) : ['spot-hn-01', 'spot-dl-01'];
+      return readSavedSpotIds(localStorage.getItem('chupgibaygio_saved'));
     } catch {
-      return ['spot-hn-01', 'spot-dl-01'];
+      return [];
     }
   });
 
