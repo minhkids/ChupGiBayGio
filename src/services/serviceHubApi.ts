@@ -28,7 +28,8 @@ export interface ServiceListing {
   gearBody?: string;
   gearLens?: string;
   portfolioPhotos?: string[];
-  packages?: { name: string; price: number; duration: string; deliveredPhotos: number }[];
+  shootSpots?: string[];
+  packages?: { name: string; price: number; duration: string; deliveredPhotos: number; deliveredPhotosText?: string }[];
   lat?: number;
   lng?: number;
   suitableSeasons?: string[];
@@ -102,9 +103,9 @@ export const serviceHubApi = {
       ...spots.map((row) => ({ ...row, id: String(row.id), category: 'spot' as const, name: String(row.name || ''), slug: String(row.slug || ''), regionId: String(row.region_id || ''), address: String(row.address || ''), district: String(row.district || ''), lat: Number(row.lat), lng: Number(row.lng), bestTimeOfDay: String(row.best_time_of_day || ''), goldenHour: String(row.golden_hour || ''), bestMonths: parseList(row.best_months).map(Number), entryFee: String(row.entry_fee || ''), parkingFee: String(row.parking_fee || ''), sourceUrl: String(row.source_url || ''), coverImageUrl: String(row.cover_image_url || ''), description: String(row.description || '') })),
       ...rental.map((row) => ({ ...row, id: String(row.id), category: 'rental' as const, name: String(row.name || ''), address: String(row.address || ''), phone: String(row.hotline || ''), link: String(row.fanpage_url || ''), price: String(row.daily_price || '') })),
       ...outfits.map((row) => ({ ...row, id: String(row.id), category: 'outfit' as const, spotId: String(row.spot_id || ''), name: String(row.name || ''), description: String(row.description || ''), price: String(row.estimated_price || ''), imageUrl: String(row.image_url || ''), link: String(row.shopee_url || ''), secondaryLink: String(row.tiktok_url || ''), material: String(row.material || ''), hotspots: parseJsonArray(row.hotspots) })),
-      ...photographers.map((row) => ({ ...row, id: String(row.id), category: 'photographer' as const, name: String(row.name || ''), description: String(row.bio || ''), imageUrl: String(row.avatar_url || ''), phone: String(row.phone || ''), link: String(row.instagram || ''), tags: parseList(row.styles), gearBody: String(row.gear_body || ''), gearLens: String(row.gear_lens || ''), portfolioPhotos: parseList(row.portfolio_photos), packages: Array.isArray(row.packages) ? row.packages as ServiceListing['packages'] : [] })),
+      ...photographers.map((row) => ({ ...row, id: String(row.id), category: 'photographer' as const, name: String(row.name || ''), description: String(row.bio || ''), imageUrl: String(row.avatar_url || ''), phone: String(row.phone || ''), link: String(row.instagram || ''), tags: parseList(row.styles), shootSpots: parseList(row.preferred_spots), gearBody: String(row.gear_body || ''), gearLens: String(row.gear_lens || ''), portfolioPhotos: parseList(row.portfolio_photos), packages: Array.isArray(row.packages) ? row.packages as ServiceListing['packages'] : [] })),
       ...films.map((row) => ({ ...row, id: String(row.id), category: 'filmColor' as const, name: String(row.name || ''), iso: String(row.iso || ''), recommendedTime: String(row.tone || ''), filmImageUrl: String(row.package_image_url || ''), imageUrl: String(row.sample_image_url || ''), suitableSeasons: parseList(row.suitable_seasons) })),
-      ...labs.map((row) => ({ ...row, id: String(row.id), category: 'filmLab' as const, name: String(row.name || ''), address: String(row.address || ''), phone: String(row.hotline || ''), openingHours: String(row.opening_hours || ''), fastService: Boolean(row.fast_2h), filmStocks: parseList(row.in_stock_films) })),
+      ...labs.map((row) => ({ ...row, id: String(row.id), category: 'filmLab' as const, name: String(row.name || ''), address: String(row.address || ''), district: String(row.district || ''), imageUrl: String(row.image_url || ''), link: String(row.fanpage_url || ''), phone: String(row.hotline || ''), openingHours: String(row.opening_hours || ''), fastService: Boolean(row.fast_2h), filmStocks: parseList(row.in_stock_films) })),
       ...legacy
     ] as ServiceListing[];
   },

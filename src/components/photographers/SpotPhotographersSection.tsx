@@ -2,6 +2,7 @@ import React from 'react';
 import { PinReferenceButton } from '../planner/PinReferenceButton';
 import { Camera, Star, MessageCircle, ExternalLink, ChevronRight } from 'lucide-react';
 import { getPhotographersForSpot } from '../../data/mockPhotographers';
+import { PartnerPhotographersForSpot } from './PartnerPhotographersForSpot';
 import type { Photographer } from '../../types';
 
 interface SpotPhotographersSectionProps {
@@ -19,7 +20,7 @@ export const SpotPhotographersSection: React.FC<SpotPhotographersSectionProps> =
 }) => {
   const photographers = getPhotographersForSpot(spotId, spotName);
 
-  if (!photographers || photographers.length === 0) return null;
+  if (!photographers || photographers.length === 0) return <PartnerPhotographersForSpot spotName={spotName} />;
 
   return (
     <div className="space-y-3 pt-4 border-t border-neutral-800/80">
@@ -139,6 +140,7 @@ export const SpotPhotographersSection: React.FC<SpotPhotographersSectionProps> =
           </div>
         ))}
       </div>
+      <PartnerPhotographersForSpot spotName={spotName} />
     </div>
   );
 };

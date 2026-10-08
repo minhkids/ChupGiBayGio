@@ -44,7 +44,8 @@ export function App() {
     return () => { mounted = false; };
   }, []);
   const [activeRegionId, setActiveRegionId] = useState<string>('hanoi');
-  const [activeView, setActiveView] = useState<'map' | 'grid' | 'moodboard' | 'film' | 'services'>('map');
+  const [activeView, setActiveView] = useState<'map' | 'grid' | 'moodboard' | 'film' | 'services'>(() =>
+    new URLSearchParams(window.location.search).has('services') ? 'services' : 'map');
   const [uiTheme, setUiTheme] = useState<'modern' | 'editorial'>('modern');
   const currentMonth = useMemo(() => new Date().getMonth() + 1, []); // eslint-disable-line react/purity — runs once at mount
 

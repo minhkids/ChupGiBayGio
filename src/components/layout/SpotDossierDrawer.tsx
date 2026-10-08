@@ -6,6 +6,7 @@ import { useShootPlan } from '../../context/ShootPlanContext';
 import { db } from '../../services/db';
 import { fetchSpotOutfits } from '../../services/outfitService';
 import { getPhotographersForSpot } from '../../data/mockPhotographers';
+import { PartnerPhotographersForSpot } from '../photographers/PartnerPhotographersForSpot';
 import { recommendFilmForSpot } from '../../utils/filmAdvisor';
 import { calculateDistanceKm, formatDistance } from '../../utils/geo';
 import { openNearestFilmShops } from '../../hooks/useNearestLabs';
@@ -158,6 +159,7 @@ function DossierContent({ spot, month, onClose, onSelectPhotographer, onOpenPhot
           </section>
           <ShopSection title="Địa chỉ thuê thiết bị" shop={shops.find(shop => shop.type === 'CAMERA')} />
           <section><h3 className={heading}>Thợ ảnh ở điểm chụp</h3>{photographers.length === 0 && <p className="text-sm text-stone-400">Chưa có hồ sơ thợ ảnh cho địa điểm này.</p>}<div className="space-y-3">{photographers.map(person => <article key={person.id} className="border-b border-editorial-border pb-4"><div className="flex items-center gap-3"><img src={person.avatarUrl} alt="" loading="lazy" className="h-11 w-11 rounded-full object-cover" /><div className="min-w-0"><h4 className="text-sm font-semibold">{person.name}</h4><p className="mt-1 text-xs text-kodak-amber">Từ {person.startingPriceFormatted}</p></div></div><p className="my-3 text-xs leading-6 text-stone-400">{person.gear}</p><div className="flex flex-wrap gap-2">{onSelectPhotographer && <button type="button" className={control} onClick={() => { onClose(); onSelectPhotographer(person); }}>Xem hồ sơ</button>}<a className={control} href={person.contact.zaloUrl} target="_blank" rel="noopener noreferrer">Liên hệ Zalo <ExternalLink size={12} /></a><button type="button" className={control} onClick={() => plan.setPhotographer(person)}>{plan.photographer?.id === person.id ? 'Đã chọn thợ ảnh' : 'Chọn vào kế hoạch'}</button></div></article>)}</div>{onOpenPhotographers && <button type="button" className={`${control} mt-4 w-full`} onClick={() => { onClose(); onOpenPhotographers(); }}>Xem danh bạ thợ ảnh</button>}</section>
+          <PartnerPhotographersForSpot spotName={spot.name} />
         </>}
       </div>)}
     </div>

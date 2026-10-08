@@ -3,6 +3,7 @@ import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 import { secureHeaders } from 'hono/secure-headers';
 import cmsAdminRoutes from './cmsAdminRoutes';
+import partnerRoutes from './partnerRoutes';
 import { getD1 } from './d1Client';
 
 type Bindings = {
@@ -67,6 +68,11 @@ function mapServiceRow(row: Record<string, unknown>) {
   let data: Record<string, unknown> = {};
   try { data = JSON.parse(String(row.data || '{}')) as Record<string, unknown>; } catch { /* Ignore malformed legacy payload */ }
   return { ...data, id: row.id, category: row.category, name: row.name };
+}
+
+function parseJsonField<T>(value: string, fallback: T): T {
+  try { return JSON.parse(value) as T; }
+  catch { return fallback; }
 }
 
 // Global middleware
@@ -276,10 +282,10 @@ app.get('/api/services', async (c) => {
   const [rentalRows, outfitRows, photographerRows, packageRows, filmRows, labRows] = await Promise.all([
     db.prepare('SELECT * FROM rental_shops ORDER BY created_at DESC').all(),
     db.prepare('SELECT * FROM outfits ORDER BY created_at DESC').all(),
-    db.prepare('SELECT * FROM photographers ORDER BY created_at DESC').all(),
+    db.prepare("SELECT * FROM photographers WHERE status = 'published' ORDER BY created_at DESC").all(),
     db.prepare('SELECT * FROM photographer_packages ORDER BY rowid').all(),
     db.prepare('SELECT * FROM film_rolls ORDER BY created_at DESC').all(),
-    db.prepare('SELECT * FROM film_labs ORDER BY created_at DESC').all()
+    db.prepare("SELECT * FROM film_labs WHERE status = 'published' ORDER BY created_at DESC").all()
   ]);
   const rows = (value: unknown) => Array.isArray(value) ? value as Record<string, unknown>[] : [];
   const packages = rows(packageRows.results);
@@ -289,10 +295,10 @@ app.get('/api/services', async (c) => {
     ...rows(outfitRows.results).map((row) => ({ ...mapFields(row, { description: 'description', price: 'estimated_price', imageUrl: 'image_url', link: 'shopee_url', secondaryLink: 'tiktok_url', material: 'material' }), id: row.id, name: row.name, category: 'outfit', hotspots: parseJsonField(String(row.hotspots || '[]'), []) })),
     ...rows(photographerRows.results).map((row) => {
       const firstPackage = packages.find((pkg) => pkg.photographer_id === row.id);
-      return { ...mapFields(row, { description: 'bio', imageUrl: 'avatar_url', phone: 'phone', link: 'instagram', gearBody: 'gear_body', gearLens: 'gear_lens' }), id: row.id, name: row.name, category: 'photographer', price: firstPackage?.price ? String(firstPackage.price) : '', tags: parseJsonField(String(row.styles || '[]'), []), portfolioPhotos: parseJsonField(String(row.portfolio_photos || '[]'), []), packages: packages.filter((pkg) => pkg.photographer_id === row.id).map((pkg) => ({ id: pkg.id, name: pkg.name, price: pkg.price, duration: pkg.duration, deliveredPhotos: pkg.delivered_photos })) };
+      return { ...mapFields(row, { description: 'bio', imageUrl: 'avatar_url', phone: 'phone', link: 'instagram', gearBody: 'gear_body', gearLens: 'gear_lens' }), id: row.id, name: row.name, category: 'photographer', price: firstPackage?.price ? String(firstPackage.price) : '', tags: parseJsonField(String(row.styles || '[]'), []), shootSpots: parseJsonField(String(row.preferred_spots || '[]'), []), portfolioPhotos: parseJsonField(String(row.portfolio_photos || '[]'), []), packages: packages.filter((pkg) => pkg.photographer_id === row.id).map((pkg) => ({ id: pkg.id, name: pkg.name, price: pkg.price, duration: pkg.duration, deliveredPhotos: pkg.delivered_photos, deliveredPhotosText: pkg.delivered_photos_text })) };
     }),
     ...rows(filmRows.results).map((row) => ({ ...mapFields(row, { iso: 'iso', recommendedTime: 'tone', filmImageUrl: 'package_image_url', imageUrl: 'sample_image_url' }), id: row.id, name: row.name, category: 'filmColor', tags: parseJsonField(String(row.suitable_seasons || '[]'), []) })),
-    ...rows(labRows.results).map((row) => ({ ...mapFields(row, { address: 'address', phone: 'hotline', openingHours: 'opening_hours', fastService: 'fast_2h' }), id: row.id, name: row.name, category: 'filmLab', filmStocks: parseJsonField(String(row.in_stock_films || '[]'), []) }))
+    ...rows(labRows.results).map((row) => ({ ...mapFields(row, { address: 'address', district: 'district', phone: 'hotline', openingHours: 'opening_hours', fastService: 'fast_2h', link: 'fanpage_url', imageUrl: 'image_url', lat: 'lat', lng: 'lng' }), id: row.id, name: row.name, category: 'filmLab', filmStocks: parseJsonField(String(row.in_stock_films || '[]'), []) }))
   ];
   return c.json([...catalogs, ...legacy]);
 });
@@ -303,7 +309,7 @@ app.get('/api/films', async (c) => {
 });
 
 app.get('/api/labs', async (c) => {
-  const { results } = await getD1(c.env).prepare('SELECT * FROM film_labs ORDER BY created_at DESC').all();
+  const { results } = await getD1(c.env).prepare("SELECT * FROM film_labs WHERE status = 'published' ORDER BY created_at DESC").all();
   return c.json(results || []);
 });
 
@@ -317,7 +323,7 @@ app.get('/api/outfits', async (c) => {
 
 app.get('/api/photographers', async (c) => {
   const [people, packageRows] = await Promise.all([
-    getD1(c.env).prepare('SELECT * FROM photographers ORDER BY created_at DESC').all(),
+    getD1(c.env).prepare("SELECT * FROM photographers WHERE status = 'published' ORDER BY created_at DESC").all(),
     getD1(c.env).prepare('SELECT * FROM photographer_packages ORDER BY rowid').all()
   ]);
   const packages = (packageRows.results || []) as Record<string, unknown>[];
@@ -403,6 +409,7 @@ app.delete('/api/admin/services/:id', async (c) => {
   return c.json({ success: true });
 });
 
+app.route('/', partnerRoutes);
 app.route('/', cmsAdminRoutes);
 
 app.notFound((c) => c.json({ error: 'Not Found' }, 404));
