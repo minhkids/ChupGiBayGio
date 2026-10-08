@@ -36,6 +36,72 @@ import { NearestFilmShopsDrawer } from './layout/NearestFilmShopsDrawer';
 import type { ServicesTab } from './layout/ShootServicesHubDrawer';
 import type { FilmLab } from '../data/filmLabsData';
 import { SingleFilmLabCard } from './layout/SingleFilmLabCard';
+import { serviceHubApi, type ServiceListing } from '../services/serviceHubApi';
+import type { LocalInsight } from '../types';
+
+const mapServiceListingToInsight = (item: ServiceListing): LocalInsight | null => {
+  if (item.category === 'outfit') {
+    return {
+      id: item.id,
+      regionId: item.regionId || 'all',
+      kind: 'HOT',
+      category: 'OUTFIT',
+      title: item.name,
+      detail: item.description || '',
+      placeName: item.name,
+      areaLabel: item.district || (item.material ? `Chất liệu: ${item.material}` : 'Trang phục chụp ảnh'),
+      priceNow: item.price ? `${item.price}` : undefined,
+      hotScore: 90,
+      sourceLabel: 'Quản trị viên',
+    };
+  }
+  if (item.category === 'rental') {
+    return {
+      id: item.id,
+      regionId: item.regionId || 'all',
+      kind: 'HOT',
+      category: 'RENTAL',
+      title: item.name,
+      detail: item.description || (item.address ? `Địa chỉ: ${item.address}` : ''),
+      placeName: item.name,
+      areaLabel: item.address || 'Tiệm cho thuê máy ảnh',
+      priceNow: item.price ? `${item.price}` : undefined,
+      hotScore: 85,
+      sourceLabel: 'Quản trị viên',
+    };
+  }
+  if (item.category === 'filmLab') {
+    return {
+      id: item.id,
+      regionId: item.regionId || 'all',
+      kind: 'DEAL',
+      category: 'LAB',
+      title: item.name,
+      detail: item.description || (item.openingHours ? `Giờ mở cửa: ${item.openingHours}` : ''),
+      placeName: item.name,
+      areaLabel: item.address || 'Lab tráng film',
+      priceNow: item.price || undefined,
+      hotScore: 80,
+      sourceLabel: 'Quản trị viên',
+    };
+  }
+  if (item.category === 'filmColor') {
+    return {
+      id: item.id,
+      regionId: item.regionId || 'all',
+      kind: 'HOT',
+      category: 'FILM',
+      title: item.name,
+      detail: item.description || (item.recommendedTime ? `Tone: ${item.recommendedTime}` : ''),
+      placeName: item.name,
+      areaLabel: item.iso ? `ISO ${item.iso}` : 'Cuộn film',
+      priceNow: item.price || undefined,
+      hotScore: 80,
+      sourceLabel: 'Quản trị viên',
+    };
+  }
+  return null;
+};
 
 const ShootServicesHubDrawer = lazy(() => import('./layout/ShootServicesHubDrawer').then(m => ({ default: m.ShootServicesHubDrawer })));
 
@@ -180,6 +246,20 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
   // Real-time weather from Open-Meteo API (Hanoi)
   const weather = useWeather();
 
+  const [adminServiceInsights, setAdminServiceInsights] = useState<LocalInsight[]>([]);
+
+  useEffect(() => {
+    let active = true;
+    serviceHubApi.list().then((items) => {
+      if (!active) return;
+      const mapped = items.map(mapServiceListingToInsight).filter((i): i is LocalInsight => i !== null);
+      setAdminServiceInsights(mapped);
+    }).catch(() => {
+      if (active) setAdminServiceInsights([]);
+    });
+    return () => { active = false; };
+  }, []);
+
   // Ưu đãi & xu hướng theo khu vực / spot đang chọn (thay cho tab bài viết FB)
   // Dữ liệu theo 3 tab chuyên môn nhiếp ảnh
   const outfitInsights = useMemo(
@@ -188,8 +268,8 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
       category: ['OUTFIT', 'PROP'],
       searchQuery: filters.searchQuery,
       selectedSpot,
-    }),
-    [activeRegionId, filters.searchQuery, selectedSpot]
+    }, adminServiceInsights),
+    [activeRegionId, filters.searchQuery, selectedSpot, adminServiceInsights]
   );
 
   const cameraInsights = useMemo(
@@ -198,8 +278,8 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
       category: ['RENTAL'],
       searchQuery: filters.searchQuery,
       selectedSpot,
-    }),
-    [activeRegionId, filters.searchQuery, selectedSpot]
+    }, adminServiceInsights),
+    [activeRegionId, filters.searchQuery, selectedSpot, adminServiceInsights]
   );
 
   const filmInsights = useMemo(
@@ -208,8 +288,8 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
       category: ['FILM', 'LAB'],
       searchQuery: filters.searchQuery,
       selectedSpot,
-    }),
-    [activeRegionId, filters.searchQuery, selectedSpot]
+    }, adminServiceInsights),
+    [activeRegionId, filters.searchQuery, selectedSpot, adminServiceInsights]
   );
 
   const currentInsights = useMemo(() => {
