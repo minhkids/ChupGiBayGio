@@ -14,7 +14,7 @@
     "cf:deploy:worker": "wrangler deploy --env production --config wrangler-worker.toml",
     "cf:deploy:worker:dev": "wrangler deploy --env dev --config wrangler-worker.toml",
     "cf:d1:create": "wrangler d1 create chupgibaygio-db --config wrangler-worker.toml",
-    "cf:d1:migrate": "wrangler d1 migrations apply chupgibaygio-db --env production --config wrangler-worker.toml",
+    "cf:d1:migrate": "wrangler d1 migrations apply chupgibaygio-db --remote --env production --config wrangler-worker.toml",
     "cf:d1:migrate:dev": "wrangler d1 migrations apply chupgibaygio-db-dev --env dev --config wrangler-worker.toml",
     "cf:r2:create": "wrangler r2 bucket create chupgibaygio-assets --config wrangler-worker.toml",
     "cf:kv:create": "wrangler kv:namespace create CACHE --config wrangler-worker.toml"
