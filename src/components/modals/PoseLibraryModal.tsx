@@ -22,7 +22,12 @@ export const PoseLibraryModal: React.FC<PoseLibraryModalProps> = ({ onClose }) =
     { id: 'props', label: 'Phụ kiện', icon: <Smile className="w-5 h-5" /> },
   ] as const;
 
-  const filteredPoses = db.poses.getAll().filter(p => p.category === activeCategory);
+  const [allPoses, setAllPoses] = useState<PoseItem[]>([]);
+  React.useEffect(() => {
+    db.poses.getAll().then(setAllPoses);
+  }, []);
+
+  const filteredPoses = allPoses.filter(p => p.category === activeCategory);
 
   return (
     <>
