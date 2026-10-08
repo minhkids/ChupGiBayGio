@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 import { ArrowLeft, ArrowUpRight, Check, Copy, ImagePlus, MapPin, Sparkles } from 'lucide-react';
 import { LivePreviewCard } from './LivePreviewCard';
+import { AddressSuggestionsField } from './AddressSuggestionsField';
 
 const districts = ['Ba Đình', 'Hoàn Kiếm', 'Đống Đa', 'Cầu Giấy', 'Hai Bà Trưng', 'Tây Hồ', 'Thanh Xuân', 'Long Biên', 'Hà Đông', 'Hoàng Mai', 'Nam Từ Liêm', 'Bắc Từ Liêm', 'Gia Lâm', 'Đông Anh', 'Sóc Sơn', 'Thanh Trì', 'Hoài Đức', 'Đan Phượng', 'Thanh Oai', 'Thường Tín', 'Phúc Thọ', 'Quốc Oai', 'Thạch Thất', 'Chương Mỹ', 'Mỹ Đức', 'Ứng Hòa', 'Ba Vì', 'Sơn Tây', 'Mê Linh'];
 const films = ['Kodak Gold 200', 'Kodak ColorPlus', 'Fujifilm 200', 'CineStill 800T', 'Ilford HP5', 'Vision3 chiết'];
@@ -65,7 +66,7 @@ export function PartnerJoinPage({ kind }: { kind: Kind }) {
     setBusy(true); setError('');
     const payload = lab
       ? { name, address, district, phone, socialUrl, openingHours, filmStocks, imageUrl, website: '' }
-      : { name, phone, socialUrl, imageUrl, gear, styles: selectedStyles, shootSpots, package: { name: packageName, price: Number(packagePrice), duration: packageDuration, deliveredPhotos }, website: '' };
+      : { name, address, district, phone, socialUrl, imageUrl, gear, styles: selectedStyles, shootSpots, package: { name: packageName, price: Number(packagePrice), duration: packageDuration, deliveredPhotos }, website: '' };
     const body = new FormData();
     body.set('payload', JSON.stringify(payload));
     files.forEach((file) => body.append('photos', file));
@@ -94,7 +95,11 @@ export function PartnerJoinPage({ kind }: { kind: Kind }) {
         <form onSubmit={(event) => void submit(event)} className="space-y-6 rounded-[28px] border border-[#D8CFBD] bg-[#FAF8F4] p-5 sm:p-8">
           <div><h2 className="text-xl font-bold">Thông tin {lab ? 'shop bán film' : 'nhiếp ảnh gia'}</h2><p className="mt-1 text-sm text-[#675D52]">Điền thông tin thật để khách dễ tìm thấy và liên hệ bạn. Dấu * là bắt buộc.</p></div>
           <label className={label}>{lab ? 'Tên shop bán film *' : 'Tên thợ ảnh / Nghệ danh *'}<input className={input} value={name} onChange={(e) => setName(e.target.value)} required maxLength={160} placeholder={lab ? 'Ví dụ: Tiệm Film Hà Nội' : 'Ví dụ: Minh Studio'} autoComplete="organization" /></label>
-          {lab && <><label className={label}>Địa chỉ chính xác *<input className={input} value={address} onChange={(e) => setAddress(e.target.value)} required minLength={8} maxLength={300} placeholder="Số nhà, đường, phường — để ghim đúng vị trí" autoComplete="street-address" /></label><label className={label}>Quận / Huyện *<select className={input} value={district} required onChange={(e) => setDistrict(e.target.value)}><option value="">Chọn quận / huyện</option>{districts.map((name) => <option key={name}>{name}</option>)}</select></label><p className="flex items-start gap-2 text-xs leading-relaxed text-[#675D52]"><MapPin className="h-4 w-4 shrink-0 text-[#C76B3C]" />Địa chỉ được định vị tự động. Nếu không tìm thấy, hãy ghi rõ số nhà, đường và quận/huyện.</p></>}
+          <AddressSuggestionsField label={lab ? 'Địa chỉ chính xác *' : 'Địa chỉ studio / nơi nhận khách (tùy chọn)'} value={address} onChange={setAddress}
+            onPick={(suggestion) => { const found = districts.find((item) => suggestion.toLocaleLowerCase('vi').includes(item.toLocaleLowerCase('vi'))); if (found) setDistrict(found); }}
+            required={lab} inputClassName={input} placeholder={lab ? 'Số nhà, đường, phường — để ghim đúng vị trí' : 'Chỉ nhập nếu bạn muốn công khai địa chỉ studio'} />
+          <label className={label}>Quận / Huyện {lab ? '*' : '(tùy chọn)'}<select className={input} value={district} required={lab} onChange={(e) => setDistrict(e.target.value)}><option value="">Chọn quận / huyện</option>{districts.map((name) => <option key={name}>{name}</option>)}</select></label>
+          <p className="flex items-start gap-2 text-xs leading-relaxed text-[#675D52]"><MapPin className="h-4 w-4 shrink-0 text-[#C76B3C]" />{lab ? 'Chọn gợi ý nếu phù hợp hoặc nhập tay; kiểm tra số nhà và quận/huyện trước khi gửi.' : 'Địa chỉ này sẽ hiển thị công khai. Không nhập địa chỉ nhà riêng nếu bạn không muốn chia sẻ.'}</p>
           <label className={label}>{lab ? 'Hotline / Số Zalo nhận khách *' : 'Số điện thoại / Zalo *'}<input className={input} type="tel" inputMode="tel" autoComplete="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required pattern="0[0-9 ]{9,14}" placeholder="09xx xxx xxx" /></label>
           <label className={label}>Link Facebook / Instagram<input className={input} type="url" value={socialUrl} onChange={(e) => setSocialUrl(e.target.value)} placeholder="https://facebook.com/…" /></label>
           {lab ? <>

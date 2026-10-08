@@ -16,6 +16,23 @@ describe('partner onboarding pages', () => {
     expect(screen.getByLabelText('Quận / Huyện *')).toBeTruthy();
   });
 
+  it('shows a selectable address suggestion for the shop while preserving manual entry', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => [{ label: 'Ngọc Thụy, Long Biên, Hà Nội' }] });
+    vi.stubGlobal('fetch', fetchMock);
+    render(<PartnerJoinPage kind="lab" />);
+    fireEvent.focus(screen.getByLabelText('Địa chỉ chính xác *'));
+    fireEvent.change(screen.getByLabelText('Địa chỉ chính xác *'), { target: { value: 'Ngọc Thụy' } });
+    fireEvent.click(await screen.findByRole('option', { name: 'Ngọc Thụy, Long Biên, Hà Nội' }));
+    expect((screen.getByLabelText('Địa chỉ chính xác *') as HTMLInputElement).value).toBe('Ngọc Thụy, Long Biên, Hà Nội');
+    expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining('/api/partner/address-suggestions?q='), expect.anything());
+  });
+
+  it('offers the same address search for photographers without requiring a studio address', () => {
+    render(<PartnerJoinPage kind="photographer" />);
+    expect(screen.getByLabelText('Địa chỉ studio / nơi nhận khách (tùy chọn)')).toBeTruthy();
+    expect((screen.getByLabelText('Địa chỉ studio / nơi nhận khách (tùy chọn)') as HTMLInputElement).required).toBe(false);
+  });
+
   it('submits the photographer portfolio and presents a link returned by the API', async () => {
     const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ id: 'test-id', status: 'published', url: 'https://chupgibaygio.com/?services=photographers&partner=test-id' }) });
     vi.stubGlobal('fetch', fetchMock);

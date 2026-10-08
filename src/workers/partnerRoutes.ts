@@ -14,6 +14,44 @@ const phone = (value: unknown) => /^0\d{9,10}$/.test(String(value ?? '').replace
 const validPoint = (lat: number, lng: number) => Number.isFinite(lat) && Number.isFinite(lng) && lat >= 20.4 && lat <= 21.7 && lng >= 105.2 && lng <= 106.3;
 const types = new Map([['image/jpeg', 'jpg'], ['image/png', 'png'], ['image/webp', 'webp']]);
 
+routes.get('/api/partner/address-suggestions', async (c) => {
+  const query = (c.req.query('q') || '').trim().replace(/\s+/g, ' ');
+  if (query.length < 3) return c.json([]);
+  if (query.length > 120) return c.json({ error: 'Địa chỉ tìm kiếm quá dài.' }, 400);
+  const cacheKey = `partner:address:${query.toLocaleLowerCase('vi')}`;
+  const cached = await c.env.CACHE.get(cacheKey).catch(() => null);
+  if (cached) {
+    try { return c.json(JSON.parse(cached) as { label: string }[]); }
+    catch { /* Ignore a malformed cache entry. */ }
+  }
+  const rateKey = `partner:address-rate:${c.req.header('CF-Connecting-IP') || 'local'}`;
+  const count = Number(await c.env.CACHE.get(rateKey).catch(() => null)) || 0;
+  if (count >= 20) return c.json({ error: 'Bạn đã tìm quá nhiều địa chỉ. Vui lòng thử lại sau.' }, 429);
+  await c.env.CACHE.put(rateKey, String(count + 1), { expirationTtl: 60 }).catch(() => undefined);
+  const params = new URLSearchParams({ q: query, limit: '8', lat: '21.0285', lon: '105.8542' });
+  try {
+    const response = await fetch(`https://photon.komoot.io/api/?${params}`, { headers: { 'User-Agent': 'ChupGiBayGio/1.0 (https://chupgibaygio.com)', Accept: 'application/json' }, signal: AbortSignal.timeout(5000) });
+    if (!response.ok) return c.json({ error: 'Gợi ý địa chỉ đang tạm gián đoạn; bạn vẫn có thể nhập tay.' }, 503);
+    const data = await response.json() as { features?: { geometry?: { coordinates?: number[] }; properties?: Record<string, unknown> }[] };
+    const labels = new Set<string>();
+    for (const feature of (data.features || []).slice(0, 20)) {
+      const props = feature.properties || {};
+      const [lng, lat] = feature.geometry?.coordinates || [];
+      if (String(props.countrycode || '').toUpperCase() !== 'VN' || !/hà nội|ha noi/i.test(String(props.city || props.state || '')) || !validPoint(lat, lng)) continue;
+      if (!props.housenumber && props.type !== 'street' && props.osm_key !== 'place') continue;
+      const first = [props.housenumber, props.street].filter(Boolean).join(' ').trim() || String(props.name || '').trim();
+      const label = [first, props.district, 'Hà Nội'].filter(Boolean).map(String).filter((part, index, parts) => parts.indexOf(part) === index).join(', ');
+      if (first && label.length <= 300) labels.add(label);
+      if (labels.size === 5) break;
+    }
+    const suggestions = [...labels].map((label) => ({ label }));
+    await c.env.CACHE.put(cacheKey, JSON.stringify(suggestions), { expirationTtl: 86400 }).catch(() => undefined);
+    return c.json(suggestions);
+  } catch {
+    return c.json({ error: 'Gợi ý địa chỉ đang tạm gián đoạn; bạn vẫn có thể nhập tay.' }, 503);
+  }
+});
+
 async function photos(form: FormData, min: number, max: number) {
   const files = form.getAll('photos');
   if (files.length < min || files.length > max || files.some((file) => !(file instanceof File) || file.size < 1 || file.size > 3 * 1024 * 1024)) return { error: 'Cần 3–6 ảnh portfolio (JPG, PNG, WebP; tối đa 3 MB/ảnh).' };
@@ -85,6 +123,9 @@ async function registration(c: Context<{ Bindings: Bindings }>, kind: 'lab' | 'p
     try { point = await geocode(address, district, c.env.CACHE); } catch { return c.json({ error: 'Dịch vụ xác định vị trí tạm gián đoạn. Vui lòng thử lại.' }, 503); }
     if (!point) return c.json({ error: 'Không xác định được tọa độ. Hãy ghi rõ số nhà, đường và quận/huyện Hà Nội.' }, 422);
   } else {
+    address = text(body.address, 300);
+    district = text(body.district, 80);
+    if ((body.address && !address) || (body.district && !districts.has(district)) || (district && !address)) return c.json({ error: 'Địa chỉ studio hoặc quận/huyện không hợp lệ.' }, 400);
     styles = list(body.styles, 12) ?? [];
     shootSpots = list(body.shootSpots, 20) ?? [];
     const pack = body.package as Record<string, unknown> | null;
@@ -107,8 +148,8 @@ async function registration(c: Context<{ Bindings: Bindings }>, kind: 'lab' | 'p
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(id, name, address, district, point!.lat, point!.lng, text(body.openingHours, 120), number, 0, JSON.stringify(stocks), social || '', urls[0] || imageUrl || '', 'published').run();
     } else {
       await c.env.DB.batch([
-        c.env.DB.prepare(`INSERT INTO photographers (id, name, avatar_url, bio, phone, instagram, gear_body, gear_lens, styles, portfolio_photos, preferred_spots, facebook_url, status)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(id, name, imageUrl || urls[0], text(body.bio, 500), number, social || '', text(body.gear, 200), '', JSON.stringify(styles), JSON.stringify(urls), JSON.stringify(shootSpots), social || '', 'published'),
+        c.env.DB.prepare(`INSERT INTO photographers (id, name, avatar_url, bio, phone, instagram, gear_body, gear_lens, styles, portfolio_photos, preferred_spots, facebook_url, status, address, district)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(id, name, imageUrl || urls[0], text(body.bio, 500), number, social || '', text(body.gear, 200), '', JSON.stringify(styles), JSON.stringify(urls), JSON.stringify(shootSpots), social || '', 'published', address, district),
         c.env.DB.prepare('INSERT INTO photographer_packages (id, photographer_id, name, price, duration, delivered_photos, delivered_photos_text) VALUES (?, ?, ?, ?, ?, ?, ?)')
           .bind(crypto.randomUUID(), id, pkg!.name, pkg!.price, pkg!.duration, 0, pkg!.deliveredPhotos)
       ]);

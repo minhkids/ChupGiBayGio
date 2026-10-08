@@ -39,14 +39,49 @@ const photographer = {
 };
 
 describe('public partner registration', () => {
+  it('suggests only distinct Hanoi addresses from the geocoder', async () => {
+    const env = environment();
+    const provider = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(new Response(JSON.stringify({ features: [
+      { geometry: { coordinates: [105.85, 21.03] }, properties: { name: 'Ngọc Thụy', type: 'street', district: 'Bồ Đề', city: 'Hà Nội', countrycode: 'VN' } },
+      { geometry: { coordinates: [105.85, 21.03] }, properties: { name: 'Ngọc Thụy', type: 'street', district: 'Bồ Đề', city: 'Hà Nội', countrycode: 'VN' } },
+      { geometry: { coordinates: [105.86, 21.04] }, properties: { name: 'Công viên Ngọc Thụy', osm_key: 'leisure', district: 'Bồ Đề', city: 'Hà Nội', countrycode: 'VN' } },
+      { geometry: { coordinates: [106.7, 20.8] }, properties: { name: 'Lê Lợi', type: 'street', city: 'Hải Phòng', countrycode: 'VN' } }
+    ] }), { status: 200 }));
+    try {
+      const response = await worker.request('/api/partner/address-suggestions?q=Ng%E1%BB%8Dc%20Th%E1%BB%A5y', {}, env);
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual([{ label: 'Ngọc Thụy, Bồ Đề, Hà Nội' }]);
+      expect(provider).toHaveBeenCalledOnce();
+    } finally { provider.mockRestore(); }
+  });
+
+  it('does not query the geocoder for an empty or short address', async () => {
+    const provider = vi.spyOn(globalThis, 'fetch');
+    try {
+      const response = await worker.request('/api/partner/address-suggestions?q=Ng', {}, environment());
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual([]);
+      expect(provider).not.toHaveBeenCalled();
+    } finally { provider.mockRestore(); }
+  });
+
+  it('stores an optional public studio address without affecting photographers without studios', async () => {
+    const env = environment();
+    const response = await submit('/api/partner/register-photographer', { ...photographer, address: '15 Ngọc Thụy, Long Biên, Hà Nội', district: 'Long Biên' }, [jpg(), jpg(), jpg()], env);
+    expect(response.status).toBe(201);
+    const written = env.writes.find(({ sql }) => sql.includes('INSERT INTO photographers'));
+    expect(written?.sql).toContain('address');
+    expect(written?.values).toContain('15 Ngọc Thụy, Long Biên, Hà Nội');
+    expect(written?.values).toContain('Long Biên');
+  });
   it('reads published partner records through the live directory and photographer API', async () => {
-    const env = environment({ photographers: [{ id: 'p-1', name: 'Minh Studio', status: 'published', styles: '["MàuFilm"]', preferred_spots: '["Hồ Tây"]', portfolio_photos: '["https://example.com/a.jpg"]' }], photographer_packages: [{ id: 'pkg-1', photographer_id: 'p-1', name: 'Ngoại cảnh', price: 600000 }] });
+    const env = environment({ photographers: [{ id: 'p-1', name: 'Minh Studio', status: 'published', address: '15 Ngọc Thụy, Hà Nội', district: 'Long Biên', styles: '["MàuFilm"]', preferred_spots: '["Hồ Tây"]', portfolio_photos: '["https://example.com/a.jpg"]' }], photographer_packages: [{ id: 'pkg-1', photographer_id: 'p-1', name: 'Ngoại cảnh', price: 600000 }] });
     const people = await worker.request('/api/photographers', {}, env);
     expect(people.status).toBe(200);
     expect(await people.json()).toMatchObject([{ id: 'p-1', styles: ['MàuFilm'], portfolioPhotos: ['https://example.com/a.jpg'] }]);
     const directory = await worker.request('/api/services', {}, env);
     expect(directory.status).toBe(200);
-    expect(await directory.json()).toContainEqual(expect.objectContaining({ id: 'p-1', category: 'photographer', shootSpots: ['Hồ Tây'] }));
+    expect(await directory.json()).toContainEqual(expect.objectContaining({ id: 'p-1', category: 'photographer', shootSpots: ['Hồ Tây'], address: '15 Ngọc Thụy, Hà Nội', district: 'Long Biên' }));
   });
   it('publishes a photographer with package and persisted portfolio images', async () => {
     const env = environment();

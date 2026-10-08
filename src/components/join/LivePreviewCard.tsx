@@ -32,6 +32,7 @@ export function LivePreviewCard({ data }: { data: PartnerPreview }) {
         {data.openingHours && <p className="flex items-center gap-2 text-sm"><Clock3 aria-hidden="true" className="h-4 w-4 text-[#C76B3C]" />{data.openingHours}</p>}
         {!!data.filmStocks?.length && <div className="flex flex-wrap gap-1.5">{data.filmStocks.map((film) => <span key={film} className="rounded-full border border-[#D8CFBD] bg-white px-2.5 py-1 text-xs">{film}</span>)}</div>}
       </> : <>
+        {data.address && <p className="flex items-start gap-2 text-sm"><MapPin aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-[#C76B3C]" />{[data.address, data.district].filter(Boolean).join(', ')}</p>}
         {!!data.portfolio?.length && <div className="grid grid-cols-3 gap-1.5">{data.portfolio.slice(0, 3).map((url, index) => <img key={index} src={url} alt={`Ảnh portfolio ${index + 1}`} className="aspect-square w-full rounded-lg object-cover" />)}</div>}
         {!!data.styles?.length && <div className="flex flex-wrap gap-1.5">{data.styles.map((style) => <span key={style} className="rounded-full bg-[#EDE3D2] px-2.5 py-1 text-xs">#{style.replace(/^#/, '')}</span>)}</div>}
         {!!data.shootSpots?.length && <p className="flex items-start gap-2 text-sm"><MapPin aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-[#C76B3C]" />{data.shootSpots.join(' · ')}</p>}
