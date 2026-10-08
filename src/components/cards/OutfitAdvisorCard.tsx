@@ -11,12 +11,20 @@ interface OutfitAdvisorCardProps {
 
 export const OutfitAdvisorCard: React.FC<OutfitAdvisorCardProps> = ({ spot }) => {
   const [showLibrary, setShowLibrary] = useState(false);
+  const [outfitShops, setOutfitShops] = useState<any[]>([]);
 
-  // Find nearest outfit shop
-  const outfitShops = db.rentalShops.getAll().filter(s => s.type === 'OUTFIT').map(shop => ({
-    ...shop,
-    distance: calculateDistanceKm(spot.lat, spot.lng, shop.lat, shop.lng)
-  })).sort((a, b) => a.distance - b.distance);
+  React.useEffect(() => {
+    db.rentalShops.getAll().then(shops => {
+      const filtered = shops
+        .filter(s => s.type === 'OUTFIT')
+        .map(shop => ({
+          ...shop,
+          distance: calculateDistanceKm(spot.lat, spot.lng, shop.lat, shop.lng)
+        }))
+        .sort((a, b) => a.distance - b.distance);
+      setOutfitShops(filtered);
+    });
+  }, [spot.lat, spot.lng]);
 
   const nearestShop = outfitShops[0];
 

@@ -1,30 +1,58 @@
 // @vitest-environment jsdom
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { ShootPlanProvider } from '../../context/ShootPlanContext';
 import { ServicesHubView } from './ServicesHubView';
+import { serviceHubApi } from '../../services/serviceHubApi';
 
-afterEach(cleanup);
+vi.mock('../../services/serviceHubApi', () => ({
+  serviceHubApi: {
+    list: vi.fn().mockResolvedValue([]), adminList: vi.fn().mockResolvedValue([]),
+    login: vi.fn().mockResolvedValue(undefined), logout: vi.fn(), create: vi.fn(), update: vi.fn(), remove: vi.fn()
+  }
+}));
+
+afterEach(() => { cleanup(); sessionStorage.clear(); });
+const renderView = () => render(<ShootPlanProvider><ServicesHubView onClose={() => undefined} /></ShootPlanProvider>);
 
 describe('ServicesHubView', () => {
-  it('shows the warm editorial shell and switches between the three service directories', () => {
-    render(<ShootPlanProvider><ServicesHubView onClose={() => undefined} /></ShootPlanProvider>);
-
+  it('starts the directories empty and uses equal-width navigation tabs', async () => {
+    renderView();
     expect(screen.getByRole('heading', { name: 'Chuẩn bị cho buổi chụp' })).toBeDefined();
-    expect(screen.getByRole('heading', { name: 'Tiệm thuê trang phục uy tín' })).toBeDefined();
-    expect(screen.getByText(/Kéo thả ảnh mẫu để tìm đồ trên Shopee & TikTok Shop/i)).toBeDefined();
-    const tabNav = screen.getByRole('navigation', { name: 'Danh mục dịch vụ' });
-    expect(tabNav.firstElementChild?.className).toContain('grid-cols-3');
-    expect(tabNav.querySelectorAll('button')).toHaveLength(3);
-    expect(tabNav.querySelector('button')?.className).toContain('w-full');
-    expect(tabNav.querySelector('button span')?.className).toContain('whitespace-nowrap');
+    expect(await screen.findByText('Chưa có tiệm thuê nào. Quản trị viên có thể thêm thông tin.')).toBeDefined();
+    expect(screen.getByText('Chưa có trang phục nào. Quản trị viên có thể thêm thông tin.')).toBeDefined();
+    expect(screen.queryByText('Tiệm Áo Dài Thơ')).toBeNull();
+    const nav = screen.getByRole('navigation', { name: 'Danh mục dịch vụ' });
+    expect(nav.firstElementChild?.className).toContain('grid-cols-3');
+    expect(nav.querySelectorAll('button')).toHaveLength(3);
+    expect(nav.querySelector('button')?.className).toContain('w-full');
+    expect(nav.querySelector('button span')?.className).toContain('whitespace-nowrap');
 
     fireEvent.click(screen.getByRole('button', { name: /Nhiếp ảnh gia/i }));
-    expect(screen.getByPlaceholderText(/Tìm nhiếp ảnh gia hoặc phong cách/i)).toBeDefined();
-    expect(screen.getAllByRole('link', { name: /Nhắn Zalo/i }).length).toBeGreaterThan(0);
+    expect(await screen.findByText('Chưa có nhiếp ảnh gia nào. Quản trị viên có thể thêm thông tin.')).toBeDefined();
+    expect(screen.queryByText('Dương Tuấn Anh')).toBeNull();
 
     fireEvent.click(screen.getByRole('button', { name: /Mua film & Lab/i }));
-    expect(screen.getByText(/Đang hiển thị tiệm quanh khu vực Hồ Gươm/i)).toBeDefined();
-    expect(screen.queryByText(/21\.\d+,\s*105\./)).toBeNull();
+    expect(await screen.findByText('Chưa có film lab nào. Quản trị viên có thể thêm thông tin.')).toBeDefined();
+    expect(screen.queryByText('Nadar Club')).toBeNull();
+  });
+
+  it('opens the admin screen and prompts for the admin password', async () => {
+    renderView();
+    fireEvent.click(screen.getByRole('button', { name: 'Quản lý dịch vụ' }));
+    expect(await screen.findByRole('heading', { name: 'Quản lý thông tin dịch vụ' })).toBeDefined();
+    expect(screen.getByLabelText('Mật khẩu')).toBeDefined();
+    fireEvent.change(screen.getByLabelText('Mật khẩu'), { target: { value: 'example' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Đăng nhập' }));
+    expect(await screen.findByRole('heading', { name: 'Thêm thông tin mới' })).toBeDefined();
+    expect(screen.getByRole('button', { name: /Tiệm thuê trang phục/ })).toBeDefined();
+    expect(screen.getByRole('button', { name: /Màu Film/ })).toBeDefined();
+    fireEvent.click(screen.getByRole('button', { name: /Màu Film/ }));
+    expect(screen.getByLabelText('ISO')).toBeDefined();
+    expect(screen.getByLabelText('Mã màu palette (HEX)')).toBeDefined();
+    fireEvent.click(screen.getByRole('button', { name: /Tiệm thuê trang phục/ }));
+    fireEvent.change(screen.getByLabelText(/Tên hiển thị/), { target: { value: 'Tiệm mới' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Thêm mục' }));
+    expect(serviceHubApi.create).toHaveBeenCalledWith(expect.objectContaining({ category: 'rental', name: 'Tiệm mới' }));
   });
 });

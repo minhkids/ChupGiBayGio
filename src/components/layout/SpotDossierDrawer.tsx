@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useId, useRef, useState, useSyncExternalStore } from 'react';
 import { Drawer } from 'vaul';
-import { Camera, Check, ExternalLink, Pin, X } from 'lucide-react';
+import { Camera, Check, ExternalLink, MapPin, Pin, X } from 'lucide-react';
 import type { Photographer, PoseItem, PostOutfit, RentalShop, Spot } from '../../types';
 import { useShootPlan } from '../../context/ShootPlanContext';
 import { db } from '../../services/db';
@@ -66,8 +66,8 @@ function DossierContent({ spot, month, onClose, onSelectPhotographer, onOpenPhot
   const photo = photos[photoIndex];
   const film = recommendFilmForSpot(spot, month);
   const photographers = getPhotographersForSpot(spot.id, spot.name);
-  const shops = db.rentalShops.getAll().map(shop => ({ ...shop, distance: calculateDistanceKm(spot.lat, spot.lng, shop.lat, shop.lng) })).sort((a, b) => a.distance - b.distance);
-  const poses = db.poses.getAll();
+  const [shops, setShops] = useState<(RentalShop & { distance: number })[]>([]);
+  const [poses, setPoses] = useState<PoseItem[]>([]);
   const suggestedPoses = poses.filter(pose => pose.matchedSpots?.some(name => spot.name.toLowerCase().includes(name.toLowerCase())));
   const availablePoses = suggestedPoses.length ? suggestedPoses : poses;
   const [poseId, setPoseId] = useState(availablePoses[0]?.id || '');
@@ -77,8 +77,16 @@ function DossierContent({ spot, month, onClose, onSelectPhotographer, onOpenPhot
   useEffect(() => {
     let active = true;
     void fetchSpotOutfits(spot.id).then(data => { if (active) setOutfits(data); }).catch(() => { if (active) { setOutfits([]); setOutfitError(true); } });
+    void db.rentalShops.getAll().then(allShops => {
+      if (active) {
+        setShops(allShops.map(shop => ({ ...shop, distance: calculateDistanceKm(spot.lat, spot.lng, shop.lat, shop.lng) })).sort((a, b) => a.distance - b.distance));
+      }
+    });
+    void db.poses.getAll().then(allPoses => {
+      if (active) setPoses(allPoses);
+    });
     return () => { active = false; };
-  }, [spot.id]);
+  }, [spot.id, spot.lat, spot.lng]);
 
   const changeTab = (index: number) => {
     setTab(index);
@@ -145,7 +153,7 @@ function DossierContent({ spot, month, onClose, onSelectPhotographer, onOpenPhot
               onClick={() => openNearestFilmShops(film.film.fullName)}
               className={`${control} mt-3 w-full border-amber-500/50 text-amber-400 hover:bg-amber-500/10`}
             >
-              📍 Tìm Lab gần đây còn sẵn cuộn này
+              <MapPin size={16} /> Tìm Lab gần đây còn sẵn cuộn này
             </button>
           </section>
           <ShopSection title="Địa chỉ thuê thiết bị" shop={shops.find(shop => shop.type === 'CAMERA')} />

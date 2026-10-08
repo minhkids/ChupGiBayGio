@@ -22,11 +22,11 @@ import {
 } from 'lucide-react';
 import { useNearestLabs } from '../../hooks/useNearestLabs';
 import { type FilmLab } from '../../data/filmLabsData';
-import { MOCK_PHOTOGRAPHERS } from '../../data/mockPhotographers';
-import { RENTAL_SHOPS } from '../../data/rentalShops';
-import { MOCK_POST_OUTFITS, buildShopeeSearchUrl, buildTikTokShopSearchUrl } from '../../data/mockOutfits';
+import { buildShopeeSearchUrl, buildTikTokShopSearchUrl } from '../../data/mockOutfits';
 import { useShootPlan } from '../../context/ShootPlanContext';
 import type { Photographer } from '../../types';
+import { serviceHubApi, type ServiceListing } from '../../services/serviceHubApi';
+import type { RentalShop } from '../../types';
 
 export type ServicesTab = 'outfit' | 'photographers' | 'film';
 
@@ -70,12 +70,21 @@ export const ShootServicesHubDrawer: React.FC<ShootServicesHubDrawerProps> = ({
   // Tab 2 (Photographers) State
   const [budgetFilter, setBudgetFilter] = useState<'all' | 'under500' | '500to1000' | 'above1000'>('all');
   const [photographerSearch, setPhotographerSearch] = useState('');
+  const [directoryItems, setDirectoryItems] = useState<ServiceListing[]>([]);
 
   // Tab 3 (Film Labs) State
   const [filmSearch, setFilmSearch] = useState('');
   const { labs, userCoords, isFallback, isLocating, refreshLocation } = useNearestLabs({
     filmStockQuery: filmSearch
   });
+
+  React.useEffect(() => {
+    if (!isOpen) return;
+    let active = true;
+    serviceHubApi.list().then((items) => { if (active) setDirectoryItems(items); })
+      .catch((error: unknown) => { console.warn('Không tải được marketplace từ D1.', error); if (active) setDirectoryItems([]); });
+    return () => { active = false; };
+  }, [isOpen]);
 
   // Keep active tab in sync if initialTab changes when opening
   React.useEffect(() => {
@@ -86,7 +95,16 @@ export const ShootServicesHubDrawer: React.FC<ShootServicesHubDrawerProps> = ({
 
   // Filtered Photographers
   const filteredPhotographers = useMemo(() => {
-    return MOCK_PHOTOGRAPHERS.filter((p) => {
+    const photographers: Photographer[] = directoryItems.filter((entry) => entry.category === 'photographer').map((entry) => {
+      const price = Number((entry.price || '').replace(/[^\d]/g, '')) || 0;
+      const packages = (entry.packages || []).map((pkg, index) => ({ id: `${entry.id}-package-${index}`, name: pkg.name, price: pkg.price, priceFormatted: `${pkg.price.toLocaleString('vi-VN')}đ`, duration: pkg.duration, deliverables: { totalOriginalPhotos: String(pkg.deliveredPhotos), retouchedPhotos: String(pkg.deliveredPhotos), turnaroundTime: '' } }));
+      return { id: entry.id, name: entry.name, avatarUrl: entry.imageUrl || '', bio: entry.description || '', rating: Number(entry.rating) || 0, reviewCount: Number(entry.reviewCount) || 0,
+        startingPrice: price, startingPriceFormatted: entry.price || 'Liên hệ', budgetCategory: price < 500000 ? 'student' : price <= 1000000 ? 'standard' : 'premium',
+        vibes: (entry.tags || []) as Photographer['vibes'], specialtySpots: [], gear: [entry.gearBody, entry.gearLens].filter(Boolean).join(' / '),
+        contact: { zaloPhone: entry.phone || '', zaloUrl: entry.phone ? `https://zalo.me/${entry.phone.replace(/\D/g, '')}` : '', phone: entry.phone || '', instagram: entry.link || '' },
+        featuredPhotos: entry.portfolioPhotos?.length ? entry.portfolioPhotos : entry.imageUrl ? [entry.imageUrl] : [], packages, albums: [] };
+    });
+    return photographers.filter((p) => {
       // Search matching
       if (photographerSearch.trim()) {
         const q = photographerSearch.toLowerCase();
@@ -102,12 +120,21 @@ export const ShootServicesHubDrawer: React.FC<ShootServicesHubDrawerProps> = ({
       if (budgetFilter === 'above1000') return p.startingPrice > 1000000;
       return true;
     });
-  }, [budgetFilter, photographerSearch]);
+  }, [directoryItems, budgetFilter, photographerSearch]);
 
   // Outfit rental shops
   const outfitShops = useMemo(() => {
-    return RENTAL_SHOPS.filter((s) => s.type === 'OUTFIT');
-  }, []);
+    return directoryItems.filter((item) => item.category === 'rental').map((shop): RentalShop => ({
+      id: shop.id, name: shop.name, type: 'OUTFIT', address: shop.address || '', lat: 0, lng: 0,
+      priceRange: shop.price || '', phone: shop.phone || '', link: shop.link || ''
+    }));
+  }, [directoryItems]);
+
+  const adminOutfits = useMemo(() => directoryItems.filter((item) => item.category === 'outfit').map((item) => ({
+    id: item.id, postId: '', spotId: undefined, imageUrl: item.imageUrl || '', itemName: item.name, category: 'SET' as const,
+    xPercent: 50, yPercent: 50, searchQuery: item.name, priceEstimate: item.price || '', shopeeUrl: item.link || '',
+    tiktokUrl: item.secondaryLink || '', similarItems: []
+  })), [directoryItems]);
 
   // Handle image upload for bóc đồ
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -367,12 +394,12 @@ export const ShootServicesHubDrawer: React.FC<ShootServicesHubDrawerProps> = ({
                       Mẫu Trang Phục Hot Tại Điểm Chụp
                     </h3>
                     <span className="text-[10px] text-amber-400 font-mono-spec">
-                      {MOCK_POST_OUTFITS.length} gợi ý
+                      {adminOutfits.length} gợi ý
                     </span>
                   </div>
 
                   <div className="space-y-2.5">
-                    {MOCK_POST_OUTFITS.slice(0, 3).map((outfit) => (
+                    {adminOutfits.slice(0, 3).map((outfit) => (
                       <div
                         key={outfit.id}
                         className="p-3 rounded-xl bg-white border border-[#E2DAD0] hover:border-[#C76B3C]/50 transition-colors flex gap-3"

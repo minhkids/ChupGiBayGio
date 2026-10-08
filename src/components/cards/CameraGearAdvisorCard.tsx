@@ -9,11 +9,20 @@ interface CameraGearAdvisorCardProps {
 }
 
 export const CameraGearAdvisorCard: React.FC<CameraGearAdvisorCardProps> = ({ spot }) => {
-  // Find nearest camera shop
-  const cameraShops = db.rentalShops.getAll().filter(s => s.type === 'CAMERA').map(shop => ({
-    ...shop,
-    distance: calculateDistanceKm(spot.lat, spot.lng, shop.lat, shop.lng)
-  })).sort((a, b) => a.distance - b.distance);
+  const [cameraShops, setCameraShops] = React.useState<any[]>([]);
+
+  React.useEffect(() => {
+    db.rentalShops.getAll().then(shops => {
+      const filtered = shops
+        .filter(s => s.type === 'CAMERA')
+        .map(shop => ({
+          ...shop,
+          distance: calculateDistanceKm(spot.lat, spot.lng, shop.lat, shop.lng)
+        }))
+        .sort((a, b) => a.distance - b.distance);
+      setCameraShops(filtered);
+    });
+  }, [spot.lat, spot.lng]);
 
   const nearestShop = cameraShops[0];
 

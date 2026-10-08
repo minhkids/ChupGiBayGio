@@ -4,7 +4,7 @@ import type { PostOutfit } from '../../types';
 import { VisualOutfitHotspot } from './VisualOutfitHotspot';
 import { OutfitTapToShopModal } from './OutfitTapToShopModal';
 import { PinReferenceButton } from '../planner/PinReferenceButton';
-import { fetchPostOutfits, getAllMockOutfits } from '../../services/outfitService';
+import { fetchPostOutfits, fetchSpotOutfits } from '../../services/outfitService';
 
 interface TapToShopImageProps {
   src: string;
@@ -44,22 +44,10 @@ export const TapToShopImage: React.FC<TapToShopImageProps> = ({
 
     if (postId) {
       fetchPostOutfits(postId).then(data => {
-        if (data && data.length > 0) {
-          setFetchedOutfits(data);
-        }
+        setFetchedOutfits(data);
       });
-    } else {
-      const allMocks = getAllMockOutfits();
-      const matched = allMocks.filter(o => o.imageUrl === src || (spotId && o.spotId === spotId));
-      if (matched.length > 0) {
-        setFetchedOutfits(matched);
-      } else {
-        setFetchedOutfits([{
-          ...allMocks[0],
-          id: `outfit-auto-${Math.random()}`,
-          imageUrl: src,
-        }]);
-      }
+    } else if (spotId) {
+      fetchSpotOutfits(spotId).then(setFetchedOutfits);
     }
   }, [postId, spotId, src, propOutfits]);
 

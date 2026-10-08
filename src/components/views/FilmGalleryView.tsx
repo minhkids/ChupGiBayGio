@@ -1,19 +1,30 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { PinReferenceButton } from '../planner/PinReferenceButton';
-import { Film, Store, Sparkles } from 'lucide-react';
-import { FILM_STOCKS } from '../../utils/filmAdvisor';
+import { Film, Sparkles } from 'lucide-react';
+import { serviceHubApi, type ServiceListing } from '../../services/serviceHubApi';
 import { openNearestFilmShops } from '../../hooks/useNearestLabs';
 
 export const FilmGalleryView: React.FC = () => {
   const [copiedHex, setCopiedHex] = useState<string | null>(null);
+  const [films, setFilms] = useState<ServiceListing[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    let active = true;
+    serviceHubApi.list().then((items) => {
+      if (active) setFilms(items.filter((item) => item.category === 'filmColor'));
+    }).catch((err: unknown) => {
+      if (active) setError(err instanceof Error ? err.message : 'Không tải được dữ liệu màu film.');
+    }).finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, []);
   
   const handleCopyHex = (hex: string) => {
     navigator.clipboard.writeText(hex);
     setCopiedHex(hex);
     setTimeout(() => setCopiedHex(null), 1500);
   };
-
-  const films = Object.values(FILM_STOCKS);
 
   return (
     <div className="absolute inset-0 bg-[#F7F5F0] overflow-y-auto w-full custom-scrollbar text-[#2C2621]">
@@ -28,17 +39,24 @@ export const FilmGalleryView: React.FC = () => {
           </p>
         </div>
 
+        {loading && <p className="rounded-2xl border border-[#E2DAD0] bg-white p-6 text-sm text-[#6E655B]">Đang tải dữ liệu màu film…</p>}
+        {error && <p role="alert" className="rounded-2xl border border-red-200 bg-red-50 p-6 text-sm text-red-800">{error}</p>}
+        {!loading && !error && films.length === 0 && <section className="rounded-2xl border border-dashed border-[#D8CFBD] bg-white p-8 text-center">
+          <Film className="mx-auto mb-3 h-8 w-8 text-[#C76B3C]" />
+          <h2 className="font-bold">Chưa có dữ liệu màu film</h2>
+          <p className="mt-2 text-sm text-[#6E655B]">Danh sách hiện đang để trống. Quản trị viên có thể thêm nội dung tại Dịch vụ → Quản lý → Màu Film.</p>
+        </section>}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 lg:gap-8">
-          {films.map((film) => (
+          {!loading && films.map((film) => (
             <div 
               key={film.id}
               className="flex flex-col rounded-3xl border border-[#E2DAD0] bg-white overflow-hidden shadow-[0_4px_20px_rgba(44,38,33,0.04)] hover:shadow-[0_8px_30px_rgba(44,38,33,0.08)] transition-shadow duration-300"
             >
               {/* Header / Hero Image */}
               <div className="relative h-48 w-full bg-[#EFE9DF] shrink-0 border-b border-[#EFE9DF]">
-                {film.sampleImageUrl && <PinReferenceButton imageUrl={film.sampleImageUrl} label={`Ảnh mẫu ${film.fullName}`} />}
-                {film.sampleImageUrl ? (
-                  <img src={film.sampleImageUrl} alt={`Sample ${film.fullName}`} className="w-full h-full object-cover" />
+                {film.imageUrl && <PinReferenceButton imageUrl={film.imageUrl} label={`Ảnh mẫu ${film.name}`} />}
+                {film.imageUrl ? (
+                  <img src={film.imageUrl} alt={`Sample ${film.name}`} className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-neutral-400">
                     <Film className="w-12 h-12 opacity-50" />
@@ -47,15 +65,15 @@ export const FilmGalleryView: React.FC = () => {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
                 <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between">
                   <div>
-                    <h2 className="text-xl font-bold text-white mb-1 drop-shadow-md">{film.fullName}</h2>
+                    <h2 className="text-xl font-bold text-white mb-1 drop-shadow-md">{film.name}</h2>
                     <p className="text-xs font-mono font-medium text-neutral-200 drop-shadow-md flex gap-2">
-                      <span>ISO {film.iso}</span>
+                      {film.iso && <span>ISO {film.iso}</span>}
                       <span>•</span>
-                      <span>{film.format}</span>
+                      {film.format && <span>{film.format}</span>}
                     </p>
                   </div>
                   {film.filmImageUrl && (
-                    <img src={film.filmImageUrl} alt={film.brand} className="w-12 h-12 object-cover rounded-lg border-2 border-white/20 shadow-lg" />
+                    <img src={film.filmImageUrl} alt={film.name} className="w-12 h-12 object-cover rounded-lg border-2 border-white/20 shadow-lg" />
                   )}
                 </div>
               </div>
@@ -73,7 +91,7 @@ export const FilmGalleryView: React.FC = () => {
                       <Sparkles className="w-3.5 h-3.5" /> Tone Màu Đặc Trưng
                     </h3>
                     <div className="flex rounded-xl overflow-hidden shadow-inner h-8">
-                      {film.paletteHex.map((hex) => (
+                      {(film.paletteHex || []).map((hex) => (
                         <button
                           key={hex}
                           onClick={() => handleCopyHex(hex)}
@@ -104,27 +122,11 @@ export const FilmGalleryView: React.FC = () => {
                     </p>
                   </div>
 
-                  {/* Nearby Shops */}
-                  {film.nearbyShops && film.nearbyShops.length > 0 && (
-                    <div className="space-y-2">
-                      <h3 className="text-[11px] font-bold uppercase tracking-wider text-neutral-500 flex items-center gap-1.5">
-                        <Store className="w-3.5 h-3.5" /> Nơi mua / Tráng film
-                      </h3>
-                      <ul className="space-y-2">
-                        {film.nearbyShops.map((shop, i) => (
-                          <li key={i} className="text-xs bg-[#FAF8F4] border border-[#D8CFBD] p-2 rounded-lg">
-                            <strong className="block text-[#2C2621]">{shop.name}</strong>
-                            <span className="text-[#6E655B] block truncate">{shop.address}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
 
                   {/* Button to open Nearest Film Labs drawer */}
                   <button
                     type="button"
-                    onClick={() => openNearestFilmShops(film.fullName)}
+                    onClick={() => openNearestFilmShops(film.name)}
                     className="w-full mt-3 py-2 px-3 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 text-xs font-semibold transition-colors flex items-center justify-center space-x-1.5 border border-amber-500/30 cursor-pointer"
                   >
                     <span>📍 Tìm Lab gần đây còn sẵn cuộn này</span>

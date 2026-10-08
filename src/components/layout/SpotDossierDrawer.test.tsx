@@ -2,13 +2,13 @@
 import { afterEach, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { ShootPlanProvider } from '../../context/ShootPlanContext';
-import { db } from '../../services/db';
+import { MOCK_SPOTS } from '../../data/mockSpots';
 import { SpotDossierDrawer } from './SpotDossierDrawer';
 
 Object.defineProperty(window, 'matchMedia', { writable: true, value: vi.fn().mockImplementation(() => ({ matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn() })) });
 afterEach(() => { cleanup(); localStorage.clear(); });
 it('opens a named dossier and persists the header plan pin', () => {
-  const spot = db.spots.getAll()[0];
+  const spot = MOCK_SPOTS[0];
   render(<ShootPlanProvider><SpotDossierDrawer spot={spot} month={10} onClose={() => {}} /></ShootPlanProvider>);
   expect(screen.getByRole('dialog', { name: spot.name })).toBeTruthy();
   expect(screen.getAllByRole('tab')).toHaveLength(3);

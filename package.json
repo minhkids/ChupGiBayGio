@@ -29,6 +29,7 @@
     "lucide-react": "^1.49.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
+    "read-excel-file": "^9.3.12",
     "tailwind-merge": "^3.7.0",
     "vaul": "^1.1.2"
   },

@@ -14,6 +14,7 @@ dist-ssr
 tmp
 *.out.js
 .wrangler
+.dev.vars
 
 # Editor directories and files
 .vscode/*

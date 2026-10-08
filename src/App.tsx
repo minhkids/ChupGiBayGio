@@ -29,7 +29,19 @@ const ServicesHubView = lazy(() => import('./components/layout/ServicesHubView')
 const SpotDetailModal = lazy(() => import('./components/modals/SpotDetailModal').then(m => ({ default: m.SpotDetailModal })));
 
 export function App() {
-  const [spots, setSpots] = useState<Spot[]>(db.spots.getAll());
+  const [spots, setSpots] = useState<Spot[]>([]);
+
+
+  useEffect(() => {
+    let mounted = true;
+    db.spots.getAll().then(data => {
+      if (mounted) {
+        setSpots(data);
+
+      }
+    });
+    return () => { mounted = false; };
+  }, []);
   const [activeRegionId, setActiveRegionId] = useState<string>('hanoi');
   const [activeView, setActiveView] = useState<'map' | 'grid' | 'moodboard' | 'film' | 'services'>('map');
   const [uiTheme, setUiTheme] = useState<'modern' | 'editorial'>('modern');

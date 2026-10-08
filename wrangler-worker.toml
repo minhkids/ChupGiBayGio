@@ -3,10 +3,6 @@ main = "src/workers/index.ts"
 compatibility_date = "2024-10-02"
 compatibility_flags = ["nodejs_compat"]
 
-# Build configuration
-[build]
-command = "npm run build:worker"
-watch_dir = "src/workers"
 
 # Environment variables (non-secret)
 [vars]
@@ -17,17 +13,17 @@ LOG_LEVEL = "info"
 [[d1_databases]]
 binding = "DB"
 database_name = "chupgibaygio-db"
-database_id = "your-d1-database-id-here"
+database_id = "7ca25a88-df29-4a3a-8988-ced043d783d9"
 
 # R2 Bucket binding
 [[r2_buckets]]
 binding = "R2_BUCKET"
-bucket_name = "chupgibaygio-assets"
+bucket_name = "chupgibaygio"
 
 # KV Namespace for caching (optional)
 [[kv_namespaces]]
 binding = "CACHE"
-id = "your-kv-namespace-id"
+id = "1cd9b5e4effe4af68e27decc4f19912c"
 
 # AI binding (if using Cloudflare AI)
 # [ai]
@@ -69,10 +65,10 @@ vars = { APP_ENV = "production", LOG_LEVEL = "info" }
 [[env.production.d1_databases]]
 binding = "DB"
 database_name = "chupgibaygio-db"
-database_id = "your-d1-database-id-here"
+database_id = "7ca25a88-df29-4a3a-8988-ced043d783d9"
 [[env.production.r2_buckets]]
 binding = "R2_BUCKET"
-bucket_name = "chupgibaygio-assets"
+bucket_name = "chupgibaygio"
 [[env.production.kv_namespaces]]
 binding = "CACHE"
-id = "your-kv-namespace-id"
+id = "1cd9b5e4effe4af68e27decc4f19912c"

@@ -6,7 +6,7 @@ import type { Spot } from '../../types';
 import { REGIONS } from '../../data/regions';
 import { getStatusBadgeInfo } from '../../utils/season';
 import { Compass, Layers, Key, Check, ExternalLink } from 'lucide-react';
-import { FILM_LABS, type FilmLab } from '../../data/filmLabsData';
+import { type FilmLab } from '../../data/filmLabsData';
 
 interface SpotMapProps {
   editorial?: boolean;
@@ -69,6 +69,28 @@ export const SpotMap: React.FC<SpotMapProps> = ({
   const [showKeyModal, setShowKeyModal] = useState(false);
   const [tempKeyInput, setTempKeyInput] = useState(cartoApiKey);
   const [keySaved, setKeySaved] = useState(false);
+  const [d1FilmLabs, setD1FilmLabs] = useState<FilmLab[]>([]);
+
+  useEffect(() => {
+    let active = true;
+    const apiBase = import.meta.env.VITE_API_URL || '';
+    fetch(`${apiBase}/api/labs`).then(async (response) => {
+      if (!response.ok) throw new Error(`Lỗi tải lab (${response.status})`);
+      const rows: unknown = await response.json();
+      if (!Array.isArray(rows)) return [];
+      return rows.map((value) => {
+        const row = value as Record<string, unknown>;
+        const address = String(row.address || '');
+        let availableFilms: string[] = [];
+        try { const stock = typeof row.in_stock_films === 'string' ? JSON.parse(row.in_stock_films) : row.inStockFilms; if (Array.isArray(stock)) availableFilms = stock.map(String); } catch { availableFilms = []; }
+        return { id: String(row.id), name: String(row.name || ''), address, district: String(row.district || ''), lat: Number(row.lat) || 0, lng: Number(row.lng) || 0,
+          openingHours: String(row.opening_hours || ''), hasFastService: Boolean(row.fast_2h), availableFilms, phone: String(row.hotline || ''),
+          fanpageUrl: String(row.fanpage_url || ''), googleMapsUrl: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`, services: [] } satisfies FilmLab;
+      });
+    }).then((rows) => { if (active) setD1FilmLabs(rows); })
+      .catch((error: unknown) => { console.warn('Không tải được lab cho bản đồ từ D1.', error); if (active) setD1FilmLabs([]); });
+    return () => { active = false; };
+  }, []);
 
   // Helper to get tile configuration
   const getTileConfig = (provider: TileProvider, key: string) => {
@@ -334,7 +356,7 @@ export const SpotMap: React.FC<SpotMapProps> = ({
     if (!mapInstanceRef.current || !filmLabsLayerRef.current) return;
     filmLabsLayerRef.current.clearLayers();
 
-    const labs = filmLabs || FILM_LABS;
+    const labs = filmLabs || d1FilmLabs;
     labs.forEach((lab) => {
       const isSelected = selectedFilmLab?.id === lab.id;
 
@@ -364,7 +386,7 @@ export const SpotMap: React.FC<SpotMapProps> = ({
 
       marker.addTo(filmLabsLayerRef.current!);
     });
-  }, [filmLabs, selectedFilmLab, onSelectFilmLab]);
+  }, [filmLabs, d1FilmLabs, selectedFilmLab, onSelectFilmLab]);
 
   // Handle focused coordinates (e.g. fly to film lab on map)
   useEffect(() => {

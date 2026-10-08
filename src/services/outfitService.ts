@@ -1,5 +1,5 @@
 import type { PostOutfit } from '../types';
-import { getOutfitsForPost, getOutfitsForSpot, MOCK_POST_OUTFITS } from '../data/mockOutfits';
+
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
@@ -12,21 +12,12 @@ interface OutfitApiResponse {
  */
 export async function fetchPostOutfits(postId: string): Promise<PostOutfit[]> {
   try {
-    if (API_BASE) {
-      const res = await fetch(`${API_BASE}/api/posts/${postId}/outfit`);
-      if (res.ok) {
-        const data = (await res.json()) as OutfitApiResponse;
-        if (data.outfits && data.outfits.length > 0) {
-          return data.outfits;
-        }
-      }
-    }
+    const res = await fetch(`${API_BASE}/api/posts/${encodeURIComponent(postId)}/outfit`);
+    if (res.ok) return ((await res.json()) as OutfitApiResponse).outfits || [];
   } catch (err) {
-    console.warn(`[OutfitService] Lỗi gọi API /api/posts/${postId}/outfit, dùng mock data:`, err);
+    console.warn(`[OutfitService] Lỗi gọi API /api/posts/${postId}/outfit:`, err);
   }
-
-  // Fallback về mock data
-  return getOutfitsForPost(postId);
+  return [];
 }
 
 /**
@@ -34,22 +25,10 @@ export async function fetchPostOutfits(postId: string): Promise<PostOutfit[]> {
  */
 export async function fetchSpotOutfits(spotId: string): Promise<PostOutfit[]> {
   try {
-    if (API_BASE) {
-      const res = await fetch(`${API_BASE}/api/spots/${spotId}/outfits`);
-      if (res.ok) {
-        const data = (await res.json()) as OutfitApiResponse;
-        if (data.outfits && data.outfits.length > 0) {
-          return data.outfits;
-        }
-      }
-    }
+    const res = await fetch(`${API_BASE}/api/spots/${encodeURIComponent(spotId)}/outfits`);
+    if (res.ok) return ((await res.json()) as OutfitApiResponse).outfits || [];
   } catch (err) {
-    console.warn(`[OutfitService] Lỗi gọi API /api/spots/${spotId}/outfits, dùng mock data:`, err);
+    console.warn(`[OutfitService] Lỗi gọi API /api/spots/${spotId}/outfits:`, err);
   }
-
-  return getOutfitsForSpot(spotId);
-}
-
-export function getAllMockOutfits(): PostOutfit[] {
-  return MOCK_POST_OUTFITS;
+  return [];
 }

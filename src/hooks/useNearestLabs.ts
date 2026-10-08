@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { FILM_LABS, HANOI_DEFAULT_COORDS, type FilmLab } from '../data/filmLabsData';
+import { HANOI_DEFAULT_COORDS, type FilmLab } from '../data/filmLabsData';
 
 export interface NearestFilmLab extends FilmLab {
   distanceKm: number;
@@ -63,6 +63,38 @@ export function useNearestLabs(optionsOrFilter?: string | { filmStockQuery?: str
   const [isUsingFallback, setIsUsingFallback] = useState<boolean>(true);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [filmFilter, setFilmFilter] = useState<string>(initialFilmFilter || '');
+  const [filmLabs, setFilmLabs] = useState<FilmLab[]>([]);
+
+  useEffect(() => {
+    let active = true;
+    const apiBase = import.meta.env.VITE_API_URL || '';
+    fetch(`${apiBase}/api/labs`).then(async (response) => {
+      if (!response.ok) throw new Error(`Lỗi tải lab (${response.status})`);
+      const rows: unknown = await response.json();
+      if (!Array.isArray(rows)) return [];
+      return rows.map((value) => {
+        const row = value as Record<string, unknown>;
+        const address = String(row.address || '');
+        const filmsValue = row.in_stock_films ?? row.inStockFilms;
+        let availableFilms: string[] = [];
+        try { const parsed = typeof filmsValue === 'string' ? JSON.parse(filmsValue) : filmsValue; if (Array.isArray(parsed)) availableFilms = parsed.map(String); } catch { availableFilms = []; }
+        const lat = Number(row.lat) || HANOI_DEFAULT_COORDS.lat;
+        const lng = Number(row.lng) || HANOI_DEFAULT_COORDS.lng;
+        const phone = String(row.hotline || row.phone || '');
+        return {
+          id: String(row.id), name: String(row.name || ''), address, district: String(row.district || ''), lat, lng,
+          openingHours: String(row.opening_hours || row.openingHours || ''), hasFastService: Boolean(row.fast_2h ?? row.fast2h),
+          availableFilms, phone, zaloUrl: phone ? `https://zalo.me/${phone.replace(/\D/g, '')}` : '',
+          fanpageUrl: String(row.fanpage_url || row.fanpageUrl || ''),
+          googleMapsUrl: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`,
+          services: Array.isArray(row.services) ? row.services.map(String) : [], priceRange: String(row.price_range || ''),
+          rating: Number(row.rating) || 0, reviewCount: Number(row.review_count) || 0, description: String(row.description || '')
+        } satisfies FilmLab;
+      });
+    }).then((rows) => { if (active) setFilmLabs(rows); })
+      .catch((error: unknown) => { console.warn('Không tải được dữ liệu lab từ D1.', error); if (active) setFilmLabs([]); });
+    return () => { active = false; };
+  }, []);
 
   // Update filmFilter if prop changes
   useEffect(() => {
@@ -120,7 +152,7 @@ export function useNearestLabs(optionsOrFilter?: string | { filmStockQuery?: str
 
   // Compute distances, filter and sort nearest to farthest
   const sortedLabs = useMemo(() => {
-    const list = FILM_LABS.map((lab) => {
+    const list = filmLabs.map((lab) => {
       const distance = haversineDistanceKm(
         userCoords.lat,
         userCoords.lng,
@@ -155,7 +187,7 @@ export function useNearestLabs(optionsOrFilter?: string | { filmStockQuery?: str
     }
 
     return filtered;
-  }, [userCoords, filmFilter]);
+  }, [filmLabs, userCoords, filmFilter]);
 
   return {
     labs: sortedLabs,
