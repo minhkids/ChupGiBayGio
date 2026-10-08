@@ -10,9 +10,11 @@ import {
   Share2,
   Flag,
   Camera,
+  Film,
   Clock,
   Sparkles,
   MapPin,
+  Shirt,
   Check,
   ChevronUp,
   ChevronDown,
@@ -686,39 +688,36 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
 
 
 
-          {/* 3 PHOTOGRAPHY TABS: 👗 Quần áo | 📷 Thuê máy ảnh | 🎞️ Mua film */}
-          <div className="grid grid-cols-3 p-1 bg-[#DDD3BD] rounded-xl text-xs font-semibold gap-1">
+          {/* Three photography service tabs */}
+          <div className="grid grid-cols-3 gap-1 rounded-xl border border-[#D0C5AC] bg-[#E0D6BF] p-1 text-xs font-semibold">
             <button
               type="button"
               onClick={() => setSidebarTab('outfit')}
-              className={`flex items-center justify-center space-x-1 py-2 px-1 rounded-lg transition-all text-center ${sidebarTab === 'outfit'
-                  ? 'bg-[#FAF8F4] text-[#2C2621] font-bold shadow-sm'
-                  : 'text-[#6E655B] hover:text-[#2C2621] font-medium'
-                }`}
+              aria-pressed={sidebarTab === 'outfit'}
+              className={`flex min-h-10 min-w-0 items-center justify-center gap-1.5 rounded-lg px-1 py-2 text-center text-[11px] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#C76B3C] ${sidebarTab === 'outfit' ? 'bg-[#FAF8F4] font-bold text-[#2C2621] shadow-sm' : 'font-semibold text-[#554D43] hover:bg-[#ECE4D0]'}`}
             >
-              <span className="truncate">👗 Quần áo ({outfitInsights.length})</span>
+              <Shirt aria-hidden="true" className={`h-4 w-4 shrink-0 ${sidebarTab === 'outfit' ? 'text-[#C76B3C]' : 'text-[#6E655B]'}`} />
+              <span className="truncate">Quần áo ({outfitInsights.length})</span>
             </button>
 
             <button
               type="button"
               onClick={() => setSidebarTab('camera')}
-              className={`flex items-center justify-center space-x-1 py-2 px-1 rounded-lg transition-all text-center ${sidebarTab === 'camera'
-                  ? 'bg-[#FAF8F4] text-[#2C2621] font-bold shadow-sm'
-                  : 'text-[#6E655B] hover:text-[#2C2621] font-medium'
-                }`}
+              aria-pressed={sidebarTab === 'camera'}
+              className={`flex min-h-10 min-w-0 items-center justify-center gap-1.5 rounded-lg px-1 py-2 text-center text-[11px] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#C76B3C] ${sidebarTab === 'camera' ? 'bg-[#FAF8F4] font-bold text-[#2C2621] shadow-sm' : 'font-semibold text-[#554D43] hover:bg-[#ECE4D0]'}`}
             >
-              <span className="truncate">📷 Thuê máy ({cameraInsights.length})</span>
+              <Camera aria-hidden="true" className={`h-4 w-4 shrink-0 ${sidebarTab === 'camera' ? 'text-[#C76B3C]' : 'text-[#6E655B]'}`} />
+              <span className="truncate">Thuê máy ({cameraInsights.length})</span>
             </button>
 
             <button
               type="button"
               onClick={() => setSidebarTab('film')}
-              className={`flex items-center justify-center space-x-1 py-2 px-1 rounded-lg transition-all text-center ${sidebarTab === 'film'
-                  ? 'bg-[#FAF8F4] text-[#2C2621] font-bold shadow-sm'
-                  : 'text-[#6E655B] hover:text-[#2C2621] font-medium'
-                }`}
+              aria-pressed={sidebarTab === 'film'}
+              className={`flex min-h-10 min-w-0 items-center justify-center gap-1.5 rounded-lg px-1 py-2 text-center text-[11px] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#C76B3C] ${sidebarTab === 'film' ? 'bg-[#FAF8F4] font-bold text-[#2C2621] shadow-sm' : 'font-semibold text-[#554D43] hover:bg-[#ECE4D0]'}`}
             >
-              <span className="truncate">🎞️ Mua film ({filmInsights.length})</span>
+              <Film aria-hidden="true" className={`h-4 w-4 shrink-0 ${sidebarTab === 'film' ? 'text-[#C76B3C]' : 'text-[#6E655B]'}`} />
+              <span className="truncate">Mua film ({filmInsights.length})</span>
             </button>
           </div>
 
@@ -730,14 +729,14 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                 setFilmFilterForLabs('');
                 setIsAllLabsDrawerOpen(true);
               }}
-              className="w-full mt-2.5 py-2 px-3 rounded-xl bg-gradient-to-r from-amber-500/15 to-orange-500/15 border border-amber-500/30 hover:border-amber-500 text-amber-700 dark:text-amber-300 flex items-center justify-between text-xs font-bold transition-all shadow-xs group"
+              className="mt-2.5 flex w-full items-center justify-between rounded-xl border border-[#D9B894] bg-[#F4E9DA] px-3 py-2 text-xs font-bold text-[#554D43] shadow-sm transition-colors hover:border-[#C76B3C] hover:bg-[#F1E0C7] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#C76B3C]"
             >
-              <span className="flex items-center space-x-1.5">
-                <span className="text-base group-hover:scale-110 transition-transform">📍</span>
+              <span className="flex items-center gap-1.5">
+                <MapPin aria-hidden="true" className="h-4 w-4 shrink-0 text-[#C76B3C]" />
                 <span>Tìm Lab gần tôi (GPS & Lọc film)</span>
               </span>
-              <span className="text-[10px] font-mono-spec px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-600 dark:text-amber-300">
-                Mở Drawer →
+              <span className="rounded-md border border-[#D8CFBD] bg-[#FAF8F4] px-1.5 py-0.5 text-[10px] font-mono-spec text-[#554D43]">
+                Mở danh sách →
               </span>
             </button>
           )}
@@ -1093,7 +1092,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
           <div className="w-full flex items-center justify-between font-mono-spec">
 
             {/* Mobile Tab Pill Switcher */}
-            <div className="grid grid-cols-3 flex-1 p-1 bg-neutral-100 dark:bg-neutral-800 rounded-xl mr-2 gap-1 text-center">
+            <div className="mr-2 grid flex-1 grid-cols-3 gap-1 rounded-xl border border-[#D0C5AC] bg-[#E0D6BF] p-1 text-center">
               <button
                 type="button"
                 onClick={(e) => {
@@ -1101,12 +1100,11 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                   setSidebarTab('outfit');
                   if (mobileSnap === 'peek') setMobileSnap('half');
                 }}
-                className={`py-2 rounded-lg text-xs font-bold transition-all truncate ${sidebarTab === 'outfit'
-                    ? 'bg-white dark:bg-neutral-900 text-terracotta shadow-sm'
-                    : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-white'
-                  }`}
+                aria-pressed={sidebarTab === 'outfit'}
+                className={`flex min-h-10 min-w-0 items-center justify-center gap-1 rounded-lg px-1 py-2 text-[11px] font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#C76B3C] ${sidebarTab === 'outfit' ? 'bg-[#FAF8F4] font-bold text-[#2C2621] shadow-sm' : 'text-[#554D43] hover:bg-[#ECE4D0]'}`}
               >
-                👗 Quần áo ({outfitInsights.length})
+                <Shirt aria-hidden="true" className={`h-4 w-4 shrink-0 ${sidebarTab === 'outfit' ? 'text-[#C76B3C]' : 'text-[#6E655B]'}`} />
+                <span className="truncate">Quần áo ({outfitInsights.length})</span>
               </button>
               <button
                 type="button"
@@ -1115,12 +1113,11 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                   setSidebarTab('camera');
                   if (mobileSnap === 'peek') setMobileSnap('half');
                 }}
-                className={`py-2 rounded-lg text-xs font-bold transition-all truncate ${sidebarTab === 'camera'
-                    ? 'bg-white dark:bg-neutral-900 text-terracotta shadow-sm'
-                    : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-white'
-                  }`}
+                aria-pressed={sidebarTab === 'camera'}
+                className={`flex min-h-10 min-w-0 items-center justify-center gap-1 rounded-lg px-1 py-2 text-[11px] font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#C76B3C] ${sidebarTab === 'camera' ? 'bg-[#FAF8F4] font-bold text-[#2C2621] shadow-sm' : 'text-[#554D43] hover:bg-[#ECE4D0]'}`}
               >
-                📷 Thuê máy ({cameraInsights.length})
+                <Camera aria-hidden="true" className={`h-4 w-4 shrink-0 ${sidebarTab === 'camera' ? 'text-[#C76B3C]' : 'text-[#6E655B]'}`} />
+                <span className="truncate">Thuê máy ({cameraInsights.length})</span>
               </button>
               <button
                 type="button"
@@ -1129,12 +1126,11 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                   setSidebarTab('film');
                   if (mobileSnap === 'peek') setMobileSnap('half');
                 }}
-                className={`py-2 rounded-lg text-xs font-bold transition-all truncate ${sidebarTab === 'film'
-                    ? 'bg-white dark:bg-neutral-900 text-terracotta shadow-sm'
-                    : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-white'
-                  }`}
+                aria-pressed={sidebarTab === 'film'}
+                className={`flex min-h-10 min-w-0 items-center justify-center gap-1 rounded-lg px-1 py-2 text-[11px] font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#C76B3C] ${sidebarTab === 'film' ? 'bg-[#FAF8F4] font-bold text-[#2C2621] shadow-sm' : 'text-[#554D43] hover:bg-[#ECE4D0]'}`}
               >
-                🎞️ Mua film ({filmInsights.length})
+                <Film aria-hidden="true" className={`h-4 w-4 shrink-0 ${sidebarTab === 'film' ? 'text-[#C76B3C]' : 'text-[#6E655B]'}`} />
+                <span className="truncate">Mua film ({filmInsights.length})</span>
               </button>
             </div>
 
