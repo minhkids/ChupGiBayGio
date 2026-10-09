@@ -363,10 +363,10 @@ export const SpotMap: React.FC<SpotMapProps> = ({
       const labIconHtml = `
         <div class="relative cursor-pointer transition-transform hover:scale-125 ${isSelected ? 'scale-125 z-50' : 'z-30'}" title="${lab.name} - ${lab.address}">
           <div style="background-color: #FAF8F4; border: 2px solid #C76B3C; box-shadow: 0 2px 10px rgba(199, 107, 60, 0.35);" 
-               class="w-7 h-7 rounded-full flex items-center justify-center text-[#C76B3C] font-mono text-[11px] font-bold">
-            🎞️
+               class="w-8 h-8 rounded-full flex items-center justify-center text-[#C76B3C]">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M7 3v18"/><path d="M3 7.5h4"/><path d="M3 12h18"/><path d="M3 16.5h4"/><path d="M17 3v18"/><path d="M17 7.5h4"/><path d="M17 16.5h4"/></svg>
           </div>
-          <div class="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[5px] border-t-[#C76B3C] mx-auto"></div>
+          <div class="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[6px] border-t-[#C76B3C] mx-auto -mt-[1px]"></div>
         </div>
       `;
 
