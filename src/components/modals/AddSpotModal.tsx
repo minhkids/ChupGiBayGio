@@ -141,7 +141,7 @@ export const AddSpotModal: React.FC<AddSpotModalProps> = ({
             <button
               type="button"
               onClick={onCancelMapPick}
-              className="px-3.5 py-1.5 border border-slateInk bg-slateInk hover:bg-slateInk/90 text-xs font-bold font-mono-spec text-white transition-colors flex items-center space-x-1"
+              className="px-3.5 py-1.5 border border-slateInk bg-terracotta hover:bg-terracotta-dark text-xs font-bold font-mono-spec text-white transition-colors flex items-center space-x-1"
             >
               <Maximize2 className="w-3.5 h-3.5 mr-1" />
               <span>XONG</span>
@@ -176,7 +176,7 @@ export const AddSpotModal: React.FC<AddSpotModalProps> = ({
                 setIsComplete(false);
                 onClose();
               }}
-              className="w-full py-2.5 px-4 border border-slateInk bg-slateInk hover:bg-slateInk/90 text-white font-bold font-mono-spec text-sm transition-colors shadow-hard"
+              className="w-full py-2.5 px-4 border border-slateInk bg-terracotta hover:bg-terracotta-dark text-white font-bold font-mono-spec text-sm transition-colors shadow-hard"
             >
               ĐÓNG
             </button>
@@ -192,12 +192,12 @@ export const AddSpotModal: React.FC<AddSpotModalProps> = ({
         className="relative bg-paper-light border-2 border-slateInk w-full max-w-2xl shadow-hard-lg overflow-hidden reticle-corner reticle-tl reticle-br flex flex-col max-h-[90vh]"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="border-b border-slateInk bg-slateInk px-4 py-3 flex items-center justify-between font-mono-spec text-xs">
-          <span className="font-bold text-white flex items-center">
+        <div className="border-b border-slateInk bg-paper-warm px-4 py-3 flex items-center justify-between font-mono-spec text-xs">
+          <span className="font-bold text-terracotta flex items-center">
             <MapPin className="w-4 h-4 mr-2" />
             THÊM ĐỊA ĐIỂM CHỤP MỚI
           </span>
-          <button onClick={onClose} className="w-6 h-6 flex items-center justify-center text-white hover:bg-white/20 transition-colors">
+          <button onClick={onClose} className="w-6 h-6 border border-slateInk bg-paper-light flex items-center justify-center hover:bg-slateInk hover:text-white transition-colors">
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -282,7 +282,7 @@ export const AddSpotModal: React.FC<AddSpotModalProps> = ({
                     onClick={() => toggleConcept(tagKey)}
                     className={`px-3 py-1.5 text-xs border font-mono-spec transition-all ${
                       isSelected
-                        ? 'border-slateInk bg-slateInk text-white font-bold'
+                        ? 'border-terracotta bg-terracotta text-white font-bold'
                         : 'border-slateInk/40 bg-paper-warm text-slateInk hover:border-slateInk'
                     }`}
                   >
@@ -306,7 +306,7 @@ export const AddSpotModal: React.FC<AddSpotModalProps> = ({
             <button
               type="submit"
               disabled={isSubmitting || !spotName.trim() || !selectedLocation}
-              className="px-5 py-2 border border-slateInk bg-slateInk hover:bg-slateInk/90 disabled:opacity-50 text-white font-bold shadow-hard transition-colors flex items-center gap-2"
+              className="px-5 py-2 border border-slateInk bg-terracotta hover:bg-terracotta-dark disabled:opacity-50 text-white font-bold shadow-hard transition-colors flex items-center gap-2"
             >
               {isSubmitting ? 'ĐANG LƯU...' : (
                 <>
