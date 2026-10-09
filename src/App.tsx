@@ -11,7 +11,7 @@ import {
 } from './components';
 import { useWeather } from './hooks/useWeather';
 import { useMapLocationPicker } from './hooks/useMapLocationPicker';
-import { isSpotActiveInMonth } from './utils/season';
+import { getCurrentMonthInVietnam, isSpotActiveInMonth } from './utils/season';
 import { calculateDistanceKm } from './utils/geo';
 import { recommendFilmForSpot } from './utils/filmAdvisor';
 import { readSavedSpotIds } from './utils/savedSpots';
@@ -47,11 +47,11 @@ export function App() {
   const [activeView, setActiveView] = useState<'map' | 'grid' | 'moodboard' | 'film' | 'services'>(() =>
     new URLSearchParams(window.location.search).has('services') ? 'services' : 'map');
   const [uiTheme, setUiTheme] = useState<'modern' | 'editorial'>('modern');
-  const currentMonth = useMemo(() => new Date().getMonth() + 1, []); // eslint-disable-line react/purity — runs once at mount
+  const currentMonth = useMemo(() => getCurrentMonthInVietnam(), []); // eslint-disable-line react/purity — runs once at mount
 
   // Filter State
   const [filters, setFilters] = useState<FilterState>({
-    month: 11,
+    month: currentMonth,
     season: 'autumn',
     regionId: 'hanoi',
     status: 'ALL',

@@ -25,6 +25,13 @@ export const CONCEPT_METADATA: Record<ConceptTag, { label: string; iconName: str
   CHRISTMAS: { label: 'Giáng Sinh & Đông', iconName: 'Gift', description: 'Không gian trang trí Noel, cây thông, đèn lồng, không khí lễ hội' }
 };
 
+export function getCurrentMonthInVietnam(now: Date = new Date()): number {
+  return Number(new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Bangkok',
+    month: 'numeric'
+  }).format(now));
+}
+
 export function isSpotActiveInMonth(startMonth: number, endMonth: number, targetMonth: number): boolean {
   if (startMonth <= endMonth) {
     return targetMonth >= startMonth && targetMonth <= endMonth;

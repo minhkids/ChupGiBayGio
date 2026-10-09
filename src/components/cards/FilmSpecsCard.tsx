@@ -23,7 +23,7 @@ export const FilmSpecsCard: React.FC<FilmSpecsCardProps> = ({
   const { film, recommendedSettings, rationale } = recommendation;
 
   return (
-    <div className={`relative overflow-hidden rounded-2xl border border-neutral-200/90 dark:border-neutral-800 bg-gradient-to-br from-amber-50/60 via-white to-orange-50/40 dark:from-neutral-900/90 dark:via-neutral-900 dark:to-neutral-850/80 p-5 shadow-md backdrop-blur-md transition-all hover:shadow-lg ${className}`}>
+    <div className={`relative overflow-hidden rounded-2xl border border-neutral-200/90 dark:border-neutral-700 bg-gradient-to-br from-amber-50/60 via-white to-orange-50/40 dark:bg-none dark:bg-neutral-800 p-5 shadow-md backdrop-blur-md transition-all hover:shadow-lg ${className}`}>
       
       {/* Film Sprocket Perforations Header Accent */}
       <div className="flex items-center justify-between mb-3 border-b border-amber-200/50 dark:border-neutral-800 pb-2.5">

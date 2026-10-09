@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { getEffectiveSeasonalStatus } from './season';
+import { getCurrentMonthInVietnam, getEffectiveSeasonalStatus } from './season';
+
+describe('getCurrentMonthInVietnam', () => {
+  it('uses the month currently shown in Vietnam, including UTC month boundaries', () => {
+    expect(getCurrentMonthInVietnam(new Date('2026-10-31T17:30:00Z'))).toBe(11);
+  });
+});
 
 describe('getEffectiveSeasonalStatus', () => {
   it('keeps a verified label through its last day in Vietnam and retires it afterward', () => {
