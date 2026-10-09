@@ -9,7 +9,6 @@ import {
   RotateCw,
   Search,
   Sparkles,
-  Zap,
   Film,
   Navigation
 } from 'lucide-react';
@@ -322,12 +321,7 @@ const LabCard: React.FC<LabCardProps> = ({
           <span>{lab.openingHours}</span>
         </span>
 
-        {lab.hasFastService && (
-          <span className="flex items-center space-x-1 text-amber-300 bg-amber-950/40 border border-amber-800/60 px-2 py-1 rounded-md font-medium text-[11px]">
-            <Zap className="w-3 h-3 text-amber-400" />
-            <span>⚡ Tráng lấy ngay 2h</span>
-          </span>
-        )}
+
       </div>
 
       {/* Available Films in Stock */}

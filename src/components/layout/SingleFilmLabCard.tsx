@@ -68,8 +68,7 @@ export const SingleFilmLabCard: React.FC<SingleFilmLabCardProps> = ({ lab, userC
       </div>
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
-        {lab.hasFastService && <span className="rounded-full border border-[#EAD3B9] bg-[#FAF0E4] px-2.5 py-1 text-[11px] font-semibold text-[#A64B1E]">Tráng lấy ngay 2h</span>}
-        {lab.fastServiceNotes && !lab.hasFastService && <span className="rounded-full border border-[#E2DAD0] bg-white px-2.5 py-1 text-[11px] text-[#6E655B]">{lab.fastServiceNotes}</span>}
+
         {lab.priceRange && <span className="text-[11px] font-mono text-[#8C8377]">{lab.priceRange}</span>}
       </div>
 

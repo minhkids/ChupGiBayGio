@@ -84,7 +84,7 @@ export const SpotMap: React.FC<SpotMapProps> = ({
         let availableFilms: string[] = [];
         try { const stock = typeof row.in_stock_films === 'string' ? JSON.parse(row.in_stock_films) : row.inStockFilms; if (Array.isArray(stock)) availableFilms = stock.map(String); } catch { availableFilms = []; }
         return { id: String(row.id), name: String(row.name || ''), address, district: String(row.district || ''), lat: Number(row.lat) || 0, lng: Number(row.lng) || 0,
-          openingHours: String(row.opening_hours || ''), hasFastService: Boolean(row.fast_2h), availableFilms, phone: String(row.hotline || ''),
+          openingHours: String(row.opening_hours || ''), availableFilms, phone: String(row.hotline || ''),
           fanpageUrl: String(row.fanpage_url || ''), googleMapsUrl: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`, services: [] } satisfies FilmLab;
       });
     }).then((rows) => { if (active) setD1FilmLabs(rows); })

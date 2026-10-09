@@ -10,7 +10,6 @@
 // SavedSpotsModal — imported via React.lazy in App.tsx
 // SpotDetailModal — imported via React.lazy in App.tsx
 export { PoseLibraryModal } from './modals/PoseLibraryModal';
-export { SubmitSpotModal } from './modals/SubmitSpotModal';
 
 // Cards
 export { CameraGearAdvisorCard } from './cards/CameraGearAdvisorCard';

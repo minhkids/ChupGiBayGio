@@ -13,7 +13,6 @@ import {
   MapPin,
   Compass,
   MessageCircle,
-  Zap,
   Check,
   Plus,
   RefreshCw,
@@ -854,12 +853,7 @@ export const ShootServicesHubDrawer: React.FC<ShootServicesHubDrawerProps> = ({
                           {/* Hours & 2h Turnaround Badge */}
                           <div className="flex items-center justify-between text-xs text-[#6E655B] pt-0.5">
                             <span className="font-mono-spec text-[11px]">{lab.openingHours}</span>
-                            {lab.hasFastService && (
-                              <span className="text-[10px] font-semibold text-emerald-400 flex items-center">
-                                <Zap className="w-3 h-3 mr-0.5 fill-current" />
-                                ⚡ Tráng lấy ngay 2h
-                              </span>
-                            )}
+
                           </div>
 
                           {/* Available Films in stock */}

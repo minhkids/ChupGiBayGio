@@ -83,7 +83,8 @@ export function useNearestLabs(optionsOrFilter?: string | { filmStockQuery?: str
         const phone = String(row.hotline || row.phone || '');
         return {
           id: String(row.id), name: String(row.name || ''), address, district: String(row.district || ''), lat, lng,
-          openingHours: String(row.opening_hours || row.openingHours || ''), hasFastService: Boolean(row.fast_2h ?? row.fast2h),
+          openingHours: String(row.opening_hours || row.openingHours || ''),
+
           availableFilms, phone, zaloUrl: phone ? `https://zalo.me/${phone.replace(/\D/g, '')}` : '',
           fanpageUrl: String(row.fanpage_url || row.fanpageUrl || ''),
           googleMapsUrl: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`,
