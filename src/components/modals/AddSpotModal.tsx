@@ -38,8 +38,6 @@ export const AddSpotModal: React.FC<AddSpotModalProps> = ({
   const [spotName, setSpotName] = useState('');
   const [regionId, setRegionId] = useState('hanoi');
   const [selectedConcepts, setSelectedConcepts] = useState<ConceptTag[]>(['HOA_CO']);
-  const [coverUrl, setCoverUrl] = useState('');
-  const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
 
@@ -80,9 +78,9 @@ export const AddSpotModal: React.FC<AddSpotModalProps> = ({
       recommendedOutfits: ['Trang phục thoải mái'],
       colorPalette: ['#C85A32', '#F4EFE6', '#1C1D1F', '#E09F3E'],
       crowdLevelByHour: { morning: 'Vắng', noon: 'Vắng', afternoon: 'Trung bình', evening: 'Đông' },
-      coverImageUrl: coverUrl || '/facebook_media/post_0_0.jpg',
-      galleryUrls: [coverUrl || '/facebook_media/post_0_0.jpg'],
-      description: description || `Điểm chụp ảnh mới được đề xuất.`,
+      coverImageUrl: '/facebook_media/post_0_0.jpg',
+      galleryUrls: ['/facebook_media/post_0_0.jpg'],
+      description: `Điểm chụp ảnh mới được đề xuất.`,
       photographyTips: ['Nên đi sớm trước giờ cao điểm để giữ góc chụp đẹp.'],
       inspirationPosts: [],
       recentReports: [],
