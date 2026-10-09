@@ -532,6 +532,10 @@ export const ShootServicesHubDrawer: React.FC<ShootServicesHubDrawerProps> = ({
             {/* ============================================================== */}
             {activeTab === 'photographers' && (
               <div className={`${standalone ? 'max-w-6xl mx-auto space-y-5' : 'space-y-4'}`}>
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#D8CFBD] bg-[#FAF8F4] p-3 text-sm">
+                  <span className="font-semibold">Bạn là nhiếp ảnh gia hoặc studio?</span>
+                  <a href="/join/photographer" className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#C76B3C] px-4 py-2 font-semibold text-white hover:bg-[#B35D30]">Đăng ký làm nhiếp ảnh gia <ExternalLink className="h-4 w-4" /></a>
+                </div>
                 {/* Search Bar for Photographers */}
                 <div className="relative">
                   <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#6E655B]" />
@@ -747,6 +751,10 @@ export const ShootServicesHubDrawer: React.FC<ShootServicesHubDrawerProps> = ({
             {/* ============================================================== */}
             {activeTab === 'film' && (
               <div className={`${standalone ? 'max-w-6xl mx-auto space-y-5' : 'space-y-4'}`}>
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#D8CFBD] bg-[#FAF8F4] p-3 text-sm">
+                  <span className="font-semibold">Bạn có shop bán film?</span>
+                  <a href="/join/film-lab" className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#C76B3C] px-4 py-2 font-semibold text-white hover:bg-[#B35D30]">Đăng ký shop bán film <ExternalLink className="h-4 w-4" /></a>
+                </div>
                 {/* Geolocation Status Banner */}
                 <div className="p-3.5 rounded-2xl bg-[#FAF8F4]/90 border border-neutral-800 flex items-center justify-between text-xs">
                   <div className="flex items-center space-x-2.5 min-w-0">

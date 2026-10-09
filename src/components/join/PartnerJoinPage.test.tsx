@@ -27,6 +27,17 @@ describe('partner onboarding pages', () => {
     expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining('/api/partner/address-suggestions?q='), expect.anything());
   });
 
+  it('explains when the address provider has no match instead of leaving a silent blank', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => [] }));
+    render(<PartnerJoinPage kind="lab" />);
+    const address = screen.getByLabelText('Địa chỉ chính xác *');
+    fireEvent.focus(address);
+    fireEvent.change(address, { target: { value: '264/88 Ngọc Thụy' } });
+    expect(screen.getByText(/gõ ít nhất 3 ký tự/i)).toBeTruthy();
+    expect(await screen.findByRole('status')).toHaveProperty('textContent', expect.stringMatching(/không tìm thấy.*nhập tay/i));
+    expect((address as HTMLInputElement).value).toBe('264/88 Ngọc Thụy');
+  });
+
   it('offers the same address search for photographers without requiring a studio address', () => {
     render(<PartnerJoinPage kind="photographer" />);
     expect(screen.getByLabelText('Địa chỉ studio / nơi nhận khách (tùy chọn)')).toBeTruthy();

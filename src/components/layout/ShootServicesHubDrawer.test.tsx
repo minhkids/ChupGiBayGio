@@ -37,11 +37,13 @@ describe('ShootServicesHubDrawer', () => {
     const photographerTabBtn = screen.getByRole('button', { name: /thợ chụp/i });
     fireEvent.click(photographerTabBtn);
     expect(screen.getByPlaceholderText(/tìm tên thợ/i)).toBeDefined();
+    expect(screen.getByRole('link', { name: /đăng ký làm nhiếp ảnh gia/i }).getAttribute('href')).toBe('/join/photographer');
 
     // Switch to Film Labs tab
     const filmTabBtn = screen.getByRole('button', { name: /mua film/i });
     fireEvent.click(filmTabBtn);
     expect(screen.getByPlaceholderText(/tìm cuộn film/i)).toBeDefined();
+    expect(screen.getByRole('link', { name: /đăng ký shop bán film/i }).getAttribute('href')).toBe('/join/film-lab');
 
     // Close button
     const closeBtn = screen.getByRole('button', { name: /đóng/i });
