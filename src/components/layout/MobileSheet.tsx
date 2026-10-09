@@ -27,7 +27,7 @@ export const MobileSheet: React.FC<MobileSheetProps> = ({
   if (!spot) return null;
 
   const { activePhotoIdx, setActivePhotoIdx } = uiState;
-  const statusInfo = getStatusBadgeInfo(spot.seasonalTrend?.status || 'PEAK', spot.seasonalTrend?.daysLeftInPeak || 0);
+  const statusInfo = getStatusBadgeInfo(spot.seasonalTrend, spot.seasonalTrend?.daysLeftInPeak || 0);
 
   const handleClose = () => {
     onClose();

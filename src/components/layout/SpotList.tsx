@@ -25,7 +25,7 @@ const SpotItem: React.FC<SpotItemProps> = ({
   onGetDirections,
   index,
 }) => {
-  const statusInfo = getStatusBadgeInfo(spot.seasonalTrend?.status || 'PEAK', spot.seasonalTrend?.daysLeftInPeak || 0);
+  const statusInfo = getStatusBadgeInfo(spot.seasonalTrend, spot.seasonalTrend?.daysLeftInPeak || 0);
 
   return (
     <motion.div

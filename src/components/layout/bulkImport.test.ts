@@ -14,6 +14,20 @@ describe('parseBulkRows', () => {
     expect(result.errors).toEqual([{ row: 3, message: 'Địa điểm cần có slug, địa chỉ, vĩ độ và kinh độ.' }]);
   });
 
+  it('keeps explicit seasonal labels and rejects unsupported ones', () => {
+    const result = parseBulkRows('spot', [
+      ['Tên địa điểm', 'Slug', 'Địa chỉ', 'Vĩ độ', 'Kinh độ', 'Trạng thái mùa', 'Hạn kiểm chứng'],
+      ['Hồ hoa', 'ho-hoa', 'Hà Nội', 21, 105, 'PEAK', '2026-10-16'],
+      ['Mùa lúa', 'mua-lua', 'Lào Cai', 22, 104, 'ENDING_SOON', '2026-10-19'],
+      ['Sai nhãn', 'sai-nhan', 'Hà Nội', 21, 105, 'HOT', '2026-10-16']
+    ]);
+    expect(result.records).toMatchObject([
+      { spotStatus: 'PEAK', statusValidUntil: '2026-10-16' },
+      { spotStatus: 'ENDING_SOON', statusValidUntil: '2026-10-19' }
+    ]);
+    expect(result.errors).toEqual([{ row: 4, message: 'Trạng thái mùa phải là PEAK, ACTIVE hoặc ENDING_SOON.' }]);
+  });
+
   it('parses JSON hotspot and photographer package cells from Excel', () => {
     const outfit = parseBulkRows('outfit', [['name', 'imageUrl', 'hotspots'], ['Váy hoa', 'https://img/a.jpg', '[{"x":20,"y":35,"label":"Váy"}]']]);
     expect(outfit.records[0]).toMatchObject({ name: 'Váy hoa', hotspots: [{ x: 20, y: 35, label: 'Váy' }] });

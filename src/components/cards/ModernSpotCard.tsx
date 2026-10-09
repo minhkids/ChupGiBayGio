@@ -18,7 +18,7 @@ export const ModernSpotCard: React.FC<ModernSpotCardProps> = ({
   onToggleSave,
   onSelectSpot,
 }) => {
-  const statusInfo = getStatusBadgeInfo(spot.seasonalTrend.status, spot.seasonalTrend.daysLeftInPeak);
+  const statusInfo = getStatusBadgeInfo(spot.seasonalTrend, spot.seasonalTrend.daysLeftInPeak);
 
   return (
     <motion.article 

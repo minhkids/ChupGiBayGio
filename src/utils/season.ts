@@ -33,7 +33,35 @@ export function isSpotActiveInMonth(startMonth: number, endMonth: number, target
   return targetMonth >= startMonth || targetMonth <= endMonth;
 }
 
-export function getStatusBadgeInfo(status: SpotStatus, daysLeft?: number): { label: string; classNames: string; dotColor: string } {
+export function getEffectiveSeasonalStatus(
+  trend?: { status: SpotStatus; statusValidUntil?: string } | null,
+  now: Date = new Date()
+): SpotStatus {
+  if (!trend?.status || trend.status === 'ACTIVE') {
+    return 'ACTIVE';
+  }
+
+  if (trend.statusValidUntil) {
+    const vietnamDateStr = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Bangkok'
+    }).format(now);
+
+    if (vietnamDateStr > trend.statusValidUntil) {
+      return 'ACTIVE';
+    }
+  }
+
+  return trend.status;
+}
+
+export function getStatusBadgeInfo(
+  statusOrTrend: SpotStatus | { status: SpotStatus; statusValidUntil?: string },
+  daysLeft?: number
+): { label: string; classNames: string; dotColor: string } {
+  const status = typeof statusOrTrend === 'string'
+    ? statusOrTrend
+    : getEffectiveSeasonalStatus(statusOrTrend);
+
   switch (status) {
     case 'PEAK':
       return {

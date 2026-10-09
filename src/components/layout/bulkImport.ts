@@ -9,7 +9,8 @@ const fields: Partial<Record<ServiceCategory, Record<string, string[]>>> = {
     name: ['name', 'ten', 'tendiem', 'tendiadiem'], slug: ['slug'], regionId: ['regionid', 'khuvuc', 'tinhthanh'], district: ['district', 'quanhuyen', 'quan'],
     address: ['address', 'diachi'], lat: ['lat', 'latitude', 'vido'], lng: ['lng', 'lon', 'longitude', 'kinhdo'], bestTimeOfDay: ['besttimeofday', 'khunggio', 'khunggiodep'],
  goldenHour: ['goldenhour', 'giovang'], bestMonths: ['bestmonths', 'thangdep', 'thangdepnhat'], entryFee: ['entryfee', 'phive'],
- parkingFee: ['parkingfee', 'phiguixe'], coverImageUrl: ['coverimageurl', 'anhbia', 'urlanhbia', 'anhbiaurl'], description: ['description', 'mota'], sourceUrl: ['sourceurl', 'linknguon']
+ parkingFee: ['parkingfee', 'phiguixe'], coverImageUrl: ['coverimageurl', 'anhbia', 'urlanhbia', 'anhbiaurl'], description: ['description', 'mota'], sourceUrl: ['sourceurl', 'linknguon'],
+ spotStatus: ['spotstatus', 'trangthaimua'], statusValidUntil: ['statusvaliduntil', 'hankiemchung']
   },
   rental: {
     name: ['name', 'ten', 'tentiem', 'tentiemthue'], address: ['address', 'diachi'], phone: ['phone', 'hotline', 'sodienthoai'],
@@ -38,7 +39,7 @@ const fields: Partial<Record<ServiceCategory, Record<string, string[]>>> = {
 };
 
 const arrays = new Set(['bestMonths', 'hotspots', 'tags', 'portfolioPhotos', 'packages', 'filmStocks', 'services', 'suitableSeasons', 'paletteHex']);
-const strings = new Set(['name', 'slug', 'regionId', 'district', 'address', 'bestTimeOfDay', 'goldenHour', 'entryFee', 'parkingFee', 'coverImageUrl', 'description', 'sourceUrl', 'price', 'spotId', 'material', 'imageUrl', 'link', 'secondaryLink', 'phone', 'gearBody', 'gearLens', 'openingHours', 'filmImageUrl', 'format', 'recommendedTime']);
+const strings = new Set(['name', 'slug', 'regionId', 'district', 'address', 'bestTimeOfDay', 'goldenHour', 'entryFee', 'parkingFee', 'coverImageUrl', 'description', 'sourceUrl', 'spotStatus', 'statusValidUntil', 'price', 'spotId', 'material', 'imageUrl', 'link', 'secondaryLink', 'phone', 'gearBody', 'gearLens', 'openingHours', 'filmImageUrl', 'format', 'recommendedTime']);
 
 function normalizeHeader(value: unknown): string {
   return String(value ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/đ/g, 'd').replace(/[^a-z0-9]/g, '');
@@ -83,6 +84,12 @@ export function parseBulkRows(category: ServiceCategory, rows: unknown[][]): Bul
       if (!record.slug || !record.address || !Number.isFinite(record.lat) || !Number.isFinite(record.lng)) {
         errors.push({ row: line, message: 'Địa điểm cần có slug, địa chỉ, vĩ độ và kinh độ.' }); continue;
       }
+      if (record.spotStatus && !['PEAK', 'ACTIVE', 'ENDING_SOON'].includes(String(record.spotStatus))) {
+        errors.push({ row: line, message: 'Trạng thái mùa phải là PEAK, ACTIVE hoặc ENDING_SOON.' }); continue;
+      }
+      if (record.spotStatus && record.spotStatus !== 'ACTIVE' && !/^\d{4}-\d{2}-\d{2}$/.test(String(record.statusValidUntil || ''))) {
+        errors.push({ row: line, message: 'Nhãn theo mùa cần hạn kiểm chứng dạng YYYY-MM-DD.' }); continue;
+      }
       const months = record.bestMonths as number[] | undefined;
       if (months?.some((month) => !Number.isInteger(month) || month < 1 || month > 12)) {
         errors.push({ row: line, message: 'Tháng đẹp phải là số từ 1 đến 12.' }); continue;
@@ -95,7 +102,7 @@ export function parseBulkRows(category: ServiceCategory, rows: unknown[][]): Bul
 
 export function bulkTemplateHeaders(category: ServiceCategory): string[] {
   const labels: Partial<Record<ServiceCategory, Record<string, string>>> = {
-    spot: { name: 'Tên địa điểm', slug: 'Slug', regionId: 'Khu vực', district: 'Quận huyện', address: 'Địa chỉ', lat: 'Vĩ độ', lng: 'Kinh độ', bestTimeOfDay: 'Khung giờ đẹp', goldenHour: 'Giờ vàng', bestMonths: 'Tháng đẹp', entryFee: 'Phí vé', parkingFee: 'Phí gửi xe', coverImageUrl: 'Ảnh bìa URL', description: 'Mô tả', sourceUrl: 'Link nguồn' },
+    spot: { name: 'Tên địa điểm', slug: 'Slug', regionId: 'Khu vực', district: 'Quận huyện', address: 'Địa chỉ', lat: 'Vĩ độ', lng: 'Kinh độ', bestTimeOfDay: 'Khung giờ đẹp', goldenHour: 'Giờ vàng', bestMonths: 'Tháng đẹp', entryFee: 'Phí vé', parkingFee: 'Phí gửi xe', coverImageUrl: 'Ảnh bìa URL', description: 'Mô tả', sourceUrl: 'Link nguồn', spotStatus: 'Trạng thái mùa', statusValidUntil: 'Hạn kiểm chứng' },
     rental: { name: 'Tên tiệm thuê', address: 'Địa chỉ', phone: 'Hotline', link: 'Fanpage URL', price: 'Giá/ngày' },
     outfit: { name: 'Tên set đồ', spotId: 'ID địa điểm', description: 'Mô tả', material: 'Chất liệu', price: 'Giá ước tính', imageUrl: 'Ảnh mẫu URL', hotspots: 'Hotspots JSON', link: 'Shopee URL', secondaryLink: 'TikTok URL' },
     photographer: { name: 'Tên nhiếp ảnh gia', imageUrl: 'Avatar URL', description: 'Bio', phone: 'Hotline/Zalo', link: 'Instagram URL', gearBody: 'Body', gearLens: 'Lens', tags: 'Hashtag', portfolioPhotos: 'Ảnh portfolio URL', packages: 'Gói chụp JSON' },

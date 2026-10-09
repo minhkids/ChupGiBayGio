@@ -19,7 +19,7 @@ export const SpotListItem: React.FC<SpotListItemProps> = ({
   onToggleSave,
 }) => {
   const statusInfo = getStatusBadgeInfo(
-    spot.seasonalTrend?.status || 'PEAK',
+    spot.seasonalTrend,
     spot.seasonalTrend?.daysLeftInPeak || 0
   );
 

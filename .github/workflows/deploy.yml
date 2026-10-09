@@ -67,16 +67,12 @@ jobs:
           VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
 
       - name: Deploy to Cloudflare Pages
-        uses: cloudflare/pages-action@v1
+        uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          projectName: chupgibaygio
-          directory: dist
-          branch: ${{ github.ref_name }}
+          command: pages deploy dist --project-name=chupgibaygio --branch=${{ github.ref_name }}
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
-          # Preview deployment for PRs, production for main
-          wranglerVersion: 'latest'
 
   # =========================================================================
   # 3. DEPLOY WORKERS (if you have API functions)

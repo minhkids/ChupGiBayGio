@@ -3,6 +3,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import type { Spot } from '../../types';
+import { getStatusBadgeInfo, getEffectiveSeasonalStatus } from '../../utils/season';
 import { SpotDetailContent } from './SpotDetailContent';
 import type { LayoutCallbacks, SharedUIState } from './shared-types';
 
@@ -28,6 +29,8 @@ export const Panel: React.FC<PanelProps> = ({
   if (!spot) return null;
 
   const { detailTab, activePhotoIdx, setDetailTab, setActivePhotoIdx } = uiState;
+  const effectiveStatus = getEffectiveSeasonalStatus(spot.seasonalTrend);
+  const statusInfo = getStatusBadgeInfo(effectiveStatus, spot.seasonalTrend?.daysLeftInPeak || 0);
 
   const handleClose = () => {
     onClose();
@@ -78,8 +81,8 @@ export const Panel: React.FC<PanelProps> = ({
           </button>
 
           {/* Status Badge */}
-          <span className="absolute top-3 left-3 px-2.5 py-1 rounded-md bg-terracotta text-white font-mono-spec text-[10px] font-bold shadow-md uppercase tracking-wider">
-            {spot.seasonalTrend?.status === 'PEAK' ? 'ĐANG RỘ (PEAK)' : (spot.seasonalTrend?.status || 'PEAK')}
+          <span className={`absolute top-3 left-3 px-2.5 py-1 rounded-md font-mono-spec text-[10px] font-bold shadow-md uppercase tracking-wider ${statusInfo.classNames}`}>
+            {effectiveStatus === 'PEAK' ? 'ĐANG RỘ (PEAK)' : (effectiveStatus === 'ENDING_SOON' ? 'SẮP HẾT MÙA' : 'QUANH NĂM')}
           </span>
 
           {/* Ghost Pose Camera launcher (temporarily disabled)

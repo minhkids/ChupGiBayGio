@@ -26,6 +26,7 @@ export interface SeasonalTrend {
   peakStartWeek?: number; // 1 - 52
   peakEndWeek?: number;   // 1 - 52
   status: SpotStatus;
+  statusValidUntil?: string;
   bloomPercentage?: number; // 0 - 100%
   daysLeftInPeak?: number;
   peakMonths?: number[];

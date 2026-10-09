@@ -4,7 +4,7 @@ import { PinReferenceButton } from '../planner/PinReferenceButton';
 import L from 'leaflet';
 import type { Spot } from '../../types';
 import { REGIONS } from '../../data/regions';
-import { getStatusBadgeInfo } from '../../utils/season';
+import { getStatusBadgeInfo, getEffectiveSeasonalStatus } from '../../utils/season';
 import { Compass, Layers, Key, Check, ExternalLink } from 'lucide-react';
 import { type FilmLab } from '../../data/filmLabsData';
 
@@ -246,7 +246,7 @@ export const SpotMap: React.FC<SpotMapProps> = ({
           .addTo(markersLayerRef.current!);
         return;
       }
-      const status = spot.seasonalTrend.status;
+      const status = getEffectiveSeasonalStatus(spot.seasonalTrend);
       const statusInfo = getStatusBadgeInfo(status, spot.seasonalTrend.daysLeftInPeak);
 
       let markerBg = '#1C1D1F';

@@ -33,7 +33,7 @@ export const SpotCard: React.FC<SpotCardProps> = ({
   const shootPlan = useShootPlan();
   const isPlanned = shootPlan?.isSpotPlanned(spot.id) ?? false;
   const statusInfo = getStatusBadgeInfo(
-    spot.seasonalTrend?.status || 'PEAK',
+    spot.seasonalTrend,
     spot.seasonalTrend?.daysLeftInPeak || 0
   );
 

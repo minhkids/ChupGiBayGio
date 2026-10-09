@@ -2,8 +2,7 @@ import { PinReferenceButton } from '../planner/PinReferenceButton';
 import React from 'react';
 import { Navigation, Share2, Flag, Bookmark, Camera, Clock, Sparkles, ExternalLink } from 'lucide-react';
 import type { Spot } from '../../types';
-import { getStatusBadgeInfo } from '../../utils/season';
-import { CONCEPT_METADATA } from '../../utils/season';
+import { getStatusBadgeInfo, getEffectiveSeasonalStatus, CONCEPT_METADATA } from '../../utils/season';
 import type { SpotDetailContentProps } from './shared-types';
 import { SpotPhotographersSection } from '../photographers/SpotPhotographersSection';
 
@@ -230,7 +229,8 @@ export const SpotDetailContent: React.FC<SpotDetailContentProps> = ({
   callbacks,
   className = '',
 }) => {
-  const statusInfo = getStatusBadgeInfo(spot.seasonalTrend?.status || 'PEAK', spot.seasonalTrend?.daysLeftInPeak || 0);
+  const effectiveStatus = getEffectiveSeasonalStatus(spot.seasonalTrend);
+  const statusInfo = getStatusBadgeInfo(effectiveStatus, spot.seasonalTrend?.daysLeftInPeak || 0);
   const allImages = [spot.coverImageUrl, ...(spot.galleryUrls || [])];
 
   return (
@@ -246,7 +246,7 @@ export const SpotDetailContent: React.FC<SpotDetailContentProps> = ({
 
         {/* Status Badge */}
         <span className={`absolute top-3 left-3 px-2.5 py-1 rounded-md bg-terracotta text-white font-mono-spec text-[10px] font-bold shadow-md uppercase tracking-wider ${statusInfo.classNames}`}>
-          {spot.seasonalTrend?.status === 'PEAK' ? 'ĐANG RỘ (PEAK)' : (spot.seasonalTrend?.status || 'PEAK')}
+          {effectiveStatus === 'PEAK' ? 'ĐANG RỘ (PEAK)' : (effectiveStatus === 'ENDING_SOON' ? 'SẮP HẾT MÙA' : 'QUANH NĂM')}
         </span>
 
         {/* Gallery Thumbnails Strip */}

@@ -75,6 +75,25 @@ describe('Services Hub admin API', () => {
     expect(await created.json()).toMatchObject({ name: 'Vườn hoa', bestMonths: [3, 4] });
   });
 
+  it('persists a verified seasonal status instead of always marking a new spot ACTIVE', async () => {
+    const env = makeEnv();
+    let savedTrend: { status: string; statusValidUntil?: string } | undefined;
+    vi.spyOn(env.DB, 'prepare').mockImplementation(() => ({
+      bind(...values: unknown[]) { savedTrend = JSON.parse(String(values.at(-1))); return this; },
+      async run() { return { meta: { changes: 1 } }; }
+    }) as unknown as D1PreparedStatement);
+    const login = await worker.request('/api/admin/login', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: 'unit-test-password' })
+    }, env);
+    const { token } = await login.json() as { token: string };
+    const response = await worker.request('/api/admin/spots', {
+      method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'Vườn hoa', slug: 'vuon-hoa', address: 'Hà Nội', lat: 21, lng: 105, bestMonths: [10], spotStatus: 'PEAK', statusValidUntil: '2026-10-16' })
+    }, env);
+    expect(response.status).toBe(201);
+    expect(savedTrend).toMatchObject({ status: 'PEAK', statusValidUntil: '2026-10-16' });
+  });
+
   it('persists outfit, rental, photographer, film and lab submissions through the protected D1 endpoints', async () => {
     const env = makeEnv();
     const login = await worker.request('/api/admin/login', {

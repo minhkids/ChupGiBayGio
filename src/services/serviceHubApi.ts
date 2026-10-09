@@ -37,6 +37,8 @@ export interface ServiceListing {
   regionId?: string;
   district?: string;
   bestMonths?: number[];
+  spotStatus?: 'PEAK' | 'ACTIVE' | 'ENDING_SOON';
+  statusValidUntil?: string;
   bestTimeOfDay?: string;
   goldenHour?: string;
   entryFee?: string;
@@ -60,13 +62,20 @@ const parseJsonArray = (value: unknown): unknown[] => {
   try { const parsed: unknown = JSON.parse(value); return Array.isArray(parsed) ? parsed : []; }
   catch { return []; }
 };
+const parseJsonObject = <T extends Record<string, unknown>>(value: unknown, fallback: T): T => {
+  if (value && typeof value === 'object' && !Array.isArray(value)) return value as T;
+  if (typeof value !== 'string') return fallback;
+  try { const parsed: unknown = JSON.parse(value); return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed as T : fallback; }
+  catch { return fallback; }
+};
+
 
 const tableFor: Record<ServiceCategory, string> = {
   spot: 'spots', rental: 'rentalShops', outfit: 'outfits', photographer: 'photographers', filmLab: 'labs', filmColor: 'films'
 };
 
 function adminPayload(listing: ServiceListing) {
-  if (listing.category === 'spot') return { name: listing.name, slug: listing.slug, regionId: listing.regionId, address: listing.address, district: listing.district, lat: listing.lat, lng: listing.lng, bestTimeOfDay: listing.bestTimeOfDay, goldenHour: listing.goldenHour, bestMonths: listing.bestMonths, entryFee: listing.entryFee, parkingFee: listing.parkingFee, sourceUrl: listing.sourceUrl, coverImageUrl: listing.coverImageUrl, description: listing.description };
+  if (listing.category === 'spot') return { name: listing.name, slug: listing.slug, regionId: listing.regionId, address: listing.address, district: listing.district, lat: listing.lat, lng: listing.lng, bestTimeOfDay: listing.bestTimeOfDay, goldenHour: listing.goldenHour, bestMonths: listing.bestMonths, entryFee: listing.entryFee, parkingFee: listing.parkingFee, sourceUrl: listing.sourceUrl, coverImageUrl: listing.coverImageUrl, description: listing.description, spotStatus: listing.spotStatus, statusValidUntil: listing.statusValidUntil };
   if (listing.category === 'rental') return { name: listing.name, address: listing.address, hotline: listing.phone, fanpageUrl: listing.link, dailyPrice: listing.price };
   if (listing.category === 'outfit') return { spotId: listing.spotId, name: listing.name, description: listing.description, material: listing.material, estimatedPrice: listing.price, imageUrl: listing.imageUrl, hotspots: listing.hotspots, shopeeUrl: listing.link, tiktokUrl: listing.secondaryLink };
   if (listing.category === 'photographer') return { name: listing.name, avatarUrl: listing.imageUrl, bio: listing.description, phone: listing.phone, instagram: listing.link, gearBody: listing.gearBody, gearLens: listing.gearLens, styles: listing.tags, portfolioPhotos: listing.portfolioPhotos, packages: listing.packages };
@@ -100,7 +109,31 @@ export const serviceHubApi = {
       request<Record<string, unknown>[]>('/api/admin/cms/labs')
     ]);
     return [
-      ...spots.map((row) => ({ ...row, id: String(row.id), category: 'spot' as const, name: String(row.name || ''), slug: String(row.slug || ''), regionId: String(row.region_id || ''), address: String(row.address || ''), district: String(row.district || ''), lat: Number(row.lat), lng: Number(row.lng), bestTimeOfDay: String(row.best_time_of_day || ''), goldenHour: String(row.golden_hour || ''), bestMonths: parseList(row.best_months).map(Number), entryFee: String(row.entry_fee || ''), parkingFee: String(row.parking_fee || ''), sourceUrl: String(row.source_url || ''), coverImageUrl: String(row.cover_image_url || ''), description: String(row.description || '') })),
+      ...spots.map((row) => {
+        const trend = parseJsonObject(row.seasonal_trend, { status: 'ACTIVE' as const, statusValidUntil: undefined as string | undefined });
+        return {
+          ...row,
+          id: String(row.id),
+          category: 'spot' as const,
+          name: String(row.name || ''),
+          slug: String(row.slug || ''),
+          regionId: String(row.region_id || ''),
+          address: String(row.address || ''),
+          district: String(row.district || ''),
+          lat: Number(row.lat),
+          lng: Number(row.lng),
+          bestTimeOfDay: String(row.best_time_of_day || ''),
+          goldenHour: String(row.golden_hour || ''),
+          bestMonths: parseList(row.best_months).map(Number),
+          entryFee: String(row.entry_fee || ''),
+          parkingFee: String(row.parking_fee || ''),
+          sourceUrl: String(row.source_url || ''),
+          coverImageUrl: String(row.cover_image_url || ''),
+          description: String(row.description || ''),
+          spotStatus: (trend.status || 'ACTIVE') as ServiceListing['spotStatus'],
+          statusValidUntil: trend.statusValidUntil ? String(trend.statusValidUntil) : undefined
+        };
+      }),
       ...rental.map((row) => ({ ...row, id: String(row.id), category: 'rental' as const, name: String(row.name || ''), address: String(row.address || ''), phone: String(row.hotline || ''), link: String(row.fanpage_url || ''), price: String(row.daily_price || '') })),
       ...outfits.map((row) => ({ ...row, id: String(row.id), category: 'outfit' as const, spotId: String(row.spot_id || ''), name: String(row.name || ''), description: String(row.description || ''), price: String(row.estimated_price || ''), imageUrl: String(row.image_url || ''), link: String(row.shopee_url || ''), secondaryLink: String(row.tiktok_url || ''), material: String(row.material || ''), hotspots: parseJsonArray(row.hotspots) })),
       ...photographers.map((row) => ({ ...row, id: String(row.id), category: 'photographer' as const, name: String(row.name || ''), address: String(row.address || ''), district: String(row.district || ''), description: String(row.bio || ''), imageUrl: String(row.avatar_url || ''), phone: String(row.phone || ''), link: String(row.instagram || ''), tags: parseList(row.styles), shootSpots: parseList(row.preferred_spots), gearBody: String(row.gear_body || ''), gearLens: String(row.gear_lens || ''), portfolioPhotos: parseList(row.portfolio_photos), packages: Array.isArray(row.packages) ? row.packages as ServiceListing['packages'] : [] })),

@@ -63,9 +63,14 @@ cms.post('/api/admin/spots', async (c) => {
   if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) return c.json({ error: 'Tọa độ không hợp lệ.' }, 400);
   const bestMonths = array(body.bestMonths);
   if (bestMonths.some((month) => !Number.isInteger(month) || Number(month) < 1 || Number(month) > 12)) return c.json({ error: 'Tháng đẹp phải nằm trong khoảng 1–12.' }, 400);
+  const spotStatus = text(body.spotStatus, 20) || 'ACTIVE';
+  const statusValidUntil = text(body.statusValidUntil, 10);
+  if (!['PEAK', 'ACTIVE', 'ENDING_SOON'].includes(spotStatus) || (spotStatus !== 'ACTIVE' && !/^\d{4}-\d{2}-\d{2}$/.test(statusValidUntil))) {
+    return c.json({ error: 'Nhãn theo mùa cần trạng thái hợp lệ và hạn kiểm chứng YYYY-MM-DD.' }, 400);
+  }
   const id = crypto.randomUUID();
   const monthNumbers = bestMonths.map(Number);
-  const seasonalTrend = JSON.stringify({ id, trendTitle: text(body.goldenHour, 300), startMonth: monthNumbers.length ? Math.min(...monthNumbers) : 1, endMonth: monthNumbers.length ? Math.max(...monthNumbers) : 12, status: 'ACTIVE', conceptTags: [], isTrending: false, trendScore: 0 });
+  const seasonalTrend = JSON.stringify({ id, trendTitle: text(body.goldenHour, 300), startMonth: monthNumbers.length ? Math.min(...monthNumbers) : 1, endMonth: monthNumbers.length ? Math.max(...monthNumbers) : 12, status: spotStatus, ...(spotStatus !== 'ACTIVE' ? { statusValidUntil } : {}), conceptTags: [], isTrending: false, trendScore: 0 });
   await getD1(c.env).prepare(`INSERT INTO spots (id, region_id, name, slug, address, lat, lng, best_time_of_day,
     best_time_description, cost_type, cover_image_url, description, district, best_months, golden_hour, entry_fee, parking_fee, source_url, seasonal_trend)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)

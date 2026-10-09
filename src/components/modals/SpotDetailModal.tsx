@@ -20,7 +20,7 @@ import {
 import { motion } from 'framer-motion';
 import type { Spot, Photographer } from '../../types';
 import { useShootPlan } from '../../context/ShootPlanContext';
-import { getStatusBadgeInfo, MONTH_SHORT_LABELS } from '../../utils/season';
+import { getStatusBadgeInfo, getEffectiveSeasonalStatus, MONTH_SHORT_LABELS } from '../../utils/season';
 import { formatCoordinates, formatDistance } from '../../utils/geo';
 import { FacebookPostCard } from '../cards/FacebookPostCard';
 import { FilmSpecsCard } from '../cards/FilmSpecsCard';
@@ -83,7 +83,8 @@ export const SpotDetailModal: React.FC<SpotDetailModalProps> = ({
   if (!spot) return null;
 
   const allImages = [spot.coverImageUrl, ...(spot.galleryUrls || [])];
-  const statusInfo = getStatusBadgeInfo(spot.seasonalTrend.status, spot.seasonalTrend.daysLeftInPeak);
+  const effectiveStatus = getEffectiveSeasonalStatus(spot.seasonalTrend);
+  const statusInfo = getStatusBadgeInfo(effectiveStatus, spot.seasonalTrend.daysLeftInPeak);
   const coordsFormatted = formatCoordinates(spot.lat, spot.lng);
 
   const handleCopyCoords = () => {
@@ -351,7 +352,7 @@ export const SpotDetailModal: React.FC<SpotDetailModalProps> = ({
                 } else {
                   isActive = month >= startMonth || month <= endMonth;
                 }
-                const isPeak = isActive && spot.seasonalTrend.status === 'PEAK';
+                const isPeak = isActive && effectiveStatus === 'PEAK';
                 const isCurrentCalendar = currentMonth === month;
 
                 return (
