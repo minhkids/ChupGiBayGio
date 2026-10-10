@@ -5,6 +5,7 @@ import { AdminImageField, type AdminHotspot } from './AdminImageField';
 import { LeafletCoordinatePicker } from './LeafletCoordinatePicker';
 import { BulkImportPanel } from './BulkImportPanel';
 import type { BulkRecord } from './bulkImport';
+import { TrendArticlesAdminView } from './TrendArticlesAdminView';
 
 const categories: { id: ServiceCategory; label: string }[] = [
   { id: 'spot', label: 'Điểm chụp ảnh' },
@@ -36,6 +37,7 @@ export const ServicesHubAdminView: React.FC<Props> = ({ onBack }) => {
   const [draft, setDraft] = useState<ServiceListing>(() => blank(initialCategory()));
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [trendArticlesOpen, setTrendArticlesOpen] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -118,11 +120,14 @@ export const ServicesHubAdminView: React.FC<Props> = ({ onBack }) => {
   const mapLat = draft.lat === undefined || String(draft.lat).trim() === '' ? undefined : Number(draft.lat);
   const mapLng = draft.lng === undefined || String(draft.lng).trim() === '' ? undefined : Number(draft.lng);
 
+  if (tokenValid && trendArticlesOpen) return <TrendArticlesAdminView onBack={() => setTrendArticlesOpen(false)} />;
+
   return (
     <section className="fixed inset-0 z-[70] flex flex-col overflow-hidden bg-[#F7F5F0] text-[#2C2621]" aria-label="Quản trị dịch vụ">
       <header className="flex items-center justify-between border-b border-[#D8CFBD] bg-[#FAF8F4] px-4 py-3 sm:px-8">
         <div><p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#C76B3C]">Bảng quản trị</p><h1 className="text-xl font-bold">Quản lý thông tin dịch vụ</h1></div>
         <div className="flex gap-2">
+          {tokenValid && <button type="button" onClick={() => setTrendArticlesOpen(true)} className="rounded-full bg-[#ECE4D0] px-3 py-2 text-xs font-semibold">Bài viết xu hướng</button>}
           {tokenValid && <button type="button" onClick={() => { serviceHubApi.logout(); setTokenValid(false); setRecords([]); }} className="rounded-full bg-[#ECE4D0] px-3 py-2 text-xs font-semibold"><LogOut className="mr-1 inline h-4 w-4" />Đăng xuất</button>}
           <button type="button" onClick={onBack} className="rounded-full bg-[#E8DEC7] px-3 py-2 text-xs font-semibold"><ArrowLeft className="mr-1 inline h-4 w-4" />Quay lại dịch vụ</button>
         </div>

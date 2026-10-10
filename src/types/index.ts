@@ -16,6 +16,7 @@ export type ConceptTag =
   | 'CYBERPUNK' 
   | 'MINIMAL' 
   | 'KIEN_TRUC'
+  | 'MAT_TROI'
   | 'CHRISTMAS';
 
 export interface SeasonalTrend {

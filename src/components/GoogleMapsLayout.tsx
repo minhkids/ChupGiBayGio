@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useState, useMemo, useEffect } from 'react';
+import React, { lazy, Suspense, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search,
@@ -10,11 +10,9 @@ import {
   Share2,
   Flag,
   Camera,
-  Film,
   Clock,
   Sparkles,
   MapPin,
-  Shirt,
   Check,
   ChevronUp,
   ChevronDown,
@@ -23,6 +21,7 @@ import {
   Layers
 } from 'lucide-react';
 import type { Spot, FilterState } from '../types';
+import { CONCEPT_METADATA } from '../utils/season';
 import { REGIONS } from '../data/regions';
 import { SpotMap } from './map/SpotMap';
 import { AtmosphericFX } from './features/AtmosphericFX';
@@ -30,80 +29,14 @@ import { FilmSpecsCard } from './cards/FilmSpecsCard';
 import { LeftNavRail } from './navigation/LeftNavRail';
 import { PoseCamera } from './features/PoseCamera';
 import { useWeather } from '../hooks/useWeather';
-import { getLocalInsights } from '../data/localInsights';
-import { LocalInsightFeed } from './views/LocalInsightFeed';
+import { trendArticleApi, type TrendArticle, type TrendArticleSection } from '../services/trendArticleApi';
+import { TrendArticleFeed } from './views/TrendArticleFeed';
 import { POSES, type PoseItem } from '../data/poses';
 import { TapToShopImage } from './outfit/TapToShopImage';
 import { NearestFilmShopsDrawer } from './layout/NearestFilmShopsDrawer';
 import type { ServicesTab } from './layout/ShootServicesHubDrawer';
 import type { FilmLab } from '../data/filmLabsData';
 import { SingleFilmLabCard } from './layout/SingleFilmLabCard';
-import { serviceHubApi, type ServiceListing } from '../services/serviceHubApi';
-import type { LocalInsight } from '../types';
-
-const mapServiceListingToInsight = (item: ServiceListing): LocalInsight | null => {
-  if (item.category === 'outfit') {
-    return {
-      id: item.id,
-      regionId: item.regionId || 'all',
-      kind: 'HOT',
-      category: 'OUTFIT',
-      title: item.name,
-      detail: item.description || '',
-      placeName: item.name,
-      areaLabel: item.district || (item.material ? `Chất liệu: ${item.material}` : 'Trang phục chụp ảnh'),
-      priceNow: item.price ? `${item.price}` : undefined,
-      hotScore: 90,
-      sourceLabel: 'Quản trị viên',
-    };
-  }
-  if (item.category === 'rental') {
-    return {
-      id: item.id,
-      regionId: item.regionId || 'all',
-      kind: 'HOT',
-      category: 'RENTAL',
-      title: item.name,
-      detail: item.description || (item.address ? `Địa chỉ: ${item.address}` : ''),
-      placeName: item.name,
-      areaLabel: item.address || 'Tiệm cho thuê máy ảnh',
-      priceNow: item.price ? `${item.price}` : undefined,
-      hotScore: 85,
-      sourceLabel: 'Quản trị viên',
-    };
-  }
-  if (item.category === 'filmLab') {
-    return {
-      id: item.id,
-      regionId: item.regionId || 'all',
-      kind: 'DEAL',
-      category: 'LAB',
-      title: item.name,
-      detail: item.description || (item.openingHours ? `Giờ mở cửa: ${item.openingHours}` : ''),
-      placeName: item.name,
-      areaLabel: item.address || 'Lab tráng film',
-      priceNow: item.price || undefined,
-      hotScore: 80,
-      sourceLabel: 'Quản trị viên',
-    };
-  }
-  if (item.category === 'filmColor') {
-    return {
-      id: item.id,
-      regionId: item.regionId || 'all',
-      kind: 'HOT',
-      category: 'FILM',
-      title: item.name,
-      detail: item.description || (item.recommendedTime ? `Tone: ${item.recommendedTime}` : ''),
-      placeName: item.name,
-      areaLabel: item.iso ? `ISO ${item.iso}` : 'Cuộn film',
-      priceNow: item.price || undefined,
-      hotScore: 80,
-      sourceLabel: 'Quản trị viên',
-    };
-  }
-  return null;
-};
 
 const ShootServicesHubDrawer = lazy(() => import('./layout/ShootServicesHubDrawer').then(m => ({ default: m.ShootServicesHubDrawer })));
 
@@ -158,8 +91,8 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
   // Desktop sidebar collapse toggle state
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
-  // Sidebar tab state: 'spots' (Địa điểm) | 'posts' (Bài viết Facebook bên cạnh)
-  const [sidebarTab, setSidebarTab] = useState<'outfit' | 'camera' | 'film'>('outfit');
+  // Selected section for the trend and upcoming-spots feed.
+  const [sidebarTab, setSidebarTab] = useState<TrendArticleSection>('hotTrend');
 
   // Detail card tab state: 'info' (Cẩm nang) | 'posts' (Bài viết liên quan)
   const [detailTab, setDetailTab] = useState<'info' | 'posts'>('info');
@@ -248,64 +181,16 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
   // Real-time weather from Open-Meteo API (Hanoi)
   const weather = useWeather();
 
-  const [adminServiceInsights, setAdminServiceInsights] = useState<LocalInsight[]>([]);
+  const [trendArticles, setTrendArticles] = useState<TrendArticle[]>([]);
+  const [trendArticlesLoading, setTrendArticlesLoading] = useState(true);
 
   useEffect(() => {
     let active = true;
-    serviceHubApi.list().then((items) => {
-      if (!active) return;
-      const mapped = items.map(mapServiceListingToInsight).filter((i): i is LocalInsight => i !== null);
-      setAdminServiceInsights(mapped);
-    }).catch(() => {
-      if (active) setAdminServiceInsights([]);
-    });
+    trendArticleApi.list().then((items) => { if (active) setTrendArticles(items); })
+      .catch((error: unknown) => { console.warn('Không tải được bài viết xu hướng.', error); if (active) setTrendArticles([]); })
+      .finally(() => { if (active) setTrendArticlesLoading(false); });
     return () => { active = false; };
   }, []);
-
-  // Ưu đãi & xu hướng theo khu vực / spot đang chọn (thay cho tab bài viết FB)
-  // Dữ liệu theo 3 tab chuyên môn nhiếp ảnh
-  const outfitInsights = useMemo(
-    () => getLocalInsights({
-      regionId: activeRegionId,
-      category: ['OUTFIT', 'PROP'],
-      searchQuery: filters.searchQuery,
-      selectedSpot,
-    }, adminServiceInsights),
-    [activeRegionId, filters.searchQuery, selectedSpot, adminServiceInsights]
-  );
-
-  const cameraInsights = useMemo(
-    () => getLocalInsights({
-      regionId: activeRegionId,
-      category: ['RENTAL'],
-      searchQuery: filters.searchQuery,
-      selectedSpot,
-    }, adminServiceInsights),
-    [activeRegionId, filters.searchQuery, selectedSpot, adminServiceInsights]
-  );
-
-  const filmInsights = useMemo(
-    () => getLocalInsights({
-      regionId: activeRegionId,
-      category: ['FILM', 'LAB'],
-      searchQuery: filters.searchQuery,
-      selectedSpot,
-    }, adminServiceInsights),
-    [activeRegionId, filters.searchQuery, selectedSpot, adminServiceInsights]
-  );
-
-  const currentInsights = useMemo(() => {
-    switch (sidebarTab) {
-      case 'outfit':
-        return outfitInsights;
-      case 'camera':
-        return cameraInsights;
-      case 'film':
-        return filmInsights;
-      default:
-        return outfitInsights;
-    }
-  }, [sidebarTab, outfitInsights, cameraInsights, filmInsights]);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -442,13 +327,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                 type="text"
                 value={filters.searchQuery}
                 onChange={(e) => onChangeFilters(prev => ({ ...prev, searchQuery: e.target.value }))}
-                placeholder={
-                  sidebarTab === 'outfit'
-                    ? 'Tìm trang phục, áo dài, tiệm thuê đồ...'
-                    : sidebarTab === 'camera'
-                    ? 'Tìm máy ảnh, lens, tiệm thuê...'
-                    : 'Tìm cuộn film, lab tráng scan...'
-                }
+                placeholder="Tìm bài hot hoặc địa điểm sắp nổi..."
                 className="w-full bg-transparent text-sm text-[#2C2621] placeholder-[#8C8377] focus:outline-none font-medium"
               />
             </div>
@@ -652,13 +531,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                 type="text"
                 value={filters.searchQuery}
                 onChange={(e) => onChangeFilters(prev => ({ ...prev, searchQuery: e.target.value }))}
-                placeholder={
-                  sidebarTab === 'outfit'
-                    ? 'Tìm trang phục, áo dài, tiệm thuê đồ...'
-                    : sidebarTab === 'camera'
-                    ? 'Tìm máy ảnh, ống kính 85mm, tiệm thuê...'
-                    : 'Tìm cuộn film, lab tráng scan...'
-                }
+                placeholder="Tìm bài hot hoặc địa điểm sắp nổi..."
                 className="w-full bg-transparent text-sm text-[#2C2621] placeholder-[#8C8377] focus:outline-none font-medium"
               />
             </div>
@@ -688,68 +561,12 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
 
 
 
-          {/* Three photography service tabs */}
-          <div className="grid grid-cols-3 gap-1 rounded-xl border border-[#D0C5AC] bg-[#E0D6BF] p-1 text-xs font-semibold">
-            <button
-              type="button"
-              onClick={() => setSidebarTab('outfit')}
-              aria-pressed={sidebarTab === 'outfit'}
-              className={`flex min-h-10 min-w-0 items-center justify-center gap-1.5 rounded-lg px-1 py-2 text-center text-[11px] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#C76B3C] ${sidebarTab === 'outfit' ? 'bg-[#FAF8F4] font-bold text-[#2C2621] shadow-sm' : 'font-semibold text-[#554D43] hover:bg-[#ECE4D0]'}`}
-            >
-              <Shirt aria-hidden="true" className={`h-4 w-4 shrink-0 ${sidebarTab === 'outfit' ? 'text-[#C76B3C]' : 'text-[#6E655B]'}`} />
-              <span className="truncate">Quần áo ({outfitInsights.length})</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setSidebarTab('camera')}
-              aria-pressed={sidebarTab === 'camera'}
-              className={`flex min-h-10 min-w-0 items-center justify-center gap-1.5 rounded-lg px-1 py-2 text-center text-[11px] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#C76B3C] ${sidebarTab === 'camera' ? 'bg-[#FAF8F4] font-bold text-[#2C2621] shadow-sm' : 'font-semibold text-[#554D43] hover:bg-[#ECE4D0]'}`}
-            >
-              <Camera aria-hidden="true" className={`h-4 w-4 shrink-0 ${sidebarTab === 'camera' ? 'text-[#C76B3C]' : 'text-[#6E655B]'}`} />
-              <span className="truncate">Thuê máy ({cameraInsights.length})</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setSidebarTab('film')}
-              aria-pressed={sidebarTab === 'film'}
-              className={`flex min-h-10 min-w-0 items-center justify-center gap-1.5 rounded-lg px-1 py-2 text-center text-[11px] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#C76B3C] ${sidebarTab === 'film' ? 'bg-[#FAF8F4] font-bold text-[#2C2621] shadow-sm' : 'font-semibold text-[#554D43] hover:bg-[#ECE4D0]'}`}
-            >
-              <Film aria-hidden="true" className={`h-4 w-4 shrink-0 ${sidebarTab === 'film' ? 'text-[#C76B3C]' : 'text-[#6E655B]'}`} />
-              <span className="truncate">Mua film ({filmInsights.length})</span>
-            </button>
-          </div>
-
-          {/* Quick CTA to open Nearest Film Labs Finder */}
-          {sidebarTab === 'film' && (
-            <button
-              type="button"
-              onClick={() => {
-                setFilmFilterForLabs('');
-                setIsAllLabsDrawerOpen(true);
-              }}
-              className="mt-2.5 flex w-full items-center justify-between rounded-xl border border-[#D9B894] bg-[#F4E9DA] px-3 py-2 text-xs font-bold text-[#554D43] shadow-sm transition-colors hover:border-[#C76B3C] hover:bg-[#F1E0C7] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#C76B3C]"
-            >
-              <span className="flex items-center gap-1.5">
-                <MapPin aria-hidden="true" className="h-4 w-4 shrink-0 text-[#C76B3C]" />
-                <span>Tìm Lab gần tôi (GPS & Lọc film)</span>
-              </span>
-              <span className="rounded-md border border-[#D8CFBD] bg-[#FAF8F4] px-1.5 py-0.5 text-[10px] font-mono-spec text-[#554D43]">
-                Mở danh sách →
-              </span>
-            </button>
-          )}
+          <TrendArticleFeed articles={trendArticles} regionId={activeRegionId} searchQuery={filters.searchQuery} activeSection={sidebarTab} onSectionChange={setSidebarTab} tabsOnly />
         </div>
 
-        {/* ─── SCROLLABLE FEED BODY (Quần áo / Thuê máy ảnh / Mua film) ─── */}
+        {/* ─── SCROLLABLE EDITORIAL FEED ─── */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          <LocalInsightFeed
-            insights={currentInsights}
-            onResetFilters={() => {
-              onChangeFilters(prev => ({ ...prev, searchQuery: '' }));
-            }}
-          />
+          <TrendArticleFeed articles={trendArticles} regionId={activeRegionId} searchQuery={filters.searchQuery} loading={trendArticlesLoading} activeSection={sidebarTab} onSectionChange={setSidebarTab} showTabs={false} />
         </div>
       </div>
 
@@ -764,7 +581,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -30 }}
             transition={{ duration: 0.25, ease: 'easeOut' }}
-            className={`hidden lg:flex flex-col fixed top-3 bottom-3 z-30 w-[420px] rounded-2xl shadow-2xl border border-neutral-200/80 dark:border-neutral-800 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-md overflow-hidden transition-all duration-300 ease-out ${isSidebarCollapsed ? 'left-[96px] max-w-[calc(100vw-112px)]' : 'left-[560px] max-w-[calc(100vw-576px)]'
+            className={`hidden lg:flex flex-col fixed top-3 bottom-3 z-30 w-[420px] rounded-2xl shadow-2xl border border-[#D8CFBD] bg-[#FAF8F4] text-[#2C2621] overflow-hidden transition-all duration-300 ease-out ${isSidebarCollapsed ? 'left-[96px] max-w-[calc(100vw-112px)]' : 'left-[560px] max-w-[calc(100vw-576px)]'
               }`}
           >
             {/* Cover Photo Gallery Banner */}
@@ -825,13 +642,13 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
             </div>
 
             {/* DETAIL CARD NAVBAR TABS: Cẩm nang vs Bài viết liên quan */}
-            <div className="px-5 pt-4 pb-4 border-b border-neutral-200/80 dark:border-neutral-800 shrink-0">
+            <div className="px-5 pt-4 pb-4 border-b border-[#D8CFBD] shrink-0">
               <div className="flex items-start justify-between gap-3 mb-3">
                 <div className="min-w-0 pr-2">
                   <span className="text-xs font-semibold text-terracotta block truncate">
                     {selectedSpot.seasonalTrend?.trendTitle}
                   </span>
-                  <h2 className="font-editorial text-2xl font-bold leading-tight text-neutral-900 dark:text-white line-clamp-2 mt-1">
+                  <h2 className="font-editorial text-2xl font-bold leading-tight text-[#2C2621] line-clamp-2 mt-1">
                     {selectedSpot.name}
                   </h2>
                 </div>
@@ -839,7 +656,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                   <button
                     type="button"
                     onClick={() => onToggleSave(selectedSpot.id)}
-                    className="p-2 rounded-lg bg-neutral-100 dark:bg-neutral-800 hover:text-terracotta text-neutral-600 dark:text-neutral-300"
+                    className="p-2 rounded-lg bg-[#ECE4D0] hover:text-terracotta text-[#554D43]"
                     title={savedSpotIds.includes(selectedSpot.id) ? 'Đã lưu' : 'Lưu'}
                   >
                     <Bookmark className={`w-4 h-4 ${savedSpotIds.includes(selectedSpot.id) ? 'text-terracotta fill-terracotta' : ''}`} />
@@ -856,13 +673,13 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
               </div>
 
               {/* Sub-navbar inside detail card */}
-              <div className="flex items-center p-1 bg-neutral-100 dark:bg-neutral-800 rounded-lg text-sm font-semibold">
+              <div className="flex items-center p-1 bg-[#ECE4D0] rounded-lg text-sm font-semibold">
                 <button
                   type="button"
                   onClick={() => setDetailTab('info')}
                   className={`flex-1 py-1.5 rounded-md transition-all ${detailTab === 'info'
-                      ? 'bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white shadow-xs'
-                      : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-white'
+                      ? 'bg-[#FAF8F4] text-[#2C2621] shadow-xs'
+                      : 'text-[#6E655B] hover:text-[#2C2621]'
                     }`}
                 >
                   Cẩm Nang & Góc Chụp
@@ -871,12 +688,12 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                   type="button"
                   onClick={() => setDetailTab('posts')}
                   className={`flex-1 py-1.5 rounded-md transition-all flex items-center justify-center space-x-1 ${detailTab === 'posts'
-                      ? 'bg-white dark:bg-neutral-900 text-blue-600 dark:text-blue-400 shadow-xs'
-                      : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-white'
+                      ? 'bg-[#FAF8F4] text-blue-700 shadow-xs'
+                      : 'text-[#6E655B] hover:text-[#2C2621]'
                     }`}
                 >
                   <span>Bài Đăng FB</span>
-                  <span className="text-xs px-1.5 bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-300 rounded font-mono-spec">
+                  <span className="text-xs px-1.5 bg-blue-100 text-blue-700 rounded font-mono-spec">
                     {selectedSpot.inspirationPosts?.length || 0}
                   </span>
                 </button>
@@ -892,7 +709,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                     <button
                       type="button"
                       onClick={() => handleOpenDirections(selectedSpot)}
-                      className="flex flex-col items-center justify-center p-3 rounded-xl bg-neutral-50 dark:bg-neutral-800 hover:bg-neutral-100 text-neutral-800 dark:text-neutral-200 transition-colors group"
+                      className="flex flex-col items-center justify-center p-3 rounded-xl bg-[#F3EAD7] hover:bg-[#ECE4D0] text-[#2C2621] transition-colors group"
                     >
                       <Navigation className="w-4 h-4 text-terracotta group-hover:scale-110 transition-transform" />
                       <span className="text-xs font-semibold mt-1.5">Chỉ đường</span>
@@ -901,7 +718,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                     <button
                       type="button"
                       onClick={() => handleShareSpot(selectedSpot)}
-                      className="flex flex-col items-center justify-center p-3 rounded-xl bg-neutral-50 dark:bg-neutral-800 hover:bg-neutral-100 text-neutral-800 dark:text-neutral-200 transition-colors group"
+                      className="flex flex-col items-center justify-center p-3 rounded-xl bg-[#F3EAD7] hover:bg-[#ECE4D0] text-[#2C2621] transition-colors group"
                     >
                       <Share2 className="w-4 h-4 text-neutral-500 group-hover:scale-110 transition-transform" />
                       <span className="text-xs font-semibold mt-1.5">Chia sẻ</span>
@@ -910,7 +727,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                     <button
                       type="button"
                       onClick={() => onOpenReportModal(selectedSpot)}
-                      className="flex flex-col items-center justify-center p-3 rounded-xl bg-neutral-50 dark:bg-neutral-800 hover:bg-neutral-100 text-neutral-800 dark:text-neutral-200 transition-colors group"
+                      className="flex flex-col items-center justify-center p-3 rounded-xl bg-[#F3EAD7] hover:bg-[#ECE4D0] text-[#2C2621] transition-colors group"
                     >
                       <Flag className="w-4 h-4 text-amberFilm group-hover:scale-110 transition-transform" />
                       <span className="text-xs font-semibold mt-1.5">Báo nở</span>
@@ -918,22 +735,22 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                   </div>
 
                   {/* Bloom Condition Summary */}
-                  <div className="bg-amber-50/70 dark:bg-neutral-800/70 border border-amber-200/60 dark:border-neutral-700/60 rounded-xl p-4 space-y-2">
+                  <div className="bg-[#F3EAD7] border border-[#D8CFBD] rounded-xl p-4 space-y-2">
                     <div className="flex items-center justify-between text-xs font-mono-spec">
-                      <span className="font-bold text-neutral-900 dark:text-neutral-100">
+                      <span className="font-bold text-[#2C2621]">
                         TÌNH TRẠNG HOA / PHONG CẢNH
                       </span>
                       <span className="font-bold text-terracotta">
                         {selectedSpot.seasonalTrend?.bloomPercentage || 85}% ĐANG NỞ
                       </span>
                     </div>
-                    <div className="w-full bg-neutral-200 dark:bg-neutral-700 h-1.5 rounded-full overflow-hidden">
+                    <div className="w-full bg-[#E2DAD0] h-1.5 rounded-full overflow-hidden">
                       <div
                         className="bg-terracotta h-full transition-all duration-500"
                         style={{ width: `${selectedSpot.seasonalTrend?.bloomPercentage || 85}%` }}
                       />
                     </div>
-                    <p className="text-sm text-neutral-600 dark:text-neutral-300 font-sans leading-relaxed pt-1">
+                    <p className="text-sm text-[#554D43] font-sans leading-relaxed pt-1">
                       {selectedSpot.description}
                     </p>
                   </div>
@@ -950,7 +767,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
 
                   {/* PHOTOGRAPHY TIPS (Ống kính, Giờ vàng, Concept) */}
                   <div className="space-y-3 pt-1">
-                    <h3 className="text-sm font-bold text-neutral-900 dark:text-neutral-100 flex items-center">
+                    <h3 className="text-sm font-bold text-[#2C2621] flex items-center">
                       <Camera className="w-3.5 h-3.5 mr-1.5 text-terracotta" />
                       Cẩm nang chụp ảnh & thiết bị
                     </h3>
@@ -959,8 +776,8 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                     <div className="flex items-start space-x-2.5 text-sm">
                       <Clock className="w-4 h-4 text-amberFilm shrink-0 mt-0.5" />
                       <div>
-                        <span className="font-bold text-neutral-800 dark:text-neutral-200">Khung giờ đẹp: </span>
-                        <span className="text-neutral-600 dark:text-neutral-400">{selectedSpot.bestTimeDescription}</span>
+                        <span className="font-bold text-[#2C2621]">Khung giờ đẹp: </span>
+                        <span className="text-[#6E655B]">{selectedSpot.bestTimeDescription}</span>
                       </div>
                     </div>
 
@@ -968,10 +785,10 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                     <div className="flex items-start space-x-2.5 text-sm">
                       <Camera className="w-4 h-4 text-terracotta shrink-0 mt-0.5" />
                       <div>
-                        <span className="font-bold text-neutral-800 dark:text-neutral-200">Ống kính khuyên dùng: </span>
+                        <span className="font-bold text-[#2C2621]">Ống kính khuyên dùng: </span>
                         <div className="flex flex-wrap gap-1 mt-1">
                           {selectedSpot.recommendedLenses.map((lens, lIdx) => (
-                            <span key={lIdx} className="px-2 py-0.5 bg-neutral-100 dark:bg-neutral-800 rounded-md font-mono-spec text-xs text-neutral-700 dark:text-neutral-300">
+                            <span key={lIdx} className="px-2 py-0.5 bg-[#ECE4D0] rounded-md font-mono-spec text-xs text-[#554D43]">
                               {lens}
                             </span>
                           ))}
@@ -983,11 +800,11 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                     <div className="flex items-start space-x-2.5 text-sm">
                       <Sparkles className="w-4 h-4 text-purple-500 shrink-0 mt-0.5" />
                       <div>
-                        <span className="font-bold text-neutral-800 dark:text-neutral-200">Concept & Trang phục: </span>
+                        <span className="font-bold text-[#2C2621]">Concept & Trang phục: </span>
                         <div className="flex flex-wrap gap-1 mt-1">
                           {selectedSpot.seasonalTrend?.conceptTags.map((tag, tIdx) => (
-                            <span key={tIdx} className="px-2 py-0.5 bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800/60 rounded-md text-xs">
-                              #{tag}
+                            <span key={tIdx} className="px-2 py-0.5 bg-purple-50 text-purple-700 border border-purple-200 rounded-md text-xs">
+                              {CONCEPT_METADATA[tag]?.label || `#${tag}`}
                             </span>
                           ))}
                         </div>
@@ -999,13 +816,13 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                 /* DETAIL TAB: REAL POSTS SPECIFICALLY FOR THIS SPOT */
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-mono-spec font-bold text-blue-600 dark:text-blue-400">
+                    <span className="text-xs font-mono-spec font-bold text-blue-700">
                       BÀI ĐĂNG THỰC TẾ ({selectedSpot.inspirationPosts?.length || 0})
                     </span>
                     <button
                       type="button"
                       onClick={() => onOpenAddPostModal(selectedSpot.id)}
-                      className="text-xs text-blue-600 dark:text-blue-400 font-mono-spec font-bold hover:underline"
+                      className="text-xs text-blue-700 font-mono-spec font-bold hover:underline"
                     >
                       + Thêm bài viết
                     </button>
@@ -1019,7 +836,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                     selectedSpot.inspirationPosts.map(post => (
                       <div
                         key={post.id}
-                        className="p-4 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50/80 dark:bg-neutral-850/80 space-y-2"
+                        className="p-4 rounded-xl border border-[#D8CFBD] bg-white space-y-2"
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-2">
@@ -1029,10 +846,10 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                               className="w-6 h-6 rounded-full object-cover"
                             />
                             <div>
-                              <div className="text-sm font-bold text-neutral-800 dark:text-neutral-200">
+                              <div className="text-sm font-bold text-[#2C2621]">
                                 {post.authorName}
                               </div>
-                              <div className="text-xs text-neutral-400 font-mono-spec">
+                              <div className="text-xs text-[#8C8377] font-mono-spec">
                                 {post.postDate}
                               </div>
                             </div>
@@ -1048,12 +865,12 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                           </a>
                         </div>
 
-                        <p className="text-sm text-neutral-600 dark:text-neutral-300 font-sans leading-relaxed">
+                        <p className="text-sm text-[#554D43] font-sans leading-relaxed">
                           {post.fullContent || post.caption}
                         </p>
 
                         {post.cameraSettings && (
-                          <div className="text-xs font-mono-spec text-neutral-500 bg-white dark:bg-neutral-800 px-2 py-1 rounded">
+                          <div className="text-xs font-mono-spec text-[#6E655B] bg-[#F3EAD7] px-2 py-1 rounded">
                             📷 {post.cameraSettings}
                           </div>
                         )}
@@ -1091,47 +908,8 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
 
           <div className="w-full flex items-center justify-between font-mono-spec">
 
-            {/* Mobile Tab Pill Switcher */}
-            <div className="mr-2 grid flex-1 grid-cols-3 gap-1 rounded-xl border border-[#D0C5AC] bg-[#E0D6BF] p-1 text-center">
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setSidebarTab('outfit');
-                  if (mobileSnap === 'peek') setMobileSnap('half');
-                }}
-                aria-pressed={sidebarTab === 'outfit'}
-                className={`flex min-h-10 min-w-0 items-center justify-center gap-1 rounded-lg px-1 py-2 text-[11px] font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#C76B3C] ${sidebarTab === 'outfit' ? 'bg-[#FAF8F4] font-bold text-[#2C2621] shadow-sm' : 'text-[#554D43] hover:bg-[#ECE4D0]'}`}
-              >
-                <Shirt aria-hidden="true" className={`h-4 w-4 shrink-0 ${sidebarTab === 'outfit' ? 'text-[#C76B3C]' : 'text-[#6E655B]'}`} />
-                <span className="truncate">Quần áo ({outfitInsights.length})</span>
-              </button>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setSidebarTab('camera');
-                  if (mobileSnap === 'peek') setMobileSnap('half');
-                }}
-                aria-pressed={sidebarTab === 'camera'}
-                className={`flex min-h-10 min-w-0 items-center justify-center gap-1 rounded-lg px-1 py-2 text-[11px] font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#C76B3C] ${sidebarTab === 'camera' ? 'bg-[#FAF8F4] font-bold text-[#2C2621] shadow-sm' : 'text-[#554D43] hover:bg-[#ECE4D0]'}`}
-              >
-                <Camera aria-hidden="true" className={`h-4 w-4 shrink-0 ${sidebarTab === 'camera' ? 'text-[#C76B3C]' : 'text-[#6E655B]'}`} />
-                <span className="truncate">Thuê máy ({cameraInsights.length})</span>
-              </button>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setSidebarTab('film');
-                  if (mobileSnap === 'peek') setMobileSnap('half');
-                }}
-                aria-pressed={sidebarTab === 'film'}
-                className={`flex min-h-10 min-w-0 items-center justify-center gap-1 rounded-lg px-1 py-2 text-[11px] font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#C76B3C] ${sidebarTab === 'film' ? 'bg-[#FAF8F4] font-bold text-[#2C2621] shadow-sm' : 'text-[#554D43] hover:bg-[#ECE4D0]'}`}
-              >
-                <Film aria-hidden="true" className={`h-4 w-4 shrink-0 ${sidebarTab === 'film' ? 'text-[#C76B3C]' : 'text-[#6E655B]'}`} />
-                <span className="truncate">Mua film ({filmInsights.length})</span>
-              </button>
+            <div className="mr-2 min-w-0 flex-1">
+              <TrendArticleFeed articles={trendArticles} regionId={activeRegionId} searchQuery={filters.searchQuery} activeSection={sidebarTab} onSectionChange={setSidebarTab} tabsOnly />
             </div>
 
             {/* Snap Toggle Indicator */}
@@ -1146,13 +924,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
 
         {/* Mobile Feed */}
         <div className="flex-1 overflow-y-auto p-4 space-y-3">
-          <LocalInsightFeed
-            insights={currentInsights}
-            compact
-            onResetFilters={() => {
-              onChangeFilters(prev => ({ ...prev, searchQuery: '' }));
-            }}
-          />
+          <TrendArticleFeed articles={trendArticles} regionId={activeRegionId} searchQuery={filters.searchQuery} loading={trendArticlesLoading} activeSection={sidebarTab} onSectionChange={setSidebarTab} showTabs={false} />
         </div>
       </motion.div>
 
@@ -1167,18 +939,18 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-            className="lg:hidden fixed inset-x-0 bottom-0 z-50 bg-white dark:bg-neutral-900 border-t border-neutral-200/80 dark:border-neutral-800 rounded-t-3xl shadow-2xl max-h-[84vh] flex flex-col overflow-hidden pb-safe"
+            className="lg:hidden fixed inset-x-0 bottom-0 z-50 bg-[#FAF8F4] text-[#2C2621] border-t border-[#D8CFBD] rounded-t-3xl shadow-2xl max-h-[84vh] flex flex-col overflow-hidden pb-safe"
           >
             {/* Mobile Detail Drag Handle & Dismiss Header */}
-            <div className="relative pt-2 pb-1 flex flex-col items-center shrink-0 border-b border-neutral-100 dark:border-neutral-800">
-              <div className="w-10 h-1.5 bg-neutral-300 dark:bg-neutral-700 rounded-full mb-1" />
+            <div className="relative pt-2 pb-1 flex flex-col items-center shrink-0 border-b border-[#E2DAD0]">
+              <div className="w-10 h-1.5 bg-[#D0C5AC] rounded-full mb-1" />
 
               <div className="w-full px-4 py-1 flex items-center justify-between">
                 <div className="min-w-0 pr-2">
                   <span className="text-[10px] font-mono-spec font-bold text-terracotta uppercase block truncate">
                     {selectedSpot.seasonalTrend?.trendTitle}
                   </span>
-                  <h3 className="font-editorial text-lg font-bold text-neutral-900 dark:text-white truncate">
+                  <h3 className="font-editorial text-lg font-bold text-[#2C2621] truncate">
                     {selectedSpot.name}
                   </h3>
                 </div>
@@ -1200,7 +972,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                   <button
                     type="button"
                     onClick={() => onSelectSpot(null)}
-                    className="w-8 h-8 rounded-full bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 flex items-center justify-center text-neutral-600 dark:text-neutral-300 shrink-0"
+                    className="w-8 h-8 rounded-full bg-[#ECE4D0] hover:bg-[#E2DAD0] flex items-center justify-center text-[#554D43] shrink-0"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -1257,7 +1029,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                 <button
                   type="button"
                   onClick={() => onToggleSave(selectedSpot.id)}
-                  className="flex flex-col items-center justify-center p-2.5 rounded-2xl bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200"
+                  className="flex flex-col items-center justify-center p-2.5 rounded-2xl bg-[#F3EAD7] text-[#2C2621]"
                 >
                   <Bookmark className={`w-4 h-4 ${savedSpotIds.includes(selectedSpot.id) ? 'text-terracotta fill-terracotta' : ''}`} />
                   <span className="text-[11px] font-semibold mt-1">
@@ -1268,7 +1040,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                 <button
                   type="button"
                   onClick={() => handleShareSpot(selectedSpot)}
-                  className="flex flex-col items-center justify-center p-2.5 rounded-2xl bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200"
+                  className="flex flex-col items-center justify-center p-2.5 rounded-2xl bg-[#F3EAD7] text-[#2C2621]"
                 >
                   <Share2 className="w-4 h-4" />
                   <span className="text-[11px] font-semibold mt-1">Chia sẻ</span>
@@ -1277,7 +1049,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                 <button
                   type="button"
                   onClick={() => onOpenReportModal(selectedSpot)}
-                  className="flex flex-col items-center justify-center p-2.5 rounded-2xl bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200"
+                  className="flex flex-col items-center justify-center p-2.5 rounded-2xl bg-[#F3EAD7] text-[#2C2621]"
                 >
                   <Flag className="w-4 h-4 text-amberFilm" />
                   <span className="text-[11px] font-semibold mt-1">Báo nở</span>
@@ -1285,22 +1057,22 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
               </div>
 
               {/* Condition Progress Bar */}
-              <div className="bg-amber-50/70 dark:bg-neutral-800/70 border border-amber-200/60 dark:border-neutral-700/60 rounded-2xl p-3.5 space-y-1.5">
+              <div className="bg-[#F3EAD7] border border-[#D8CFBD] rounded-2xl p-3.5 space-y-1.5">
                 <div className="flex items-center justify-between text-xs font-mono-spec">
-                  <span className="font-bold text-neutral-900 dark:text-neutral-100">
+                  <span className="font-bold text-[#2C2621]">
                     TÌNH TRẠNG HOA / PHONG CẢNH
                   </span>
                   <span className="font-bold text-terracotta">
                     {selectedSpot.seasonalTrend?.bloomPercentage || 85}% ĐANG NỞ
                   </span>
                 </div>
-                <div className="w-full bg-neutral-200 dark:bg-neutral-700 h-1.5 rounded-full overflow-hidden">
+                <div className="w-full bg-[#E2DAD0] h-1.5 rounded-full overflow-hidden">
                   <div
                     className="bg-terracotta h-full transition-all duration-500"
                     style={{ width: `${selectedSpot.seasonalTrend?.bloomPercentage || 85}%` }}
                   />
                 </div>
-                <p className="text-xs text-neutral-600 dark:text-neutral-300 font-sans leading-relaxed pt-1">
+                <p className="text-xs text-[#554D43] font-sans leading-relaxed pt-1">
                   {selectedSpot.description}
                 </p>
               </div>
@@ -1317,7 +1089,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
 
               {/* Photography Guide */}
               <div className="space-y-3 pt-1">
-                <h4 className="text-xs font-bold text-neutral-900 dark:text-neutral-100 flex items-center">
+                <h4 className="text-xs font-bold text-[#2C2621] flex items-center">
                   <Camera className="w-3.5 h-3.5 mr-1.5 text-terracotta" />
                   Cẩm nang chụp ảnh & thiết bị
                 </h4>
@@ -1325,18 +1097,18 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                 <div className="flex items-start space-x-2 text-xs">
                   <Clock className="w-4 h-4 text-amberFilm shrink-0 mt-0.5" />
                   <div>
-                    <span className="font-bold text-neutral-800 dark:text-neutral-200">Khung giờ đẹp: </span>
-                    <span className="text-neutral-600 dark:text-neutral-400">{selectedSpot.bestTimeDescription}</span>
+                    <span className="font-bold text-[#2C2621]">Khung giờ đẹp: </span>
+                    <span className="text-[#6E655B]">{selectedSpot.bestTimeDescription}</span>
                   </div>
                 </div>
 
                 <div className="flex items-start space-x-2 text-xs">
                   <Camera className="w-4 h-4 text-terracotta shrink-0 mt-0.5" />
                   <div>
-                    <span className="font-bold text-neutral-800 dark:text-neutral-200">Ống kính khuyên dùng: </span>
+                    <span className="font-bold text-[#2C2621]">Ống kính khuyên dùng: </span>
                     <div className="flex flex-wrap gap-1 mt-1">
                       {selectedSpot.recommendedLenses.map((lens, lIdx) => (
-                        <span key={lIdx} className="px-2 py-0.5 bg-neutral-100 dark:bg-neutral-800 rounded font-mono-spec text-[10px]">
+                        <span key={lIdx} className="px-2 py-0.5 bg-[#ECE4D0] text-[#554D43] rounded font-mono-spec text-[10px]">
                           {lens}
                         </span>
                       ))}
@@ -1347,11 +1119,11 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                 <div className="flex items-start space-x-2 text-xs">
                   <Sparkles className="w-4 h-4 text-purple-500 shrink-0 mt-0.5" />
                   <div>
-                    <span className="font-bold text-neutral-800 dark:text-neutral-200">Concept & Trang phục: </span>
+                    <span className="font-bold text-[#2C2621]">Concept & Trang phục: </span>
                     <div className="flex flex-wrap gap-1 mt-1">
                       {selectedSpot.seasonalTrend?.conceptTags.map((tag, tIdx) => (
-                        <span key={tIdx} className="px-2 py-0.5 bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-200 rounded text-[10px]">
-                          #{tag}
+                        <span key={tIdx} className="px-2 py-0.5 bg-purple-50 text-purple-700 border border-purple-200 rounded text-[10px]">
+                          {CONCEPT_METADATA[tag]?.label || `#${tag}`}
                         </span>
                       ))}
                     </div>
@@ -1361,7 +1133,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
 
               {/* Related Facebook Posts */}
               {selectedSpot.inspirationPosts && selectedSpot.inspirationPosts.length > 0 && (
-                <div className="border-t border-neutral-100 dark:border-neutral-800 pt-3 space-y-2.5">
+                <div className="border-t border-[#E2DAD0] pt-3 space-y-2.5">
                   <div className="flex items-center justify-between text-xs font-mono-spec">
                     <span className="font-bold text-blue-600">
                       BÀI ĐĂNG FACEBOOK APHOTO ({selectedSpot.inspirationPosts.length})
@@ -1376,7 +1148,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                   </div>
 
                   {selectedSpot.inspirationPosts.map(post => (
-                    <div key={post.id} className="p-3 rounded-2xl bg-neutral-50 dark:bg-neutral-850 space-y-2 border border-neutral-200/70 dark:border-neutral-800">
+                    <div key={post.id} className="p-3 rounded-2xl bg-white space-y-2 border border-[#D8CFBD]">
                       <div className="flex items-center justify-between text-xs">
                         <div className="flex items-center space-x-2">
                           <img src={post.authorAvatar} alt="" className="w-6 h-6 rounded-full object-cover" />
@@ -1386,7 +1158,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                           <ExternalLink className="w-3.5 h-3.5" />
                         </a>
                       </div>
-                      <p className="text-xs text-neutral-600 dark:text-neutral-300 leading-relaxed">
+                      <p className="text-xs text-[#554D43] leading-relaxed">
                         {post.fullContent || post.caption}
                       </p>
                     </div>

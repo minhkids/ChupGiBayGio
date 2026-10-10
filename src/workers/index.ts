@@ -111,6 +111,19 @@ app.get('/api/spots/:id/posts', async (c) => {
   return c.json(results);
 });
 
+app.get('/api/trend-articles', async (c) => {
+  const { results } = await getD1(c.env).prepare('SELECT * FROM trend_articles WHERE is_published = 1 ORDER BY created_at DESC LIMIT 100').all();
+  return c.json((results || []).map((value) => {
+    const row = value as Record<string, unknown>;
+    return {
+      id: String(row.id), section: String(row.section), title: String(row.title || ''), content: String(row.content || ''),
+      imageUrl: String(row.image_url || ''), location: String(row.location || ''), regionId: String(row.region_id || 'all'),
+      sourceUrl: String(row.source_url || ''), isPublished: Number(row.is_published) === 1,
+      createdAt: String(row.created_at || ''),
+    };
+  }));
+});
+
 // Image upload to R2
 app.post('/api/upload', async (c) => {
   const formData = await c.req.formData();

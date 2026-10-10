@@ -31,7 +31,7 @@ cms.post('/api/admin/upload', async (c) => {
   const file = form?.get('file');
   const entity = form?.get('entity');
   if (!file || typeof file === 'string' || !('arrayBuffer' in file) || !('size' in file) || !('type' in file)) return c.json({ error: 'Vui lòng chọn tệp ảnh.' }, 400);
-  if (!['spots', 'outfits', 'photographers', 'films'].includes(String(entity))) return c.json({ error: 'Nhóm ảnh không hợp lệ.' }, 400);
+  if (!['spots', 'outfits', 'photographers', 'films', 'trendArticles'].includes(String(entity))) return c.json({ error: 'Nhóm ảnh không hợp lệ.' }, 400);
   if (file.size < 1 || file.size > 8 * 1024 * 1024) return c.json({ error: 'Ảnh phải nhỏ hơn hoặc bằng 8 MB.' }, 413);
   const allowed = new Map([['image/jpeg', 'jpg'], ['image/png', 'png'], ['image/webp', 'webp']]);
   const extension = allowed.get(file.type);
@@ -49,6 +49,7 @@ cms.post('/api/admin/upload', async (c) => {
 
 const text = (value: unknown, max = 5000): string => typeof value === 'string' ? value.trim().slice(0, max) : '';
 const named = (body: Record<string, unknown> | null): body is Record<string, unknown> => Boolean(body && text(body.name, 160));
+const trendSection = (value: unknown): value is 'hotTrend' | 'upcomingSpot' => value === 'hotTrend' || value === 'upcomingSpot';
 function array(value: unknown): unknown[] {
   if (Array.isArray(value)) return value;
   if (typeof value !== 'string') return [];
@@ -143,7 +144,8 @@ cms.get('/api/admin/cms/:table', async (c) => {
   const queries: Record<string, string> = {
     spots: 'SELECT * FROM spots ORDER BY created_at DESC', outfits: 'SELECT * FROM outfits ORDER BY created_at DESC',
     photographers: 'SELECT * FROM photographers ORDER BY created_at DESC', films: 'SELECT * FROM film_rolls ORDER BY created_at DESC',
-    labs: 'SELECT * FROM film_labs ORDER BY created_at DESC', rentalShops: 'SELECT * FROM rental_shops ORDER BY created_at DESC'
+    labs: 'SELECT * FROM film_labs ORDER BY created_at DESC', rentalShops: 'SELECT * FROM rental_shops ORDER BY created_at DESC',
+    trendArticles: 'SELECT * FROM trend_articles ORDER BY created_at DESC'
   };
   const sql = queries[c.req.param('table')];
   if (!sql) return c.json({ error: 'Danh mục không hợp lệ.' }, 404);
@@ -158,10 +160,31 @@ cms.get('/api/admin/cms/:table', async (c) => {
   return c.json(results || []);
 });
 
+cms.post('/api/admin/cms/trendArticles', async (c) => {
+  const body = await c.req.json().catch(() => null) as Record<string, unknown> | null;
+  if (!body || !text(body.title, 180) || !trendSection(body.section)) return c.json({ error: 'Tiêu đề và một trong hai tab xu hướng là bắt buộc.' }, 400);
+  const id = crypto.randomUUID();
+  const article = {
+    id,
+    section: body.section,
+    title: text(body.title, 180),
+    content: text(body.content, 10000),
+    imageUrl: text(body.imageUrl, 2000),
+    location: text(body.location, 300),
+    regionId: text(body.regionId, 80) || 'all',
+    sourceUrl: text(body.sourceUrl, 2000),
+    isPublished: body.isPublished !== false,
+  };
+  await getD1(c.env).prepare(`INSERT INTO trend_articles (id, section, title, content, image_url, location, region_id, source_url, is_published)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+    .bind(id, article.section, article.title, article.content, article.imageUrl, article.location, article.regionId, article.sourceUrl, article.isPublished ? 1 : 0).run();
+  return c.json(article, 201);
+});
+
 cms.put('/api/admin/cms/:table/:id', async (c) => {
   const table = c.req.param('table'); const id = c.req.param('id');
   const body = await c.req.json().catch(() => null) as Record<string, unknown> | null;
-  if (!named(body)) return c.json({ error: 'Tên hiển thị là bắt buộc.' }, 400);
+  if (!body || !(table === 'trendArticles' ? text(body.title, 180) : named(body))) return c.json({ error: 'Tên hiển thị là bắt buộc.' }, 400);
   const db = getD1(c.env);
   let result: D1Result;
   if (table === 'spots') {
@@ -169,6 +192,10 @@ cms.put('/api/admin/cms/:table/:id', async (c) => {
     if (!text(body.slug, 180) || !text(body.address) || !Number.isFinite(lat) || !Number.isFinite(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180 || months.some((month) => !Number.isInteger(month) || Number(month) < 1 || Number(month) > 12)) return c.json({ error: 'Thông tin địa điểm hoặc tọa độ không hợp lệ.' }, 400);
     result = await db.prepare('UPDATE spots SET name = ?, slug = ?, region_id = ?, address = ?, district = ?, lat = ?, lng = ?, best_time_of_day = ?, golden_hour = ?, best_months = ?, entry_fee = ?, parking_fee = ?, source_url = ?, cover_image_url = ?, description = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
       .bind(text(body.name, 160), text(body.slug, 180), text(body.regionId, 80) || 'hanoi', text(body.address), text(body.district, 120), lat, lng, text(body.bestTimeOfDay, 40) || 'afternoon', text(body.goldenHour, 300), jsonText(months), text(body.entryFee, 200), text(body.parkingFee, 200), text(body.sourceUrl, 2000), text(body.coverImageUrl, 2000), text(body.description), id).run();
+  } else if (table === 'trendArticles') {
+    if (!trendSection(body.section)) return c.json({ error: 'Tab bài viết không hợp lệ.' }, 400);
+    result = await db.prepare('UPDATE trend_articles SET section = ?, title = ?, content = ?, image_url = ?, location = ?, region_id = ?, source_url = ?, is_published = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
+      .bind(body.section, text(body.title, 180), text(body.content, 10000), text(body.imageUrl, 2000), text(body.location, 300), text(body.regionId, 80) || 'all', text(body.sourceUrl, 2000), body.isPublished === false ? 0 : 1, id).run();
   } else if (table === 'outfits') {
     result = await db.prepare('UPDATE outfits SET spot_id = ?, name = ?, description = ?, material = ?, estimated_price = ?, image_url = ?, hotspots = ?, shopee_url = ?, tiktok_url = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
       .bind(text(body.spotId, 160) || null, text(body.name, 160), text(body.description), text(body.material, 300), text(body.estimatedPrice, 100), text(body.imageUrl, 2000), jsonText(array(body.hotspots)), text(body.shopeeUrl, 2000), text(body.tiktokUrl, 2000), id).run();
@@ -204,7 +231,8 @@ cms.delete('/api/admin/cms/:table/:id', async (c) => {
   const table = c.req.param('table'); const id = c.req.param('id'); const db = getD1(c.env);
   const statements: Record<string, string> = {
     spots: 'DELETE FROM spots WHERE id = ?', outfits: 'DELETE FROM outfits WHERE id = ?', rentalShops: 'DELETE FROM rental_shops WHERE id = ?',
-    photographers: 'DELETE FROM photographers WHERE id = ?', films: 'DELETE FROM film_rolls WHERE id = ?', labs: 'DELETE FROM film_labs WHERE id = ?'
+    photographers: 'DELETE FROM photographers WHERE id = ?', films: 'DELETE FROM film_rolls WHERE id = ?', labs: 'DELETE FROM film_labs WHERE id = ?',
+    trendArticles: 'DELETE FROM trend_articles WHERE id = ?'
   };
   const sql = statements[table];
   if (!sql) return c.json({ error: 'Danh mục không hợp lệ.' }, 404);

@@ -83,7 +83,7 @@ function adminPayload(listing: ServiceListing) {
   return { name: listing.name, iso: listing.iso, tone: listing.recommendedTime, suitableSeasons: listing.suitableSeasons, packageImageUrl: listing.filmImageUrl, sampleImageUrl: listing.imageUrl };
 }
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
+export async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const token = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem(ADMIN_TOKEN_KEY) : null;
   const headers = new Headers(init?.headers);
   if (init?.body && !(typeof FormData !== 'undefined' && init.body instanceof FormData)) headers.set('Content-Type', 'application/json');
@@ -149,7 +149,7 @@ export const serviceHubApi = {
     sessionStorage.setItem(ADMIN_TOKEN_KEY, result.token);
   },
   logout: () => sessionStorage.removeItem(ADMIN_TOKEN_KEY),
-  uploadImage: async (file: File, entity: 'spots' | 'outfits' | 'photographers' | 'films') => {
+  uploadImage: async (file: File, entity: 'spots' | 'outfits' | 'photographers' | 'films' | 'trendArticles') => {
     const form = new FormData();
     form.set('file', file);
     form.set('entity', entity);

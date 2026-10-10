@@ -7,7 +7,7 @@ export interface AdminHotspot { x: number; y: number; label: string }
 interface Props {
   label: string;
   value: string;
-  entity: 'spots' | 'outfits' | 'photographers' | 'films';
+  entity: 'spots' | 'outfits' | 'photographers' | 'films' | 'trendArticles';
   onChange: (url: string) => void;
   hotspots?: AdminHotspot[];
   onHotspotsChange?: (hotspots: AdminHotspot[]) => void;

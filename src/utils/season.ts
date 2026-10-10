@@ -22,6 +22,7 @@ export const CONCEPT_METADATA: Record<ConceptTag, { label: string; iconName: str
   CYBERPUNK: { label: 'Đêm Đô Thị & Flash', iconName: 'Zap', description: 'Ánh sáng neon, cầu đêm, bờ sông hiện đại' },
   MINIMAL: { label: 'Tối Giản & Hiện Đại', iconName: 'Layers', description: 'Kiến trúc hình khối, bảo tàng nghệ thuật' },
   KIEN_TRUC: { label: 'Kiến Trúc & Di Sản', iconName: 'Landmark', description: 'Công trình biểu tượng trăm năm' },
+  MAT_TROI: { label: 'Mặt Trời', iconName: 'Sun', description: 'Địa điểm ngắm Bình minh và Hoàng hôn' },
   CHRISTMAS: { label: 'Giáng Sinh & Đông', iconName: 'Gift', description: 'Không gian trang trí Noel, cây thông, đèn lồng, không khí lễ hội' }
 };
 

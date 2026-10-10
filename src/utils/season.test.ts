@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { getCurrentMonthInVietnam, getEffectiveSeasonalStatus } from './season';
+import { CONCEPT_METADATA, getCurrentMonthInVietnam, getEffectiveSeasonalStatus } from './season';
+
+describe('sunrise and sunset concept', () => {
+  it('has a user-facing Mặt Trời label and covers both golden-hour periods', () => {
+    expect(CONCEPT_METADATA.MAT_TROI.label).toBe('Mặt Trời');
+    expect(CONCEPT_METADATA.MAT_TROI.description).toContain('Bình minh');
+    expect(CONCEPT_METADATA.MAT_TROI.description).toContain('Hoàng hôn');
+  });
+});
 
 describe('getCurrentMonthInVietnam', () => {
   it('uses the month currently shown in Vietnam, including UTC month boundaries', () => {

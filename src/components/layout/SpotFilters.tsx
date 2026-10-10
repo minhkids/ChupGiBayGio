@@ -15,6 +15,7 @@ interface QuickChip {
 
 const QUICK_CHIPS: QuickChip[] = [
   { label: '🌅 Hoàng hôn', timeOfDay: 'SUNSET' as BestTimeOfDay },
+  { label: '☀️ Mặt Trời', concept: 'MAT_TROI' as ConceptTag },
   { label: '☕ Vintage Film', concept: 'VINTAGE' as ConceptTag },
   { label: '✨ Đang Rộ (Peak)', status: 'PEAK' as SpotStatus },
 ];

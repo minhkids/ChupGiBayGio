@@ -329,7 +329,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
                 Concept &amp; phong cách chụp
               </div>
               <div className="flex flex-wrap gap-2">
-                {(['ALL', 'AO_DAI', 'VINTAGE', 'HOA_CO', 'STREET', 'NANG_THO', 'FILM', 'CHRISTMAS'] as (ConceptTag | 'ALL')[]).map(c => (
+                {(['ALL', 'AO_DAI', 'VINTAGE', 'HOA_CO', 'MAT_TROI', 'STREET', 'NANG_THO', 'FILM', 'CHRISTMAS'] as (ConceptTag | 'ALL')[]).map(c => (
                   <button
                     key={c}
                     type="button"
