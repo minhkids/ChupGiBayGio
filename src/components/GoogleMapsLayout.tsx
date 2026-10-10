@@ -66,6 +66,7 @@ interface GoogleMapsLayoutProps {
 }
 
 export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
+  spots,
   filteredSpots,
   selectedSpot,
   onSelectSpot,
@@ -227,6 +228,14 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
     } catch {
       showToast('Không thể sao chép liên kết');
     }
+  };
+
+  const handleOpenTrendingSpot = (spot: Spot) => {
+    onChangeView('map');
+    setFocusedCoordinates({ lat: spot.lat, lng: spot.lng, zoom: 15 });
+    setActivePhotoIdx(0);
+    setDetailTab('info');
+    onSelectSpot(spot);
   };
 
   return (
@@ -561,12 +570,12 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
 
 
 
-          <TrendArticleFeed articles={trendArticles} regionId={activeRegionId} searchQuery={filters.searchQuery} activeSection={sidebarTab} onSectionChange={setSidebarTab} tabsOnly />
+          <TrendArticleFeed articles={trendArticles} spots={spots} regionId={activeRegionId} searchQuery={filters.searchQuery} activeSection={sidebarTab} onSectionChange={setSidebarTab} onOpenSpot={handleOpenTrendingSpot} tabsOnly />
         </div>
 
         {/* ─── SCROLLABLE EDITORIAL FEED ─── */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          <TrendArticleFeed articles={trendArticles} regionId={activeRegionId} searchQuery={filters.searchQuery} loading={trendArticlesLoading} activeSection={sidebarTab} onSectionChange={setSidebarTab} showTabs={false} />
+          <TrendArticleFeed articles={trendArticles} spots={spots} regionId={activeRegionId} searchQuery={filters.searchQuery} loading={trendArticlesLoading} activeSection={sidebarTab} onSectionChange={setSidebarTab} onOpenSpot={handleOpenTrendingSpot} showTabs={false} />
         </div>
       </div>
 
@@ -908,7 +917,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
           <div className="w-full flex items-center justify-between font-mono-spec">
 
             <div className="mr-2 min-w-0 flex-1">
-              <TrendArticleFeed articles={trendArticles} regionId={activeRegionId} searchQuery={filters.searchQuery} activeSection={sidebarTab} onSectionChange={setSidebarTab} tabsOnly />
+              <TrendArticleFeed articles={trendArticles} spots={spots} regionId={activeRegionId} searchQuery={filters.searchQuery} activeSection={sidebarTab} onSectionChange={setSidebarTab} onOpenSpot={handleOpenTrendingSpot} tabsOnly />
             </div>
 
             {/* Snap Toggle Indicator */}
@@ -923,7 +932,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
 
         {/* Mobile Feed */}
         <div className="flex-1 overflow-y-auto p-4 space-y-3">
-          <TrendArticleFeed articles={trendArticles} regionId={activeRegionId} searchQuery={filters.searchQuery} loading={trendArticlesLoading} activeSection={sidebarTab} onSectionChange={setSidebarTab} showTabs={false} />
+          <TrendArticleFeed articles={trendArticles} spots={spots} regionId={activeRegionId} searchQuery={filters.searchQuery} loading={trendArticlesLoading} activeSection={sidebarTab} onSectionChange={setSidebarTab} onOpenSpot={handleOpenTrendingSpot} showTabs={false} />
         </div>
       </motion.div>
 

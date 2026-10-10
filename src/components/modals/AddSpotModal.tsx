@@ -246,7 +246,7 @@ export const AddSpotModal: React.FC<AddSpotModalProps> = ({
                 value={spotName}
                 onChange={(e) => setSpotName(e.target.value)}
                 placeholder="VD: Cánh Đồng Hoa Tam Giác Mạch"
-                className="w-full p-2.5 bg-paper-warm border border-slateInk/40 focus:border-slateInk text-sm font-sans focus:outline-none transition-colors"
+                className="w-full p-2.5 bg-paper-warm border border-slateInk/40 text-slateInk placeholder:text-slateInk-muted caret-slateInk focus:border-slateInk text-sm font-sans focus:outline-none transition-colors"
               />
             </div>
             <div>
@@ -256,7 +256,7 @@ export const AddSpotModal: React.FC<AddSpotModalProps> = ({
               <select
                 value={regionId}
                 onChange={(e) => setRegionId(e.target.value)}
-                className="w-full p-2.5 bg-paper-warm border border-slateInk/40 focus:border-slateInk text-sm font-sans focus:outline-none transition-colors"
+                className="w-full p-2.5 bg-paper-warm border border-slateInk/40 text-slateInk caret-slateInk focus:border-slateInk text-sm font-sans focus:outline-none transition-colors"
               >
                 {REGIONS.filter(r => r.id !== 'all').map(r => (
                   <option key={r.id} value={r.id}>{r.name}</option>
