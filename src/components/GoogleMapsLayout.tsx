@@ -272,6 +272,11 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
       <div className="absolute inset-0 z-0 lg:pl-[76px]">
         <SpotMap
           spots={filteredSpots}
+          statusFilter={filters.status}
+          onToggleStatusFilter={(status) => onChangeFilters(prev => ({
+            ...prev,
+            status: prev.status === status ? 'ALL' : status
+          }))}
           selectedSpot={selectedSpot}
           onSelectSpot={(spot) => {
             onSelectSpot(spot);

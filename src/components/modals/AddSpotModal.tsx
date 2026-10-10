@@ -1,17 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
   X, 
   MapPin, 
   CheckCircle2, 
   Send,
   Compass,
-  Maximize2
+  Maximize2,
+  ImagePlus
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import type { Spot, ConceptTag } from '../../types';
 import { CONCEPT_METADATA } from '../../utils/season';
 import type { LocationData } from '../../hooks/useMapLocationPicker';
 import { REGIONS } from '../../data/regions';
+
+const API_BASE = import.meta.env.VITE_API_URL || '';
+const MAX_IMAGE_SIZE = 8 * 1024 * 1024;
 
 export interface AddSpotModalProps {
   isOpen: boolean;
@@ -40,30 +44,48 @@ export const AddSpotModal: React.FC<AddSpotModalProps> = ({
   const [selectedConcepts, setSelectedConcepts] = useState<ConceptTag[]>(['HOA_CO']);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
-
-  useEffect(() => {
-    if (selectedLocation?.placeName && !spotName) {
-      setSpotName(selectedLocation.placeName);
-    }
-  }, [selectedLocation, spotName]);
+  const [spotStatus, setSpotStatus] = useState<'PEAK' | 'ENDING_SOON' | 'ACTIVE'>('ACTIVE');
+  const [statusValidUntil, setStatusValidUntil] = useState('');
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState('');
+  const [uploadError, setUploadError] = useState('');
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
   if (!isOpen) return null;
 
-  const handleFinalSubmit = (e: React.FormEvent) => {
+  const handleFinalSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedLocation && !spotName) return;
+    if (!selectedLocation || !spotName.trim()) return;
 
     setIsSubmitting(true);
+    const spotId = `spot-${Date.now()}`;
+
+    let coverImageUrl = '/spot-image-pending.svg';
+    try {
+      if (imageFile) {
+        const formData = new FormData();
+        formData.set('file', imageFile);
+        formData.set('spotId', spotId);
+        const response = await fetch(`${API_BASE}/api/upload`, { method: 'POST', body: formData });
+        const result = await response.json().catch(() => null) as { url?: string; error?: string } | null;
+        if (!response.ok || !result?.url) throw new Error(result?.error || 'Không tải được ảnh lên. Vui lòng thử lại.');
+        coverImageUrl = result.url;
+      }
+    } catch (error) {
+      setUploadError(error instanceof Error ? error.message : 'Không tải được ảnh lên. Vui lòng thử lại.');
+      setIsSubmitting(false);
+      return;
+    }
 
     const lat = selectedLocation ? selectedLocation.lat : 21.0378;
     const lng = selectedLocation ? selectedLocation.lng : 105.8396;
     const resolvedAddress = selectedLocation?.address || 'Hà Nội, Việt Nam';
 
     const newSpot: Spot = {
-      id: `spot-${Date.now()}`,
+      id: spotId,
       regionId: regionId,
-      name: spotName || selectedLocation?.placeName || 'Điểm Chụp Mới',
-      slug: (spotName || 'diem-chup-moi').toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+      name: spotName.trim(),
+      slug: spotName.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-'),
       address: resolvedAddress,
       lat,
       lng,
@@ -78,8 +100,8 @@ export const AddSpotModal: React.FC<AddSpotModalProps> = ({
       recommendedOutfits: ['Trang phục thoải mái'],
       colorPalette: ['#C85A32', '#F4EFE6', '#1C1D1F', '#E09F3E'],
       crowdLevelByHour: { morning: 'Vắng', noon: 'Vắng', afternoon: 'Trung bình', evening: 'Đông' },
-      coverImageUrl: '/facebook_media/post_0_0.jpg',
-      galleryUrls: ['/facebook_media/post_0_0.jpg'],
+      coverImageUrl,
+      galleryUrls: [coverImageUrl],
       description: `Điểm chụp ảnh mới được đề xuất.`,
       photographyTips: ['Nên đi sớm trước giờ cao điểm để giữ góc chụp đẹp.'],
       inspirationPosts: [],
@@ -87,14 +109,15 @@ export const AddSpotModal: React.FC<AddSpotModalProps> = ({
       savesCount: 0,
       seasonalTrend: {
         id: `trend-${Date.now()}`,
-        trendTitle: spotName || 'Địa Điểm Mới',
+        trendTitle: spotName.trim(),
         startMonth: new Date().getMonth() + 1,
         endMonth: ((new Date().getMonth() + 3) % 12) + 1,
-        status: 'PEAK',
+        status: spotStatus,
+        ...(spotStatus !== 'ACTIVE' ? { statusValidUntil } : {}),
         bloomPercentage: 90,
         conceptTags: selectedConcepts,
-        isTrending: true,
-        trendScore: 85
+        isTrending: spotStatus === 'PEAK',
+        trendScore: spotStatus === 'PEAK' ? 85 : spotStatus === 'ENDING_SOON' ? 50 : 0
       }
     };
 
@@ -103,6 +126,25 @@ export const AddSpotModal: React.FC<AddSpotModalProps> = ({
       setIsSubmitting(false);
       setIsComplete(true);
     }, 400);
+  };
+
+  const handleImageSelection = (file?: File) => {
+    setUploadError('');
+    if (!file) return;
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      setUploadError('Chỉ nhận ảnh JPG, PNG hoặc WebP.');
+      if (imageInputRef.current) imageInputRef.current.value = '';
+      return;
+    }
+    if (file.size > MAX_IMAGE_SIZE) {
+      setUploadError('Ảnh minh họa tối đa 8 MB.');
+      if (imageInputRef.current) imageInputRef.current.value = '';
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => setImagePreview(String(reader.result || ''));
+    reader.readAsDataURL(file);
+    setImageFile(file);
   };
 
   const toggleConcept = (c: ConceptTag) => {
@@ -254,6 +296,7 @@ export const AddSpotModal: React.FC<AddSpotModalProps> = ({
                 KHU VỰC: *
               </label>
               <select
+                aria-label="KHU VỰC: *"
                 value={regionId}
                 onChange={(e) => setRegionId(e.target.value)}
                 className="w-full p-2.5 bg-paper-warm border border-slateInk/40 text-slateInk caret-slateInk focus:border-slateInk text-sm font-sans focus:outline-none transition-colors"
@@ -267,7 +310,64 @@ export const AddSpotModal: React.FC<AddSpotModalProps> = ({
           </div>
 
 
-          
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="spot-season-status" className="font-mono-spec font-bold text-slateInk block mb-1">
+                NHÃN ĐỊA ĐIỂM: *
+              </label>
+              <select
+                id="spot-season-status"
+                aria-label="NHÃN ĐỊA ĐIỂM: *"
+                value={spotStatus}
+                onChange={(event) => setSpotStatus(event.target.value as typeof spotStatus)}
+                className="w-full p-2.5 bg-paper-warm border border-slateInk/40 text-slateInk caret-slateInk focus:border-slateInk text-sm font-sans focus:outline-none transition-colors"
+              >
+                <option value="PEAK">Đang Rộ (Peak)</option>
+                <option value="ENDING_SOON">Sắp Hết Mùa</option>
+                <option value="ACTIVE">Quanh Năm</option>
+              </select>
+            </div>
+            {spotStatus !== 'ACTIVE' && (
+              <div>
+                <label htmlFor="spot-status-valid-until" className="font-mono-spec font-bold text-slateInk block mb-1">
+                  HẠN NHÃN MÙA: *
+                </label>
+                <input
+                  id="spot-status-valid-until"
+                  aria-label="HẠN NHÃN MÙA: *"
+                  required
+                  type="date"
+                  value={statusValidUntil}
+                  onChange={(event) => setStatusValidUntil(event.target.value)}
+                  className="w-full p-2.5 bg-paper-warm border border-slateInk/40 text-slateInk caret-slateInk focus:border-slateInk text-sm font-sans focus:outline-none transition-colors"
+                />
+              </div>
+            )}
+          </div>
+
+          <div>
+            <label className="font-mono-spec font-bold text-slateInk block mb-2">ẢNH MINH HỌA:</label>
+            <input
+              ref={imageInputRef}
+              aria-label="ẢNH MINH HỌA"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="sr-only"
+              onChange={(event) => handleImageSelection(event.target.files?.[0])}
+            />
+            <button
+              type="button"
+              onClick={() => imageInputRef.current?.click()}
+              className="flex w-full items-center justify-center gap-2 border-2 border-dashed border-slateInk/40 bg-paper-warm px-4 py-3 text-sm text-slateInk hover:border-slateInk transition-colors"
+            >
+              <ImagePlus className="h-5 w-5" />
+              {imageFile ? 'Chọn ảnh khác' : 'Chọn ảnh minh họa'}
+            </button>
+            <p className="mt-1 text-[11px] text-slateInk-muted">JPG, PNG hoặc WebP · tối đa 8 MB. Nếu chưa có ảnh, hệ thống dùng ảnh chờ xác thực.</p>
+            {imagePreview && <img src={imagePreview} alt="Xem trước ảnh minh họa" className="mt-3 max-h-48 w-full border border-slateInk/20 object-contain bg-paper-warm" />}
+            {uploadError && <p role="alert" className="mt-2 text-xs text-red-700">{uploadError}</p>}
+          </div>
+
           <div>
             <label className="font-mono-spec font-bold text-slateInk block mb-2">
               CONCEPT & PHONG CÁCH:

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CONCEPT_METADATA, getCurrentMonthInVietnam, getEffectiveSeasonalStatus } from './season';
+import { CONCEPT_METADATA, getCurrentMonthInVietnam, getEffectiveSeasonalStatus, matchesSeasonalStatusFilter } from './season';
 
 describe('sunrise and sunset concept', () => {
   it('has a user-facing Mặt Trời label and covers both golden-hour periods', () => {
@@ -24,5 +24,15 @@ describe('getEffectiveSeasonalStatus', () => {
 
   it('does not change perennial spots', () => {
     expect(getEffectiveSeasonalStatus({ status: 'ACTIVE' }, new Date('2027-01-01T00:00:00Z'))).toBe('ACTIVE');
+  });
+});
+
+describe('matchesSeasonalStatusFilter', () => {
+  it('uses the effective status so expired seasonal spots appear under Quanh Năm', () => {
+    const expiredPeak = { status: 'PEAK' as const, statusValidUntil: '2026-10-09' };
+    const now = new Date('2026-10-10T12:00:00Z');
+    expect(matchesSeasonalStatusFilter(expiredPeak, 'ACTIVE', now)).toBe(true);
+    expect(matchesSeasonalStatusFilter(expiredPeak, 'PEAK', now)).toBe(false);
+    expect(matchesSeasonalStatusFilter(expiredPeak, 'ALL', now)).toBe(true);
   });
 });

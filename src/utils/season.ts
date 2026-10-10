@@ -62,6 +62,14 @@ export function getEffectiveSeasonalStatus(
   return trend.status;
 }
 
+export function matchesSeasonalStatusFilter(
+  trend: { status: SpotStatus; statusValidUntil?: string } | null | undefined,
+  filter: 'ALL' | SpotStatus,
+  now: Date = new Date()
+): boolean {
+  return filter === 'ALL' || getEffectiveSeasonalStatus(trend, now) === filter;
+}
+
 export function getStatusBadgeInfo(
   statusOrTrend: SpotStatus | { status: SpotStatus; statusValidUntil?: string },
   daysLeft?: number

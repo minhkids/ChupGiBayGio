@@ -127,15 +127,30 @@ app.get('/api/trend-articles', async (c) => {
 // Image upload to R2
 app.post('/api/upload', async (c) => {
   const formData = await c.req.formData();
-  const file = formData.get('file') as File;
-  const spotId = formData.get('spotId') as string;
+  const candidate = formData.get('file');
+  const spotId = String(formData.get('spotId') || 'community');
+  if (!candidate || typeof candidate === 'string' || !('size' in candidate) || !('type' in candidate) || !('arrayBuffer' in candidate)) {
+    return c.json({ error: 'Vui lòng chọn tệp ảnh.' }, 400);
+  }
+  const file = candidate as File;
+  if (!/^[a-zA-Z0-9_-]{1,100}$/.test(spotId)) return c.json({ error: 'Mã địa điểm không hợp lệ.' }, 400);
+  if (file.size < 1 || file.size > 8 * 1024 * 1024) return c.json({ error: 'Ảnh phải nhỏ hơn hoặc bằng 8 MB.' }, 413);
 
-  if (!file) return c.json({ error: 'No file' }, 400);
+  const extensions = new Map([['image/jpeg', 'jpg'], ['image/png', 'png'], ['image/webp', 'webp']]);
+  const extension = extensions.get(file.type);
+  if (!extension) return c.json({ error: 'Chỉ hỗ trợ JPG, PNG hoặc WebP.' }, 415);
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const jpeg = bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
+  const png = bytes.length >= 8 && bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47 && bytes[4] === 0x0d && bytes[5] === 0x0a && bytes[6] === 0x1a && bytes[7] === 0x0a;
+  const webp = bytes.length >= 12 && String.fromCharCode(...bytes.slice(0, 4)) === 'RIFF' && String.fromCharCode(...bytes.slice(8, 12)) === 'WEBP';
+  if (!(extension === 'jpg' && jpeg || extension === 'png' && png || extension === 'webp' && webp)) {
+    return c.json({ error: 'Nội dung tệp không khớp định dạng ảnh.' }, 415);
+  }
 
-  const key = `spots/${spotId}/${crypto.randomUUID()}-${file.name}`;
-  await c.env.R2_BUCKET.put(key, file.stream(), {
+  const key = `spots/${spotId}/${crypto.randomUUID()}.${extension}`;
+  await c.env.R2_BUCKET.put(key, bytes, {
     httpMetadata: { contentType: file.type },
-    customMetadata: { spotId, originalName: file.name },
+    customMetadata: { spotId, originalName: file.name.slice(0, 160) },
   });
 
   const publicUrl = `https://pub-${c.env.R2_BUCKET.name}.r2.dev/${key}`;

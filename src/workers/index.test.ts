@@ -137,4 +137,20 @@ describe('Services Hub admin API', () => {
     const rejected = await worker.request('/api/admin/upload', { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: invalid }, env);
     expect(rejected.status).toBe(415);
   });
+
+  it('validates public spot illustration uploads before storing them in R2', async () => {
+    const env = makeEnv();
+    const invalid = new FormData();
+    invalid.set('file', new File(['not an image'], 'fake.jpg', { type: 'image/jpeg' }));
+    invalid.set('spotId', 'community-spot');
+    expect((await worker.request('/api/upload', { method: 'POST', body: invalid }, env)).status).toBe(415);
+
+    const valid = new FormData();
+    valid.set('file', new File([new Uint8Array([0xff, 0xd8, 0xff, 0x00])], 'spot.jpg', { type: 'image/jpeg' }));
+    valid.set('spotId', 'community-spot');
+    const response = await worker.request('/api/upload', { method: 'POST', body: valid }, env);
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({ key: expect.stringMatching(/^spots\/community-spot\//), url: expect.stringContaining('cms-test') });
+    expect((env.R2_BUCKET as unknown as { put: ReturnType<typeof vi.fn> }).put).toHaveBeenCalledOnce();
+  });
 });

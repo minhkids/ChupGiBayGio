@@ -2,11 +2,12 @@ import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { PinReferenceButton } from '../planner/PinReferenceButton';
 import L from 'leaflet';
-import type { Spot } from '../../types';
+import type { Spot, SpotStatus } from '../../types';
 import { REGIONS } from '../../data/regions';
 import { getStatusBadgeInfo, getEffectiveSeasonalStatus } from '../../utils/season';
 import { Compass, Layers, Key, Check, ExternalLink } from 'lucide-react';
 import { type FilmLab } from '../../data/filmLabsData';
+import { MapSpotLegend } from './MapSpotLegend';
 
 interface SpotMapProps {
   editorial?: boolean;
@@ -23,6 +24,8 @@ interface SpotMapProps {
   selectedFilmLab?: FilmLab | null;
   onSelectFilmLab?: (lab: FilmLab) => void;
   focusedCoordinates?: { lat: number; lng: number; zoom?: number } | null;
+  statusFilter?: 'ALL' | SpotStatus;
+  onToggleStatusFilter?: (status: SpotStatus) => void;
 }
 
 type TileProvider = 'osm' | 'esri' | 'carto';
@@ -41,7 +44,9 @@ export const SpotMap: React.FC<SpotMapProps> = ({
   filmLabs,
   selectedFilmLab,
   onSelectFilmLab,
-  focusedCoordinates
+  focusedCoordinates,
+  statusFilter = 'ALL',
+  onToggleStatusFilter
 }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const [popupReference, setPopupReference] = useState<{ container: HTMLElement; spot: Spot } | null>(null);
@@ -556,18 +561,10 @@ export const SpotMap: React.FC<SpotMapProps> = ({
           <Layers className="w-3 h-3 mr-1 text-terracotta" />
           CHÚ THÍCH GHIM
         </div>
-        <div className="flex items-center space-x-2">
-          <span className="w-3.5 h-3.5 bg-terracotta rounded-none text-white text-[9px] flex items-center justify-center font-bold">★</span>
-          <span className="text-[#6E655B]">Đang Rộ (Peak)</span>
-        </div>
-        <div className="flex items-center space-x-2">
-          <span className="w-3.5 h-3.5 bg-amberFilm rounded-none text-neutral-900 text-[9px] flex items-center justify-center font-bold">!</span>
-          <span className="text-[#6E655B]">Sắp Hết Mùa</span>
-        </div>
-        <div className="flex items-center space-x-2">
-          <span className="w-3.5 h-3.5 bg-olive rounded-none text-white text-[9px] flex items-center justify-center font-bold">+</span>
-          <span className="text-[#6E655B]">Quanh Năm</span>
-        </div>
+        <MapSpotLegend
+          selectedStatus={statusFilter}
+          onSelectStatus={(status) => onToggleStatusFilter?.(status)}
+        />
       </div>
 
       {/* Floating Center on Region / Location Indicator */}

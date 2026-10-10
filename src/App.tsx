@@ -11,7 +11,7 @@ import {
 } from './components';
 import { useWeather } from './hooks/useWeather';
 import { useMapLocationPicker } from './hooks/useMapLocationPicker';
-import { getCurrentMonthInVietnam, isSpotActiveInMonth } from './utils/season';
+import { getCurrentMonthInVietnam, isSpotActiveInMonth, matchesSeasonalStatusFilter } from './utils/season';
 import { calculateDistanceKm } from './utils/geo';
 import { recommendFilmForSpot } from './utils/filmAdvisor';
 import { readSavedSpotIds } from './utils/savedSpots';
@@ -213,9 +213,7 @@ export function App() {
         }
 
         // Status
-        if (filters.status !== 'ALL' && spot.seasonalTrend.status !== filters.status) {
-          return false;
-        }
+        if (!matchesSeasonalStatusFilter(spot.seasonalTrend, filters.status)) return false;
 
         // Time of Day
         if (filters.timeOfDay !== 'ALL' && spot.bestTimeOfDay !== filters.timeOfDay) {
