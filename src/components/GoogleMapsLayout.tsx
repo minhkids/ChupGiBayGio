@@ -758,7 +758,6 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                   {/* FILM PHOTOGRAPHY ADVISOR SPEC CARD */}
                   <FilmSpecsCard
                     spot={selectedSpot}
-                    onSelectFilmFilter={(filmId) => onChangeFilters(prev => ({ ...prev, filmId }))}
                     onOpenNearestLabs={(filmName) => {
                       setFilmFilterForLabs(filmName || '');
                       setIsAllLabsDrawerOpen(true);
@@ -1080,7 +1079,6 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
               {/* FILM PHOTOGRAPHY ADVISOR SPEC CARD (Mobile) */}
               <FilmSpecsCard
                 spot={selectedSpot}
-                onSelectFilmFilter={(filmId) => onChangeFilters(prev => ({ ...prev, filmId }))}
                 onOpenNearestLabs={(filmName) => {
                   setFilmFilterForLabs(filmName || '');
                   setIsAllLabsDrawerOpen(true);
