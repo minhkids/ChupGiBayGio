@@ -40,6 +40,7 @@ export const AddSpotModal: React.FC<AddSpotModalProps> = ({
   onClearLocation,
 }) => {
   const [spotName, setSpotName] = useState('');
+  const [spotDescription, setSpotDescription] = useState('');
   const [regionId, setRegionId] = useState('hanoi');
   const [selectedConcepts, setSelectedConcepts] = useState<ConceptTag[]>(['HOA_CO']);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -102,7 +103,7 @@ export const AddSpotModal: React.FC<AddSpotModalProps> = ({
       crowdLevelByHour: { morning: 'Vắng', noon: 'Vắng', afternoon: 'Trung bình', evening: 'Đông' },
       coverImageUrl,
       galleryUrls: [coverImageUrl],
-      description: `Điểm chụp ảnh mới được đề xuất.`,
+      description: spotDescription.trim(),
       photographyTips: ['Nên đi sớm trước giờ cao điểm để giữ góc chụp đẹp.'],
       inspirationPosts: [],
       recentReports: [],
@@ -275,6 +276,22 @@ export const AddSpotModal: React.FC<AddSpotModalProps> = ({
                 </div>
               </div>
             )}
+          </div>
+
+          <div>
+            <label htmlFor="spot-description" className="font-mono-spec font-bold text-slateInk block mb-1">
+              MÔ TẢ ĐỊA ĐIỂM (KHÔNG BẮT BUỘC):
+            </label>
+            <textarea
+              id="spot-description"
+              aria-label="MÔ TẢ ĐỊA ĐIỂM"
+              rows={3}
+              maxLength={500}
+              value={spotDescription}
+              onChange={(event) => setSpotDescription(event.target.value)}
+              placeholder="Mô tả cảnh quan, không gian hoặc lưu ý khi ghé thăm..."
+              className="w-full resize-y p-2.5 bg-paper-warm border border-slateInk/40 text-slateInk placeholder:text-slateInk-muted caret-slateInk focus:border-slateInk text-sm font-sans focus:outline-none transition-colors"
+            />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

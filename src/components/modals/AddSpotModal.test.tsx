@@ -56,6 +56,7 @@ describe('AddSpotModal', () => {
     const submit = renderModal();
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({ url: 'https://images.test/spot.jpg' }) }));
     fireEvent.change(screen.getByPlaceholderText('VD: Cánh Đồng Hoa Tam Giác Mạch'), { target: { value: 'Vườn hoa' } });
+    fireEvent.change(screen.getByLabelText('MÔ TẢ ĐỊA ĐIỂM'), { target: { value: 'Vườn hoa ven hồ, mở cửa tự do.' } });
     fireEvent.change(screen.getByLabelText('NHÃN ĐỊA ĐIỂM: *'), { target: { value: 'ENDING_SOON' } });
     fireEvent.change(screen.getByLabelText('HẠN NHÃN MÙA: *'), { target: { value: '2026-12-31' } });
     const file = new File([new Uint8Array([0xff, 0xd8, 0xff, 0x00])], 'spot.jpg', { type: 'image/jpeg' });
@@ -65,6 +66,7 @@ describe('AddSpotModal', () => {
     await waitFor(() => expect(submit).toHaveBeenCalledWith(expect.objectContaining({
       coverImageUrl: 'https://images.test/spot.jpg',
       galleryUrls: ['https://images.test/spot.jpg'],
+      description: 'Vườn hoa ven hồ, mở cửa tự do.',
       seasonalTrend: expect.objectContaining({ status: 'ENDING_SOON', statusValidUntil: '2026-12-31' })
     })));
     vi.unstubAllGlobals();
