@@ -64,8 +64,15 @@ export const FilmSpecsCard: React.FC<FilmSpecsCardProps> = ({
                       className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />
                     <PinReferenceButton imageUrl={film.sampleImageUrl} label={`Ảnh mẫu ${film.fullName}`} />
-
         </div>
+      )}
+      {film.sampleImageCredit && (
+        <p className="-mt-1 mb-2.5 flex items-center gap-1 text-[10px] text-[#8C8377]">
+          <span>Ảnh:</span>
+          <a href={film.sampleImageCredit.sourceUrl} target="_blank" rel="noreferrer" className="underline underline-offset-2">{film.sampleImageCredit.author}</a>
+          <span>·</span>
+          <a href={film.sampleImageCredit.licenseUrl} target="_blank" rel="noreferrer" className="underline underline-offset-2">{film.sampleImageCredit.licenseName}</a>
+        </p>
       )}
 
       {/* Brief film recommendation */}

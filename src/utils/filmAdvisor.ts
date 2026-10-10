@@ -14,6 +14,12 @@ export interface FilmStockInfo {
   description: string;
   filmImageUrl?: string;
   sampleImageUrl?: string;
+  sampleImageCredit?: {
+    author: string;
+    sourceUrl: string;
+    licenseName: string;
+    licenseUrl: string;
+  };
   matchedSpots?: any[];
   nearbyShops?: any[];
   bestSeasons?: number[];
@@ -33,7 +39,13 @@ export const FILM_STOCKS: Record<string, FilmStockInfo> = {
     paletteHex: ['#E09F3E', '#9E2A2B', '#FFF3B0', '#335C67'],
     description: 'Tone vàng ấm hổ phách, tôn ánh nắng xiên, hạt mịn vừa phải.',
     filmImageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5b/135film.jpg/500px-135film.jpg',
-    sampleImageUrl: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=1000&auto=format&fit=crop&q=80',
+    sampleImageUrl: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/1/1f/Duliang_Pavilion_of_Xuyi_County.jpg/960px-Duliang_Pavilion_of_Xuyi_County.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail',
+    sampleImageCredit: {
+      author: 'Willwongprd',
+      sourceUrl: 'https://commons.wikimedia.org/wiki/File:Duliang_Pavilion_of_Xuyi_County.jpg',
+      licenseName: 'CC BY-SA 4.0',
+      licenseUrl: 'https://creativecommons.org/licenses/by-sa/4.0'
+    },
     recommendedTime: '15:30 - 17:00 (Nắng xiên chiều thu)',
     bestSeasons: [9, 10, 11],
     nearbyShops: [
