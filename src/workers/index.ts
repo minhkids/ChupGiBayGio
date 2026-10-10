@@ -153,8 +153,27 @@ app.post('/api/upload', async (c) => {
     customMetadata: { spotId, originalName: file.name.slice(0, 160) },
   });
 
-  const publicUrl = `https://pub-${c.env.R2_BUCKET.name}.r2.dev/${key}`;
+  const imageName = key.split('/').at(-1)!;
+  const publicUrl = new URL(`/api/spot-images/${spotId}/${imageName}`, c.req.url).toString();
   return c.json({ url: publicUrl, key });
+});
+
+app.get('/api/spot-images/:spotId/:imageName', async (c) => {
+  const spotId = c.req.param('spotId');
+  const imageName = c.req.param('imageName');
+  if (!/^[a-zA-Z0-9_-]{1,100}$/.test(spotId) || !/^[0-9a-f-]{36}\.(jpg|png|webp)$/i.test(imageName)) {
+    return c.json({ error: 'Đường dẫn ảnh không hợp lệ.' }, 400);
+  }
+
+  const object = await c.env.R2_BUCKET.get(`spots/${spotId}/${imageName}`);
+  if (!object) return c.json({ error: 'Không tìm thấy ảnh.' }, 404);
+  return new Response(object.body, {
+    headers: {
+      'Content-Type': object.httpMetadata?.contentType || 'application/octet-stream',
+      'Cache-Control': 'public, max-age=31536000, immutable',
+      'X-Content-Type-Options': 'nosniff'
+    }
+  });
 });
 
 // Search spots

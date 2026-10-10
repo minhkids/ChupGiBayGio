@@ -150,7 +150,19 @@ describe('Services Hub admin API', () => {
     valid.set('spotId', 'community-spot');
     const response = await worker.request('/api/upload', { method: 'POST', body: valid }, env);
     expect(response.status).toBe(200);
-    expect(await response.json()).toMatchObject({ key: expect.stringMatching(/^spots\/community-spot\//), url: expect.stringContaining('cms-test') });
+    const uploaded = await response.json() as { key: string; url: string };
+    expect(uploaded.key).toMatch(/^spots\/community-spot\//);
+    expect(new URL(uploaded.url).pathname).toBe(`/api/spot-images/community-spot/${uploaded.key.split('/').at(-1)}`);
     expect((env.R2_BUCKET as unknown as { put: ReturnType<typeof vi.fn> }).put).toHaveBeenCalledOnce();
+
+    const get = vi.fn().mockResolvedValue({
+      body: new Blob([new Uint8Array([0xff, 0xd8, 0xff, 0x00])]).stream(),
+      httpMetadata: { contentType: 'image/jpeg' }
+    });
+    (env.R2_BUCKET as unknown as { get: typeof get }).get = get;
+    const image = await worker.request(new URL(uploaded.url).pathname, {}, env);
+    expect(image.status).toBe(200);
+    expect(image.headers.get('content-type')).toBe('image/jpeg');
+    expect(new Uint8Array(await image.arrayBuffer())).toEqual(new Uint8Array([0xff, 0xd8, 0xff, 0x00]));
   });
 });
