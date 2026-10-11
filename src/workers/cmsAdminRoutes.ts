@@ -190,8 +190,20 @@ cms.put('/api/admin/cms/:table/:id', async (c) => {
   if (table === 'spots') {
     const lat = Number(body.lat); const lng = Number(body.lng); const months = array(body.bestMonths);
     if (!text(body.slug, 180) || !text(body.address) || !Number.isFinite(lat) || !Number.isFinite(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180 || months.some((month) => !Number.isInteger(month) || Number(month) < 1 || Number(month) > 12)) return c.json({ error: 'Thông tin địa điểm hoặc tọa độ không hợp lệ.' }, 400);
-    result = await db.prepare('UPDATE spots SET name = ?, slug = ?, region_id = ?, address = ?, district = ?, lat = ?, lng = ?, best_time_of_day = ?, golden_hour = ?, best_months = ?, entry_fee = ?, parking_fee = ?, source_url = ?, cover_image_url = ?, description = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
-      .bind(text(body.name, 160), text(body.slug, 180), text(body.regionId, 80) || 'hanoi', text(body.address), text(body.district, 120), lat, lng, text(body.bestTimeOfDay, 40) || 'afternoon', text(body.goldenHour, 300), jsonText(months), text(body.entryFee, 200), text(body.parkingFee, 200), text(body.sourceUrl, 2000), text(body.coverImageUrl, 2000), text(body.description), id).run();
+    const spotStatus = text(body.spotStatus, 20);
+    const statusValidUntil = text(body.statusValidUntil, 10);
+    if (body.spotStatus !== undefined && (!['PEAK', 'ACTIVE', 'ENDING_SOON'].includes(spotStatus) || (spotStatus !== 'ACTIVE' && !/^\d{4}-\d{2}-\d{2}$/.test(statusValidUntil)))) {
+      return c.json({ error: 'Nhãn theo mùa cần trạng thái hợp lệ và hạn kiểm chứng YYYY-MM-DD.' }, 400);
+    }
+    const seasonalPatch = JSON.stringify({
+      trendTitle: text(body.goldenHour, 300),
+      startMonth: months.length ? Math.min(...months.map(Number)) : 1,
+      endMonth: months.length ? Math.max(...months.map(Number)) : 12,
+      ...(body.spotStatus !== undefined ? { status: spotStatus, statusValidUntil: spotStatus === 'ACTIVE' ? null : statusValidUntil } : {}),
+    });
+    // Patch only admin-owned fields; retain concept tags and other map metadata.
+    result = await db.prepare(`UPDATE spots SET name = ?, slug = ?, region_id = ?, address = ?, district = ?, lat = ?, lng = ?, best_time_of_day = ?, golden_hour = ?, best_months = ?, entry_fee = ?, parking_fee = ?, source_url = ?, cover_image_url = ?, description = ?, best_time_description = ?, seasonal_trend = json_patch(CASE WHEN json_valid(seasonal_trend) THEN seasonal_trend ELSE '{}' END, ?), updated_at = CURRENT_TIMESTAMP WHERE id = ?`)
+      .bind(text(body.name, 160), text(body.slug, 180), text(body.regionId, 80) || 'hanoi', text(body.address), text(body.district, 120), lat, lng, text(body.bestTimeOfDay, 40) || 'afternoon', text(body.goldenHour, 300), jsonText(months), text(body.entryFee, 200), text(body.parkingFee, 200), text(body.sourceUrl, 2000), text(body.coverImageUrl, 2000), text(body.description), text(body.goldenHour, 300), seasonalPatch, id).run();
   } else if (table === 'trendArticles') {
     if (!trendSection(body.section)) return c.json({ error: 'Tab bài viết không hợp lệ.' }, 400);
     result = await db.prepare('UPDATE trend_articles SET section = ?, title = ?, content = ?, image_url = ?, location = ?, region_id = ?, source_url = ?, is_published = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')

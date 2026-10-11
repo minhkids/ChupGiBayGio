@@ -34,7 +34,13 @@ export const ServicesHubAdminView: React.FC<Props> = ({ onBack }) => {
   const [password, setPassword] = useState('');
   const [category, setCategory] = useState<ServiceCategory>(initialCategory);
   const [records, setRecords] = useState<ServiceListing[]>([]);
-  const [draft, setDraft] = useState<ServiceListing>(() => blank(initialCategory()));
+  const [draft, updateDraft] = useState<ServiceListing>(() => blank(initialCategory()));
+  const [listText, setListText] = useState<Partial<Record<keyof ServiceListing, string>>>({});
+  const setDraft: React.Dispatch<React.SetStateAction<ServiceListing>> = (next) => {
+    // Replacing a record starts a fresh editing session; field updates keep raw input.
+    if (typeof next !== 'function') setListText({});
+    updateDraft(next);
+  };
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [trendArticlesOpen, setTrendArticlesOpen] = useState(false);
@@ -115,7 +121,11 @@ export const ServicesHubAdminView: React.FC<Props> = ({ onBack }) => {
     <label className="block space-y-1.5 text-xs font-semibold text-[#554D43]">{label}<input className={inputClass} value={String(draft[field] ?? '')} placeholder={placeholder} onChange={(event) => setField(field, event.target.value)} /></label>
   );
   const listField = (label: string, field: 'tags' | 'filmStocks' | 'services' | 'paletteHex' | 'portfolioPhotos' | 'suitableSeasons') => (
-    <label className="block space-y-1.5 text-xs font-semibold text-[#554D43]">{label}<textarea className={`${inputClass} min-h-20`} value={(draft[field] || []).join(', ')} placeholder="Phân tách từng mục bằng dấu phẩy" onChange={(event) => setField(field, event.target.value.split(',').map((value) => value.trim()).filter(Boolean) as never)} /></label>
+    <label className="block space-y-1.5 text-xs font-semibold text-[#554D43]">{label}<textarea className={`${inputClass} min-h-20`} value={listText[field] ?? (draft[field] || []).join(', ')} placeholder="Phân tách từng mục bằng dấu phẩy" onChange={(event) => {
+      const value = event.target.value;
+      setListText((current) => ({ ...current, [field]: value }));
+      setDraft((current) => ({ ...current, [field]: value.split(',').map((item) => item.trim()).filter(Boolean) }));
+    }} /></label>
   );
   const mapLat = draft.lat === undefined || String(draft.lat).trim() === '' ? undefined : Number(draft.lat);
   const mapLng = draft.lng === undefined || String(draft.lng).trim() === '' ? undefined : Number(draft.lng);

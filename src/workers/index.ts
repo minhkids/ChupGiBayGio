@@ -4,6 +4,7 @@ import { logger } from 'hono/logger';
 import { secureHeaders } from 'hono/secure-headers';
 import cmsAdminRoutes from './cmsAdminRoutes';
 import partnerRoutes from './partnerRoutes';
+import communitySpots from './communitySpots';
 import { getD1 } from './d1Client';
 
 type Bindings = {
@@ -91,7 +92,7 @@ app.get('/health', (c) => c.json({ status: 'ok', timestamp: new Date().toISOStri
 // API Routes
 app.get('/api/spots', async (c) => {
   const { results } = await c.env.DB.prepare(
-    'SELECT * FROM spots WHERE is_active = 1 ORDER BY created_at DESC LIMIT 50'
+    'SELECT * FROM spots WHERE is_active = 1 ORDER BY created_at DESC'
   ).all();
   return c.json(results);
 });
@@ -456,6 +457,7 @@ app.delete('/api/admin/services/:id', async (c) => {
   return c.json({ success: true });
 });
 
+app.route('/', communitySpots);
 app.route('/', partnerRoutes);
 app.route('/', cmsAdminRoutes);
 

@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { db } from './services/db';
+import { createCommunitySpot } from './services/communitySpots';
 import type { Spot, FilterState, CommunityReport, InspirationPost } from './types';
 import {
   FilterBar,
@@ -11,6 +12,7 @@ import {
 } from './components';
 import { useWeather } from './hooks/useWeather';
 import { useMapLocationPicker } from './hooks/useMapLocationPicker';
+import { useCatalogRevision } from './hooks/useCatalogRevision';
 import { getCurrentMonthInVietnam, isSpotActiveInMonth, matchesSeasonalStatusFilter } from './utils/season';
 import { calculateDistanceKm } from './utils/geo';
 import { recommendFilmForSpot } from './utils/filmAdvisor';
@@ -31,18 +33,7 @@ const SpotDetailModal = lazy(() => import('./components/modals/SpotDetailModal')
 
 export function App() {
   const [spots, setSpots] = useState<Spot[]>([]);
-
-
-  useEffect(() => {
-    let mounted = true;
-    db.spots.getAll().then(data => {
-      if (mounted) {
-        setSpots(data);
-
-      }
-    });
-    return () => { mounted = false; };
-  }, []);
+  const catalogRevision = useCatalogRevision();
   const [activeRegionId, setActiveRegionId] = useState<string>('hanoi');
   const [activeView, setActiveView] = useState<'map' | 'grid' | 'moodboard' | 'film' | 'services'>(() =>
     new URLSearchParams(window.location.search).has('services') ? 'services' : 'map');
@@ -81,6 +72,17 @@ export function App() {
   const [isSavedModalOpen, setIsSavedModalOpen] = useState(false);
   const [isAddPostModalOpen, setIsAddPostModalOpen] = useState(false);
   const [addPostTargetSpotId, setAddPostTargetSpotId] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    let mounted = true;
+    db.spots.getAll().then(data => {
+      if (mounted) {
+        setSpots(data);
+        setSelectedSpot(current => current ? data.find(spot => spot.id === current.id) ?? null : null);
+      }
+    });
+    return () => { mounted = false; };
+  }, [catalogRevision]);
 
   // Map Click-to-Pin location picker
   const mapLocationPicker = useMapLocationPicker({
@@ -167,8 +169,9 @@ export function App() {
   };
 
   // Handle new spot submission from crowdsourcing modal
-  const handleAddNewSpot = (newSpot: Spot) => {
-    setSpots(prev => [newSpot, ...prev]);
+  const handleAddNewSpot = async (draft: Spot) => {
+    const newSpot = await createCommunitySpot(draft);
+    setSpots(prev => [newSpot, ...prev.filter(spot => spot.id !== newSpot.id)]);
     setSelectedSpot(newSpot);
   };
 
@@ -329,8 +332,8 @@ export function App() {
             setIsSubmitModalOpen(false);
             mapLocationPicker.cancelPicking();
           }}
-          onSubmitNewSpot={(newSpot) => {
-            handleAddNewSpot(newSpot);
+          onSubmitNewSpot={async (newSpot) => {
+            await handleAddNewSpot(newSpot);
             mapLocationPicker.clearLocation();
           }}
           isPickingLocation={mapLocationPicker.isPicking}
@@ -532,8 +535,8 @@ export function App() {
           setIsSubmitModalOpen(false);
           mapLocationPicker.cancelPicking();
         }}
-        onSubmitNewSpot={(newSpot) => {
-          handleAddNewSpot(newSpot);
+        onSubmitNewSpot={async (newSpot) => {
+          await handleAddNewSpot(newSpot);
           mapLocationPicker.clearLocation();
         }}
         isPickingLocation={mapLocationPicker.isPicking}

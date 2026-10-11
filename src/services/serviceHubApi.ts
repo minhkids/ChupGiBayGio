@@ -1,3 +1,5 @@
+import { CATALOG_UPDATED_EVENT } from '../hooks/useCatalogRevision';
+
 export type ServiceCategory = 'spot' | 'rental' | 'outfit' | 'photographer' | 'filmLab' | 'filmColor';
 
 export interface ServiceListing {
@@ -93,7 +95,11 @@ export async function request<T>(path: string, init?: RequestInit): Promise<T> {
     const data = await response.json().catch(() => null) as { error?: string } | null;
     throw new Error(data?.error || `Yêu cầu thất bại (${response.status})`);
   }
-  return response.json() as Promise<T>;
+  const data = await response.json() as T;
+  if (typeof window !== 'undefined' && path.startsWith('/api/admin/') && path !== '/api/admin/login' && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(init?.method?.toUpperCase() || 'GET')) {
+    window.dispatchEvent(new Event(CATALOG_UPDATED_EVENT));
+  }
+  return data;
 }
 
 export const serviceHubApi = {

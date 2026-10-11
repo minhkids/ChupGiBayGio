@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useCatalogRevision } from './useCatalogRevision';
 import { HANOI_DEFAULT_COORDS, type FilmLab } from '../data/filmLabsData';
 
 export interface NearestFilmLab extends FilmLab {
@@ -54,6 +55,7 @@ export function formatDistanceDisplay(km: number): string {
 }
 
 export function useNearestLabs(optionsOrFilter?: string | { filmStockQuery?: string }) {
+  const catalogRevision = useCatalogRevision();
   const initialFilmFilter = typeof optionsOrFilter === 'string' ? optionsOrFilter : optionsOrFilter?.filmStockQuery;
   const [userCoords, setUserCoords] = useState<UserCoordinates>({
     lat: HANOI_DEFAULT_COORDS.lat,
@@ -95,7 +97,7 @@ export function useNearestLabs(optionsOrFilter?: string | { filmStockQuery?: str
     }).then((rows) => { if (active) setFilmLabs(rows); })
       .catch((error: unknown) => { console.warn('Không tải được dữ liệu lab từ D1.', error); if (active) setFilmLabs([]); });
     return () => { active = false; };
-  }, []);
+  }, [catalogRevision]);
 
   // Update filmFilter if prop changes
   useEffect(() => {

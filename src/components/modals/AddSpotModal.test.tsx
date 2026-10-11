@@ -52,6 +52,19 @@ describe('AddSpotModal', () => {
     expect(screen.getByRole('option', { name: 'Quanh Năm' })).toBeTruthy();
   });
 
+  it('waits for persistent creation and keeps form data on server failure', async () => {
+    let reject!: (reason: Error) => void;
+    const submit = vi.fn(() => new Promise<void>((_resolve, rejectPromise) => { reject = rejectPromise; }));
+    renderModal(submit);
+    fireEvent.change(screen.getByPlaceholderText('VD: Cánh Đồng Hoa Tam Giác Mạch'), { target: { value: 'Vườn hoa' } });
+    fireEvent.click(screen.getByRole('button', { name: 'THÊM ĐỊA ĐIỂM' }));
+    await waitFor(() => expect(submit).toHaveBeenCalledOnce());
+    expect(screen.getByRole('button', { name: 'ĐANG LƯU...' })).toBeTruthy();
+    reject(new Error('Không lưu được địa điểm'));
+    await waitFor(() => expect(screen.getByRole('alert').textContent).toBe('Không lưu được địa điểm'));
+    expect((screen.getByPlaceholderText('VD: Cánh Đồng Hoa Tam Giác Mạch') as HTMLInputElement).value).toBe('Vườn hoa');
+  });
+
   it('uploads the selected illustration and includes its URL and chosen season status', async () => {
     const submit = renderModal();
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({ url: 'https://images.test/spot.jpg' }) }));

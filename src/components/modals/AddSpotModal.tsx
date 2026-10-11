@@ -20,7 +20,7 @@ const MAX_IMAGE_SIZE = 8 * 1024 * 1024;
 export interface AddSpotModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmitNewSpot: (newSpot: Spot) => void;
+  onSubmitNewSpot: (newSpot: Spot) => void | Promise<void>;
   isPickingLocation: boolean;
   selectedLocation: LocationData | null;
   onStartMapPick: () => void;
@@ -56,7 +56,8 @@ export const AddSpotModal: React.FC<AddSpotModalProps> = ({
 
   const handleFinalSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedLocation || !spotName.trim()) return;
+    if (isSubmitting || !selectedLocation || !spotName.trim()) return;
+    setUploadError('');
 
     setIsSubmitting(true);
     const spotId = `spot-${Date.now()}`;
@@ -122,11 +123,14 @@ export const AddSpotModal: React.FC<AddSpotModalProps> = ({
       }
     };
 
-    setTimeout(() => {
-      onSubmitNewSpot(newSpot);
-      setIsSubmitting(false);
+    try {
+      await onSubmitNewSpot(newSpot);
       setIsComplete(true);
-    }, 400);
+    } catch (error) {
+      setUploadError(error instanceof Error ? error.message : 'Không lưu được địa điểm. Vui lòng thử lại.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleImageSelection = (file?: File) => {

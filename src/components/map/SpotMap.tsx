@@ -8,6 +8,7 @@ import { getStatusBadgeInfo, getEffectiveSeasonalStatus } from '../../utils/seas
 import { Compass, Layers, Key, Check, ExternalLink } from 'lucide-react';
 import { type FilmLab } from '../../data/filmLabsData';
 import { MapSpotLegend } from './MapSpotLegend';
+import { useCatalogRevision } from '../../hooks/useCatalogRevision';
 
 interface SpotMapProps {
   editorial?: boolean;
@@ -48,6 +49,7 @@ export const SpotMap: React.FC<SpotMapProps> = ({
   statusFilter = 'ALL',
   onToggleStatusFilter
 }) => {
+  const catalogRevision = useCatalogRevision();
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const [popupReference, setPopupReference] = useState<{ container: HTMLElement; spot: Spot } | null>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
@@ -95,7 +97,7 @@ export const SpotMap: React.FC<SpotMapProps> = ({
     }).then((rows) => { if (active) setD1FilmLabs(rows); })
       .catch((error: unknown) => { console.warn('Không tải được lab cho bản đồ từ D1.', error); if (active) setD1FilmLabs([]); });
     return () => { active = false; };
-  }, []);
+  }, [catalogRevision]);
 
   // Helper to get tile configuration
   const getTileConfig = (provider: TileProvider, key: string) => {
