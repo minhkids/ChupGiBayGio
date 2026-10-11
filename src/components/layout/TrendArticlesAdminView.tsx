@@ -4,15 +4,19 @@ import { AdminImageField } from './AdminImageField';
 import { REGIONS } from '../../data/regions';
 import { trendArticleApi } from '../../services/trendArticleApi';
 import type { TrendArticle, TrendArticleDraft, TrendArticleSection } from '../../services/trendArticleApi';
+import { serviceHubApi, type ServiceListing } from '../../services/serviceHubApi';
+import { getEffectiveSeasonalStatus } from '../../utils/season';
 
 const emptyDraft = (): TrendArticleDraft => ({ section: 'hotTrend', title: '', content: '', imageUrl: '', location: '', regionId: 'all', sourceUrl: '', isPublished: true });
 const inputClass = 'w-full rounded-xl border border-[#D8CFBD] bg-white px-3 py-2.5 text-sm text-[#2C2621] outline-none focus:border-[#C76B3C]';
 const sectionLabels: Record<TrendArticleSection, string> = { hotTrend: 'Hot trend', upcomingSpot: 'Điểm có thể hot sắp tới' };
 
-interface Props { onBack: () => void }
+interface Props { onBack: () => void; onEditSpot?: (spot: ServiceListing) => void }
 
-export const TrendArticlesAdminView = ({ onBack }: Props) => {
+export const TrendArticlesAdminView = ({ onBack, onEditSpot }: Props) => {
   const [articles, setArticles] = useState<TrendArticle[]>([]);
+  const [hotSpots, setHotSpots] = useState<ServiceListing[]>([]);
+  const [spotsError, setSpotsError] = useState('');
   const [section, setSection] = useState<TrendArticleSection>('hotTrend');
   const [draft, setDraft] = useState<TrendArticleDraft>(emptyDraft);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -29,6 +33,12 @@ export const TrendArticlesAdminView = ({ onBack }: Props) => {
     trendArticleApi.adminList().then((items) => { if (active) setArticles(items); })
       .catch((reason: unknown) => { if (active) setError(reason instanceof Error ? reason.message : 'Không tải được bài viết.'); })
       .finally(() => { if (active) setLoading(false); });
+    serviceHubApi.adminList().then((items) => {
+      if (active) setHotSpots(items.filter((item) => item.category === 'spot'
+        && getEffectiveSeasonalStatus({ status: item.spotStatus || 'ACTIVE', statusValidUntil: item.statusValidUntil }) === 'PEAK'));
+    }).catch((reason: unknown) => {
+      if (active) setSpotsError(reason instanceof Error ? reason.message : 'Không tải được địa điểm đang rộ.');
+    });
     return () => { active = false; };
   }, []);
 
@@ -80,7 +90,16 @@ export const TrendArticlesAdminView = ({ onBack }: Props) => {
           <section className="space-y-3 rounded-2xl border border-[#D8CFBD] bg-[#FAF8F4] p-4 sm:p-6">
             <div className="flex items-center justify-between gap-3"><h2 className="font-bold">{sectionLabels[section]}</h2><button type="button" onClick={() => startNew()} className="inline-flex min-h-9 items-center gap-1 rounded-lg bg-[#ECE4D0] px-3 text-xs font-semibold"><Plus className="h-4 w-4" />Bài mới</button></div>
             {loading && <p role="status" className="text-xs text-[#6E655B]">Đang tải…</p>}
-            {!loading && filtered.length === 0 && <p className="rounded-xl bg-white p-5 text-sm text-[#6E655B]">Chưa có bài. Thêm bài viết đầu tiên bằng biểu mẫu.</p>}
+            {section === 'hotTrend' && <div className="space-y-2 rounded-xl border border-[#E6C3A8] bg-[#FFF8F2] p-3">
+              <div><h3 className="text-sm font-bold">Địa điểm đang rộ trên bản đồ ({hotSpots.length})</h3><p className="mt-1 text-xs text-[#6E655B]">Các thẻ địa điểm Hot trend lấy từ trạng thái PEAK trong danh mục Điểm chụp ảnh.</p></div>
+              {spotsError && <p role="alert" className="text-xs text-red-700">{spotsError}</p>}
+              {hotSpots.map((spot) => <article key={spot.id} className="flex items-center justify-between gap-3 rounded-lg border border-[#E2DAD0] bg-white p-3">
+                <div className="min-w-0"><h4 className="truncate text-sm font-semibold">{spot.name}</h4><p className="truncate text-xs text-[#6E655B]">{spot.address || spot.regionId || 'Địa điểm'}</p></div>
+                <button type="button" onClick={() => onEditSpot?.(spot)} className="shrink-0 rounded-lg bg-[#ECE4D0] px-3 py-2 text-xs font-semibold">Sửa địa điểm <span className="sr-only">{spot.name}</span></button>
+              </article>)}
+              {!spotsError && !hotSpots.length && <p className="rounded-lg bg-white p-3 text-xs text-[#6E655B]">Chưa có địa điểm nào đang ở trạng thái PEAK.</p>}
+            </div>}
+            {!loading && filtered.length === 0 && <p className="rounded-xl bg-white p-5 text-sm text-[#6E655B]">Chưa có bài viết biên tập. Thêm bài mới bằng biểu mẫu.</p>}
             {filtered.map((article) => <article key={article.id} className="flex items-center gap-3 rounded-xl border border-[#E2DAD0] bg-white p-3">
               {article.imageUrl && <img src={article.imageUrl} alt="" className="h-16 w-20 rounded-lg object-cover" />}
               <div className="min-w-0 flex-1"><h3 className="truncate text-sm font-bold">{article.title}</h3><p className="truncate text-xs text-[#6E655B]">{article.location || REGIONS.find((region) => region.id === article.regionId)?.name || 'Toàn quốc'} · {article.isPublished ? 'Đã đăng' : 'Bản nháp'}</p></div>

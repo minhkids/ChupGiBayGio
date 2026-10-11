@@ -1,9 +1,7 @@
-import { PinReferenceButton } from '../planner/PinReferenceButton';
 import React, { useState } from 'react';
 import { 
   Sparkles, 
   Film, 
-  Camera, 
   Check, 
   ArrowRight
 } from 'lucide-react';
@@ -56,11 +54,6 @@ export const MoodboardView: React.FC<MoodboardViewProps> = ({ spots, onSelectSpo
   };
 
   const currentPreset = filmPresets[activeFilmTab];
-
-  // Extract all inspiration posts from spots
-  const allInspirations = spots.flatMap(spot => 
-    (spot.inspirationPosts || []).map(post => ({ ...post, spot }))
-  );
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-10">
@@ -184,80 +177,6 @@ export const MoodboardView: React.FC<MoodboardViewProps> = ({ spots, onSelectSpo
         </div>
       </div>
 
-      {/* Lookbook Feed & Poses Grid */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between border-b border-slateInk pb-3">
-          <div className="flex items-center space-x-2">
-            <Camera className="w-5 h-5 text-terracotta" />
-            <h2 className="font-editorial text-2xl font-bold text-slateInk">
-              Cẩm Nang Góc Chụp & Tạo Dáng Thực Tế
-            </h2>
-          </div>
-          <span className="text-xs font-mono-spec text-slateInk-muted">
-            {allInspirations.length} gợi ý góc máy
-          </span>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {allInspirations.map(({ spot, ...inspo }) => (
-            <div 
-              key={inspo.id}
-              className="bg-paper-card border border-slateInk shadow-hard flex flex-col justify-between overflow-hidden group"
-            >
-              <div className="relative aspect-[4/5] bg-slateInk overflow-hidden">
-                <img 
-                                  src={inspo.thumbnailUrl} 
-                                  alt={inspo.authorName} 
-                                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                                />
-                          <PinReferenceButton imageUrl={inspo.thumbnailUrl} label={`Ảnh tham khảo tại ${spot.name}`} />
-                <div className="absolute top-2 left-2 px-2 py-0.5 text-[10px] font-mono-spec font-bold bg-slateInk/90 text-white border border-white/20">
-                  {inspo.platform}
-                </div>
-                <div className="absolute bottom-2 left-2 right-2">
-                  <span className="px-2 py-1 text-xs font-mono-spec font-bold bg-paper-light text-slateInk border border-slateInk shadow-hard block truncate">
-                    📍 {spot.name}
-                  </span>
-                </div>
-              </div>
-
-              <div className="p-4 space-y-3 text-xs flex-1 flex flex-col justify-between">
-                <div>
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-slateInk">{inspo.authorName}</span>
-                    <span className="font-mono-spec text-slateInk-muted">{inspo.authorHandle}</span>
-                  </div>
-                  <p className="text-slateInk-muted font-sans mt-1 line-clamp-2">
-                    {inspo.caption}
-                  </p>
-                </div>
-
-                {inspo.poseTip && (
-                  <div className="bg-paper-warm p-2.5 border border-paper-border text-xs font-sans">
-                    <strong className="font-mono-spec text-[10px] text-terracotta block uppercase">
-                      HƯỚNG DẪN DÁNG CHỤP:
-                    </strong>
-                    <span className="text-slateInk">{inspo.poseTip}</span>
-                  </div>
-                )}
-
-                {inspo.cameraSettings && (
-                  <div className="font-mono-spec text-[10px] text-slateInk bg-paper-warm px-2 py-1 border border-slateInk/20">
-                    📷 {inspo.cameraSettings}
-                  </div>
-                )}
-
-                <button
-                  onClick={() => onSelectSpot(spot)}
-                  className="w-full py-1.5 bg-slateInk text-white font-mono-spec text-xs font-bold hover:bg-terracotta transition-colors flex items-center justify-center"
-                >
-                  XEM HỒ SƠ ĐỊA ĐIỂM NÀY
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
 
     </div>
   );

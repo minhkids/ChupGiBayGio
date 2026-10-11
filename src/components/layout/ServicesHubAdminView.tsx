@@ -130,7 +130,10 @@ export const ServicesHubAdminView: React.FC<Props> = ({ onBack }) => {
   const mapLat = draft.lat === undefined || String(draft.lat).trim() === '' ? undefined : Number(draft.lat);
   const mapLng = draft.lng === undefined || String(draft.lng).trim() === '' ? undefined : Number(draft.lng);
 
-  if (tokenValid && trendArticlesOpen) return <TrendArticlesAdminView onBack={() => setTrendArticlesOpen(false)} />;
+  if (tokenValid && trendArticlesOpen) return <TrendArticlesAdminView
+    onBack={() => setTrendArticlesOpen(false)}
+    onEditSpot={(spot) => { setTrendArticlesOpen(false); setCategory('spot'); setDraft(spot); }}
+  />;
 
   return (
     <section className="fixed inset-0 z-[70] flex flex-col overflow-hidden bg-[#F7F5F0] text-[#2C2621]" aria-label="Quản trị dịch vụ">
