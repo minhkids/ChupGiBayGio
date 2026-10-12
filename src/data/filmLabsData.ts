@@ -1,6 +1,7 @@
 export interface FilmLab {
   id: string;
   name: string;
+  slogan?: string;
   address: string;
   district: string;
   lat: number;
@@ -13,6 +14,9 @@ export interface FilmLab {
   googleMapsUrl: string;
   services: string[];
   priceRange?: string;
+  productImageUrl?: string;
+  minRollPrice?: number;
+  maxRollPrice?: number;
   rating?: number;
   reviewCount?: number;
   description?: string;

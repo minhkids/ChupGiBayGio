@@ -32,3 +32,16 @@ it('reloads public labs after a successful same-tab admin edit', async () => {
   await act(async () => { await serviceHubApi.update({ id: 'lab-1', category: 'filmLab', name: 'Edited lab', lat: 21, lng: 105 }); });
   await waitFor(() => expect(result.current.labs[0]?.name).toBe('Edited lab'));
 });
+
+it('exposes a partner-submitted product photo and per-roll price range in shop results', async () => {
+  vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify([{
+    id: 'lab-1', name: 'Film shop', slogan: 'Film đẹp cho mọi khoảnh khắc', lat: 21.0285, lng: 105.8542,
+    product_image_url: 'https://chupgibaygio.com/api/partner/images/partner/lab/lab-1/photo.jpg',
+    min_roll_price: 125000, max_roll_price: 350000,
+  }]), { status: 200 })));
+  const { result } = renderHook(() => useNearestLabs());
+
+  await waitFor(() => expect(result.current.labs[0]?.productImageUrl).toContain('/photo.jpg'));
+  expect(result.current.labs[0]?.priceRange).toBe('125.000đ – 350.000đ/cuộn');
+  expect(result.current.labs[0]?.slogan).toBe('Film đẹp cho mọi khoảnh khắc');
+});

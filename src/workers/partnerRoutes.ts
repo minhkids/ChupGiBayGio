@@ -52,9 +52,12 @@ routes.get('/api/partner/address-suggestions', async (c) => {
   }
 });
 
-async function photos(form: FormData, min: number, max: number) {
-  const files = form.getAll('photos');
-  if (files.length < min || files.length > max || files.some((file) => !(file instanceof File) || file.size < 1 || file.size > 3 * 1024 * 1024)) return { error: 'Cần 3–6 ảnh portfolio (JPG, PNG, WebP; tối đa 3 MB/ảnh).' };
+async function photos(form: FormData, min: number, max: number, field = 'photos') {
+  const files = form.getAll(field);
+  const limitError = field === 'productPhoto'
+    ? 'Ảnh mô tả sản phẩm phải là JPG, PNG hoặc WebP, tối đa 3 MB.'
+    : 'Cần 3–6 ảnh portfolio (JPG, PNG, WebP; tối đa 3 MB/ảnh).';
+  if (files.length < min || files.length > max || files.some((file) => !(file instanceof File) || file.size < 1 || file.size > 3 * 1024 * 1024)) return { error: limitError };
   const uploads: { bytes: Uint8Array; ext: string; type: string }[] = [];
   for (const file of files as File[]) {
     const ext = types.get(file.type);
@@ -109,6 +112,8 @@ async function registration(c: Context<{ Bindings: Bindings }>, kind: 'lab' | 'p
   if (!name || !number || social === null || imageUrl === null) return c.json({ error: 'Kiểm tra tên, số Zalo và đường dẫn HTTPS.' }, 400);
   const images = await photos(form, kind === 'lab' ? 0 : 3, kind === 'lab' ? 1 : 6);
   if ('error' in images) return c.json({ error: images.error }, images.error?.includes('định dạng') ? 415 : 400);
+  const productImages = kind === 'lab' ? await photos(form, 0, 1, 'productPhoto') : { uploads: [] as { bytes: Uint8Array; ext: string; type: string }[] };
+  if ('error' in productImages) return c.json({ error: productImages.error }, productImages.error?.includes('định dạng') ? 415 : 400);
   let point: { lat: number; lng: number } | null = null;
   let district = '';
   let address = '';
@@ -116,10 +121,22 @@ async function registration(c: Context<{ Bindings: Bindings }>, kind: 'lab' | 'p
   let styles: string[] = [];
   let shootSpots: string[] = [];
   let pkg: { name: string; price: number; duration: string; deliveredPhotos: string } | null = null;
+  let minRollPrice = 0;
+  let maxRollPrice = 0;
+  let slogan = '';
   if (kind === 'lab') {
     address = text(body.address, 300); district = text(body.district, 80);
+    if (body.slogan !== undefined && (typeof body.slogan !== 'string' || body.slogan.trim().length > 50)) return c.json({ error: 'Slogan của shop tối đa 50 ký tự.' }, 400);
+    slogan = text(body.slogan, 50);
     stocks = list(body.filmStocks, 20) ?? [];
-    if (address.length < 8 || !districts.has(district) || !list(body.filmStocks, 20)) return c.json({ error: 'Vui lòng nhập địa chỉ, quận/huyện Hà Nội và danh sách film hợp lệ.' }, 400);
+    const parsePrice = (value: unknown) => (typeof value === 'number' || typeof value === 'string' && value.trim() !== '') ? Number(value) : Number.NaN;
+    minRollPrice = parsePrice(body.minRollPrice);
+    maxRollPrice = parsePrice(body.maxRollPrice);
+    if (address.length < 8 || !districts.has(district) || !list(body.filmStocks, 20)
+      || !Number.isSafeInteger(minRollPrice) || !Number.isSafeInteger(maxRollPrice)
+      || minRollPrice < 0 || maxRollPrice < minRollPrice || maxRollPrice > 50000000) {
+      return c.json({ error: 'Vui lòng nhập địa chỉ, quận/huyện, danh sách film và khoảng giá hợp lệ.' }, 400);
+    }
     try { point = await geocode(address, district, c.env.CACHE); } catch { return c.json({ error: 'Dịch vụ xác định vị trí tạm gián đoạn. Vui lòng thử lại.' }, 503); }
     if (!point) return c.json({ error: 'Không xác định được tọa độ. Hãy ghi rõ số nhà, đường và quận/huyện Hà Nội.' }, 422);
   } else {
@@ -144,8 +161,16 @@ async function registration(c: Context<{ Bindings: Bindings }>, kind: 'lab' | 'p
     }
     const urls = keys.map((key) => `${base}/api/partner/images/${key}`);
     if (kind === 'lab') {
-      await c.env.DB.prepare(`INSERT INTO film_labs (id, name, address, district, lat, lng, opening_hours, hotline, fast_2h, in_stock_films, fanpage_url, image_url, status)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(id, name, address, district, point!.lat, point!.lng, text(body.openingHours, 120), number, 0, JSON.stringify(stocks), social || '', urls[0] || imageUrl || '', 'published').run();
+      let productImageUrl = '';
+      const productUpload = productImages.uploads?.[0];
+      if (productUpload) {
+        const key = `partner/${kind}/${id}/${crypto.randomUUID()}.${productUpload.ext}`;
+        await c.env.R2_BUCKET.put(key, productUpload.bytes, { httpMetadata: { contentType: productUpload.type } });
+        keys.push(key);
+        productImageUrl = `${base}/api/partner/images/${key}`;
+      }
+      await c.env.DB.prepare(`INSERT INTO film_labs (id, name, slogan, address, district, lat, lng, opening_hours, hotline, fast_2h, in_stock_films, fanpage_url, image_url, product_image_url, min_roll_price, max_roll_price, status)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(id, name, slogan, address, district, point!.lat, point!.lng, text(body.openingHours, 120), number, 0, JSON.stringify(stocks), social || '', urls[0] || imageUrl || '', productImageUrl, minRollPrice, maxRollPrice, 'published').run();
     } else {
       await c.env.DB.batch([
         c.env.DB.prepare(`INSERT INTO photographers (id, name, avatar_url, bio, phone, instagram, gear_body, gear_lens, styles, portfolio_photos, preferred_spots, facebook_url, status, address, district)

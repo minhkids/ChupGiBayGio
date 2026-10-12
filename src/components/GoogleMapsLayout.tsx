@@ -52,8 +52,8 @@ interface GoogleMapsLayoutProps {
   onResetFilters: () => void;
   activeRegionId: string;
   onSelectRegion: (regionId: string) => void;
-  activeView: 'map' | 'grid' | 'moodboard' | 'film' | 'services';
-  onChangeView: (view: 'map' | 'grid' | 'moodboard' | 'film' | 'services') => void;
+  activeView: 'map' | 'grid' | 'film' | 'services';
+  onChangeView: (view: 'map' | 'grid' | 'film' | 'services') => void;
   onOpenSubmitSpotModal: () => void;
   onOpenSavedModal: () => void;
   onOpenReportModal: (spot: Spot) => void;
@@ -419,18 +419,6 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                     {activeView === 'grid' && <Check className="w-3.5 h-3.5" />}
                   </button>
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onChangeView('moodboard');
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className={`w-full px-3 py-2 rounded-xl text-left flex items-center justify-between ${activeView === 'moodboard' ? 'bg-terracotta text-white font-bold' : 'hover:bg-neutral-100 dark:hover:bg-neutral-800'
-                      }`}
-                  >
-                    <span>🎨 Moodboard Màu Film</span>
-                    {activeView === 'moodboard' && <Check className="w-3.5 h-3.5" />}
-                  </button>
                   <button
                     type="button"
                     onClick={() => {

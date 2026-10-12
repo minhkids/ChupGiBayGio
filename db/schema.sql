@@ -112,6 +112,7 @@ CREATE TABLE IF NOT EXISTS film_rolls (
 CREATE TABLE IF NOT EXISTS film_labs (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
+  slogan TEXT NOT NULL DEFAULT '' CHECK (length(slogan) <= 50),
   address TEXT NOT NULL DEFAULT '',
   lat REAL,
   lng REAL,
@@ -119,6 +120,13 @@ CREATE TABLE IF NOT EXISTS film_labs (
   hotline TEXT NOT NULL DEFAULT '',
   fast_2h INTEGER NOT NULL DEFAULT 0,
   in_stock_films TEXT NOT NULL DEFAULT '[]',
+  district TEXT NOT NULL DEFAULT '',
+  fanpage_url TEXT NOT NULL DEFAULT '',
+  image_url TEXT NOT NULL DEFAULT '',
+  product_image_url TEXT NOT NULL DEFAULT '',
+  min_roll_price INTEGER NOT NULL DEFAULT 0,
+  max_roll_price INTEGER NOT NULL DEFAULT 0,
+  status TEXT NOT NULL DEFAULT 'published' CHECK (status IN ('published', 'pending_review')),
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

@@ -346,7 +346,15 @@ app.get('/api/services', async (c) => {
       return { ...mapFields(row, { description: 'bio', address: 'address', district: 'district', imageUrl: 'avatar_url', phone: 'phone', link: 'instagram', gearBody: 'gear_body', gearLens: 'gear_lens' }), id: row.id, name: row.name, category: 'photographer', price: firstPackage?.price ? String(firstPackage.price) : '', tags: parseJsonField(String(row.styles || '[]'), []), shootSpots: parseJsonField(String(row.preferred_spots || '[]'), []), portfolioPhotos: parseJsonField(String(row.portfolio_photos || '[]'), []), packages: packages.filter((pkg) => pkg.photographer_id === row.id).map((pkg) => ({ id: pkg.id, name: pkg.name, price: pkg.price, duration: pkg.duration, deliveredPhotos: pkg.delivered_photos, deliveredPhotosText: pkg.delivered_photos_text })) };
     }),
     ...rows(filmRows.results).map((row) => ({ ...mapFields(row, { iso: 'iso', recommendedTime: 'tone', filmImageUrl: 'package_image_url', imageUrl: 'sample_image_url' }), id: row.id, name: row.name, category: 'filmColor', tags: parseJsonField(String(row.suitable_seasons || '[]'), []) })),
-    ...rows(labRows.results).map((row) => ({ ...mapFields(row, { address: 'address', district: 'district', phone: 'hotline', openingHours: 'opening_hours', fastService: 'fast_2h', link: 'fanpage_url', imageUrl: 'image_url', lat: 'lat', lng: 'lng' }), id: row.id, name: row.name, category: 'filmLab', filmStocks: parseJsonField(String(row.in_stock_films || '[]'), []) }))
+    ...rows(labRows.results).map((row) => {
+      const minRollPrice = Number(row.min_roll_price) || 0;
+      const maxRollPrice = Number(row.max_roll_price) || 0;
+      const price = maxRollPrice > 0 ? `${minRollPrice.toLocaleString('vi-VN')}đ – ${maxRollPrice.toLocaleString('vi-VN')}đ/cuộn` : '';
+      return {
+        ...mapFields(row, { slogan: 'slogan', address: 'address', district: 'district', phone: 'hotline', openingHours: 'opening_hours', fastService: 'fast_2h', link: 'fanpage_url', imageUrl: 'image_url', productImageUrl: 'product_image_url', minRollPrice: 'min_roll_price', maxRollPrice: 'max_roll_price', lat: 'lat', lng: 'lng' }),
+        id: row.id, name: row.name, category: 'filmLab', price, filmStocks: parseJsonField(String(row.in_stock_films || '[]'), [])
+      };
+    })
   ];
   return c.json([...catalogs, ...legacy]);
 });

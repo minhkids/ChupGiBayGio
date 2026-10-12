@@ -12,10 +12,36 @@ vi.mock('../../services/serviceHubApi', () => ({
   }
 }));
 
-afterEach(() => { cleanup(); sessionStorage.clear(); });
+afterEach(() => { cleanup(); sessionStorage.clear(); window.history.replaceState(null, '', '/'); });
 const renderView = () => render(<ShootPlanProvider><ServicesHubView onClose={() => undefined} /></ShootPlanProvider>);
 
 describe('ServicesHubView', () => {
+  it('shows the shop slogan in the featured compact card and directory', async () => {
+    window.history.replaceState(null, '', '/?services=film&partner=film-shop-1');
+    Element.prototype.scrollIntoView = vi.fn();
+    vi.mocked(serviceHubApi.list).mockResolvedValueOnce([{
+      id: 'film-shop-1', category: 'filmLab', name: 'Shop Film', slogan: 'Film đẹp cho mọi khoảnh khắc',
+      address: '36 Lý Quốc Sư', phone: '0912345678', filmStocks: ['Kodak Gold 200'],
+    }]);
+    renderView();
+    expect((await screen.findByTestId('partner-preview')).textContent).toContain('Film đẹp cho mọi khoảnh khắc');
+    expect(screen.getAllByText('Film đẹp cho mọi khoảnh khắc')).toHaveLength(2);
+  });
+
+  it('shows a partner film-shop product photo and roll price range in the film tab', async () => {
+    vi.mocked(serviceHubApi.list).mockResolvedValueOnce([{
+      id: 'film-shop-1', category: 'filmLab', name: 'Shop Film', address: '36 Lý Quốc Sư',
+      productImageUrl: 'https://chupgibaygio.com/api/partner/images/partner/lab/shop/photo.jpg',
+      price: '125.000đ – 350.000đ/cuộn', filmStocks: ['Kodak Gold 200'],
+    }]);
+    renderView();
+    fireEvent.click(screen.getByRole('button', { name: /Mua film & Lab/i }));
+
+    expect(await screen.findByText('Shop Film')).toBeTruthy();
+    expect(screen.getByText('125.000đ – 350.000đ/cuộn')).toBeTruthy();
+    expect(screen.getByRole('img', { name: 'Film shop Shop Film' })).toBeTruthy();
+  });
+
   it('starts the directories empty and uses equal-width navigation tabs', async () => {
     renderView();
     expect(screen.getByRole('heading', { name: 'Chuẩn bị cho buổi chụp' })).toBeDefined();

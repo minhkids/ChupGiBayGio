@@ -3,7 +3,11 @@ import { Camera, Clock3, Film, MapPin, Phone } from 'lucide-react';
 export interface PartnerPreview {
   kind: 'lab' | 'photographer';
   name: string;
+  slogan?: string;
   image?: string;
+  productImage?: string;
+  minRollPrice?: string;
+  maxRollPrice?: string;
   address?: string;
   district?: string;
   phone?: string;
@@ -20,25 +24,31 @@ export interface PartnerPreview {
 
 export function LivePreviewCard({ data }: { data: PartnerPreview }) {
   const lab = data.kind === 'lab';
-  return <article data-testid="partner-preview" className="overflow-hidden rounded-[28px] border border-[#D8CFBD] bg-[#FAF8F4] text-[#2C2621] shadow-[0_18px_50px_-30px_rgba(44,38,33,.3)]">
-    <div className="relative flex aspect-[16/9] items-center justify-center bg-[#EAE1D1]">
-      {data.image ? <img src={data.image} alt={data.name || 'Ảnh đại diện'} className="h-full w-full object-cover" /> : (lab ? <Film aria-hidden="true" className="h-12 w-12 text-[#B28B72]" /> : <Camera aria-hidden="true" className="h-12 w-12 text-[#B28B72]" />)}
-      <span className="absolute bottom-3 left-3 rounded-full bg-[#FAF8F4]/95 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-[#9A4F29]">{lab ? 'Shop bán film' : 'Nhiếp ảnh gia'}</span>
+  const thumbnail = (lab ? data.productImage || data.image : data.portfolio?.[0] || data.image);
+  const location = data.address
+    ? `${data.address}${data.district && !data.address.toLocaleLowerCase('vi').includes(data.district.toLocaleLowerCase('vi')) ? `, ${data.district}` : ''}`
+    : data.district;
+  const highlights = lab ? data.filmStocks : data.styles;
+  return <article data-testid="partner-preview" className="mx-auto w-full max-w-sm rounded-2xl border border-[#D8CFBD] bg-[#FAF8F4] p-4 text-[#2C2621] shadow-sm">
+    <div className="flex items-start gap-3">
+      <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#EAE1D1] sm:h-24 sm:w-24">
+        {thumbnail ? <img src={thumbnail} alt={lab ? `Ảnh film của ${data.name || 'shop'}` : `Ảnh của ${data.name || 'nhiếp ảnh gia'}`} className="h-full w-full object-cover" /> : (lab ? <Film aria-hidden="true" className="h-7 w-7 text-[#B28B72]" /> : <Camera aria-hidden="true" className="h-7 w-7 text-[#B28B72]" />)}
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-[10px] font-bold uppercase tracking-wide text-[#9A4F29]">{lab ? 'Shop bán film' : 'Nhiếp ảnh gia'}</p>
+        <h3 className="mt-1 break-words text-base font-bold leading-snug">{data.name || (lab ? 'Tên tiệm film của bạn' : 'Nghệ danh của bạn')}</h3>
+        {lab && data.slogan && <p className="mt-1 break-words text-xs leading-snug text-[#675D52]">{data.slogan}</p>}
+        {lab && data.minRollPrice && data.maxRollPrice && <p className="mt-2 text-sm font-bold leading-snug text-[#8B4828]">{Number(data.minRollPrice).toLocaleString('vi-VN')}–{Number(data.maxRollPrice).toLocaleString('vi-VN')}đ/cuộn</p>}
+        {!lab && data.packagePrice && <p className="mt-2 text-sm font-bold text-[#8B4828]">Từ {Number(data.packagePrice).toLocaleString('vi-VN')}đ/gói</p>}
+      </div>
     </div>
-    <div className="space-y-4 p-5 sm:p-6">
-      <div><h3 className="text-xl font-bold leading-tight">{data.name || (lab ? 'Tên tiệm film của bạn' : 'Nghệ danh của bạn')}</h3><p className="mt-1 text-xs text-[#675D52]">Thẻ thông tin khách hàng sẽ thấy trên website</p></div>
-      {lab ? <>
-        <p className="flex items-start gap-2 text-sm"><MapPin aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-[#C76B3C]" />{[data.address, data.district].filter(Boolean).join(', ') || 'Địa chỉ tiệm tại Hà Nội'}</p>
-        {data.openingHours && <p className="flex items-center gap-2 text-sm"><Clock3 aria-hidden="true" className="h-4 w-4 text-[#C76B3C]" />{data.openingHours}</p>}
-        {!!data.filmStocks?.length && <div className="flex flex-wrap gap-1.5">{data.filmStocks.map((film) => <span key={film} className="rounded-full border border-[#D8CFBD] bg-white px-2.5 py-1 text-xs">{film}</span>)}</div>}
-      </> : <>
-        {data.address && <p className="flex items-start gap-2 text-sm"><MapPin aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-[#C76B3C]" />{[data.address, data.district].filter(Boolean).join(', ')}</p>}
-        {!!data.portfolio?.length && <div className="grid grid-cols-3 gap-1.5">{data.portfolio.slice(0, 3).map((url, index) => <img key={index} src={url} alt={`Ảnh portfolio ${index + 1}`} className="aspect-square w-full rounded-lg object-cover" />)}</div>}
-        {!!data.styles?.length && <div className="flex flex-wrap gap-1.5">{data.styles.map((style) => <span key={style} className="rounded-full bg-[#EDE3D2] px-2.5 py-1 text-xs">#{style.replace(/^#/, '')}</span>)}</div>}
-        {!!data.shootSpots?.length && <p className="flex items-start gap-2 text-sm"><MapPin aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-[#C76B3C]" />{data.shootSpots.join(' · ')}</p>}
-        {data.packageName && <div className="rounded-xl bg-[#F3EBDD] p-3 text-sm"><p><strong>{data.packageName}</strong>{data.packagePrice ? ` · ${Number(data.packagePrice).toLocaleString('vi-VN')}đ` : ''}</p>{data.packageDuration && <p className="mt-1 text-[#554D43]">{data.packageDuration}</p>}{data.packageDeliverables && <p className="mt-1 text-[#554D43]">{data.packageDeliverables}</p>}</div>}
-      </>}
-      <div className="flex min-h-10 items-center justify-center gap-2 rounded-xl bg-[#C76B3C] px-4 py-2 text-sm font-semibold text-white"><Phone aria-hidden="true" className="h-4 w-4" />{data.phone ? `Liên hệ ${data.phone}` : 'Liên hệ trực tiếp'}</div>
+    <div className="mt-3 space-y-2.5 border-t border-[#E2DAD0] pt-3 text-xs text-[#554D43]">
+      {location && <p className="flex items-start gap-2"><MapPin aria-hidden="true" className="h-4 w-4 shrink-0 text-[#C76B3C]" /><span>{location}</span></p>}
+      {lab && data.openingHours && <p className="flex items-start gap-2"><Clock3 aria-hidden="true" className="h-4 w-4 shrink-0 text-[#C76B3C]" /><span>{data.openingHours}</span></p>}
+      {!!highlights?.length && <p className="leading-relaxed"><span className="font-semibold">{lab ? 'Film: ' : 'Phong cách: '}</span>{highlights.slice(0, 3).join(' · ')}{highlights.length > 3 && ` · +${highlights.length - 3} loại khác`}</p>}
+      {!lab && data.packageName && <p className="leading-relaxed"><span className="font-semibold">{data.packageName}</span>{[data.packageDuration, data.packageDeliverables].filter(Boolean).length ? ` · ${[data.packageDuration, data.packageDeliverables].filter(Boolean).join(' · ')}` : ''}</p>}
+      {!lab && !!data.shootSpots?.length && <p className="leading-relaxed">Khu vực chụp: {data.shootSpots.join(' · ')}</p>}
     </div>
+    {data.phone && <a href={`tel:${data.phone.replace(/[^\d+]/g, '')}`} className="mt-3 flex min-h-10 items-center justify-center gap-2 rounded-xl bg-[#C76B3C] px-4 py-2 text-sm font-semibold text-white"><Phone aria-hidden="true" className="h-4 w-4" />Gọi {data.phone}</a>}
   </article>;
 }

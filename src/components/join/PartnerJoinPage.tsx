@@ -22,8 +22,13 @@ export function PartnerJoinPage({ kind }: { kind: Kind }) {
   const [address, setAddress] = useState('');
   const [district, setDistrict] = useState('');
   const [openingHours, setOpeningHours] = useState('');
+  const [slogan, setSlogan] = useState('');
   const [filmStocks, setFilmStocks] = useState<string[]>([]);
   const [customFilm, setCustomFilm] = useState('');
+  const [minRollPrice, setMinRollPrice] = useState('');
+  const [maxRollPrice, setMaxRollPrice] = useState('');
+  const [productPhoto, setProductPhoto] = useState<File | null>(null);
+  const [productPhotoPreview, setProductPhotoPreview] = useState('');
   const [selectedStyles, setSelectedStyles] = useState<string[]>([]);
   const [shootSpots, setShootSpots] = useState<string[]>([]);
   const [gear, setGear] = useState('');
@@ -38,7 +43,11 @@ export function PartnerJoinPage({ kind }: { kind: Kind }) {
   const [result, setResult] = useState<Result | null>(null);
   const [copied, setCopied] = useState(false);
   const urlsRef = useRef<string[]>([]);
-  useEffect(() => () => { urlsRef.current.forEach((url) => URL.revokeObjectURL(url)); }, []);
+  const productPhotoUrlRef = useRef('');
+  useEffect(() => () => {
+    urlsRef.current.forEach((url) => URL.revokeObjectURL(url));
+    if (productPhotoUrlRef.current) URL.revokeObjectURL(productPhotoUrlRef.current);
+  }, []);
 
   const toggle = (item: string, values: string[], setter: (items: string[]) => void) => setter(values.includes(item) ? values.filter((value) => value !== item) : [...values, item]);
   const handleFiles = (event: ChangeEvent<HTMLInputElement>) => {
@@ -59,17 +68,33 @@ export function PartnerJoinPage({ kind }: { kind: Kind }) {
     if (value && value.length <= 100 && filmStocks.length < 20 && !filmStocks.includes(value)) setFilmStocks([...filmStocks, value]);
     setCustomFilm('');
   };
+  const handleProductPhoto = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] || null;
+    if (file && (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 3 * 1024 * 1024)) {
+      setError('Ảnh mô tả sản phẩm cần là JPG, PNG hoặc WebP, tối đa 3 MB.');
+      event.target.value = '';
+      return;
+    }
+    if (productPhotoUrlRef.current) URL.revokeObjectURL(productPhotoUrlRef.current);
+    const url = file && typeof URL.createObjectURL === 'function' ? URL.createObjectURL(file) : '';
+    productPhotoUrlRef.current = url;
+    setProductPhoto(file);
+    setProductPhotoPreview(url);
+    setError('');
+  };
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     if (busy) return;
     if (!lab && (files.length < 3 || files.length > 6)) { setError('Vui lòng chọn 3–6 ảnh portfolio.'); return; }
+    if (lab && Number(minRollPrice) > Number(maxRollPrice)) { setError('Giá cuộn rẻ nhất không được cao hơn giá cuộn đắt nhất.'); return; }
     setBusy(true); setError('');
     const payload = lab
-      ? { name, address, district, phone, socialUrl, openingHours, filmStocks, imageUrl, website: '' }
+      ? { name, slogan, address, district, phone, socialUrl, openingHours, filmStocks, imageUrl, minRollPrice: Number(minRollPrice), maxRollPrice: Number(maxRollPrice), website: '' }
       : { name, address, district, phone, socialUrl, imageUrl, gear, styles: selectedStyles, shootSpots, package: { name: packageName, price: Number(packagePrice), duration: packageDuration, deliveredPhotos }, website: '' };
     const body = new FormData();
     body.set('payload', JSON.stringify(payload));
     files.forEach((file) => body.append('photos', file));
+    if (lab && productPhoto) body.set('productPhoto', productPhoto);
     try {
       const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/partner/register-${lab ? 'lab' : 'photographer'}`, { method: 'POST', body });
       const data = await response.json().catch(() => null) as (Result & { error?: string }) | null;
@@ -95,6 +120,7 @@ export function PartnerJoinPage({ kind }: { kind: Kind }) {
         <form onSubmit={(event) => void submit(event)} className="space-y-6 rounded-[28px] border border-[#D8CFBD] bg-[#FAF8F4] p-5 sm:p-8">
           <div><h2 className="text-xl font-bold">Thông tin {lab ? 'shop bán film' : 'nhiếp ảnh gia'}</h2><p className="mt-1 text-sm text-[#675D52]">Điền thông tin thật để khách dễ tìm thấy và liên hệ bạn. Dấu * là bắt buộc.</p></div>
           <label className={label}>{lab ? 'Tên shop bán film *' : 'Tên thợ ảnh / Nghệ danh *'}<input className={input} value={name} onChange={(e) => setName(e.target.value)} required maxLength={160} placeholder={lab ? 'Ví dụ: Tiệm Film Hà Nội' : 'Ví dụ: Minh Studio'} autoComplete="organization" /></label>
+          {lab && <label className={label}>Slogan của shop (tùy chọn)<input className={input} value={slogan} onChange={(e) => setSlogan(e.target.value)} maxLength={50} placeholder="Một câu ngắn về shop của bạn" /><span className="mt-1 block text-right text-xs font-normal text-[#675D52]">{slogan.length}/50 ký tự</span></label>}
           <AddressSuggestionsField label={lab ? 'Địa chỉ chính xác *' : 'Địa chỉ studio / nơi nhận khách (tùy chọn)'} value={address} onChange={setAddress}
             onPick={(suggestion) => { const found = districts.find((item) => suggestion.toLocaleLowerCase('vi').includes(item.toLocaleLowerCase('vi'))); if (found) setDistrict(found); }}
             required={lab} inputClassName={input} placeholder={lab ? 'Số nhà, đường, phường — để ghim đúng vị trí' : 'Chỉ nhập nếu bạn muốn công khai địa chỉ studio'} />
@@ -104,6 +130,10 @@ export function PartnerJoinPage({ kind }: { kind: Kind }) {
           <label className={label}>Link Facebook / Instagram<input className={input} type="url" value={socialUrl} onChange={(e) => setSocialUrl(e.target.value)} placeholder="https://facebook.com/…" /></label>
           {lab ? <>
             <label className={label}>Giờ mở cửa<input className={input} value={openingHours} onChange={(e) => setOpeningHours(e.target.value)} maxLength={120} placeholder="09:00 – 19:30 hàng ngày" /></label>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className={label}>Giá cuộn rẻ nhất (VNĐ) *<input className={input} type="number" inputMode="numeric" min="0" max="50000000" step="1" value={minRollPrice} onChange={(e) => setMinRollPrice(e.target.value)} required placeholder="120000" /></label>
+              <label className={label}>Giá cuộn đắt nhất (VNĐ) *<input className={input} type="number" inputMode="numeric" min={minRollPrice || '0'} max="50000000" step="1" value={maxRollPrice} onChange={(e) => setMaxRollPrice(e.target.value)} required placeholder="450000" /></label>
+            </div>
             <fieldset><legend className={label}>Các dòng film đang bán</legend><div className="mt-3 flex flex-wrap gap-2">{films.map((film) => <button type="button" key={film} aria-pressed={filmStocks.includes(film)} onClick={() => toggle(film, filmStocks, setFilmStocks)} className={`min-h-10 rounded-full border px-3 py-2 text-xs font-semibold ${filmStocks.includes(film) ? 'border-[#C76B3C] bg-[#C76B3C] text-white' : 'border-[#D8CFBD] bg-white'}`}>{film}</button>)}{filmStocks.filter((film) => !films.includes(film)).map((film) => <button type="button" key={film} aria-label={`Bỏ ${film}`} onClick={() => toggle(film, filmStocks, setFilmStocks)} className="min-h-10 rounded-full border border-[#C76B3C] bg-[#F3E6D6] px-3 text-xs">{film} ×</button>)}</div><div className="mt-3 flex gap-2"><input aria-label="Thêm tên film" className={input + ' !mt-0'} value={customFilm} onChange={(e) => setCustomFilm(e.target.value)} maxLength={100} placeholder="Tên film khác" /><button type="button" onClick={addFilm} className="rounded-xl border border-[#C76B3C] px-4 text-sm font-semibold text-[#8B4828]">Thêm</button></div></fieldset>
           </> : <>
             <label className={label}>Thiết bị sử dụng chính<input className={input} value={gear} onChange={(e) => setGear(e.target.value)} maxLength={200} placeholder="Ví dụ: Fujifilm X-T5, Sony A7 IV" /></label>
@@ -111,13 +141,13 @@ export function PartnerJoinPage({ kind }: { kind: Kind }) {
             <fieldset><legend className={label}>Địa bàn hay chụp</legend><div className="mt-3 flex flex-wrap gap-2">{spots.map((spot) => <button type="button" key={spot} aria-pressed={shootSpots.includes(spot)} onClick={() => toggle(spot, shootSpots, setShootSpots)} className={`min-h-10 rounded-full border px-3 py-2 text-xs font-semibold ${shootSpots.includes(spot) ? 'border-[#C76B3C] bg-[#C76B3C] text-white' : 'border-[#D8CFBD] bg-white'}`}>{spot}</button>)}</div></fieldset>
             <fieldset className="space-y-4 rounded-2xl border border-[#D8CFBD] bg-[#F7F5F0] p-4"><legend className="px-2 font-bold">Gói chụp tiêu biểu</legend><label className={label}>Tên gói *<input className={input} value={packageName} onChange={(e) => setPackageName(e.target.value)} required maxLength={160} placeholder="Nàng Thơ Ngoại Cảnh" /></label><div className="grid gap-4 sm:grid-cols-2"><label className={label}>Giá (VNĐ) *<input className={input} type="number" min="0" max="100000000" value={packagePrice} onChange={(e) => setPackagePrice(e.target.value)} required placeholder="600000" /></label><label className={label}>Thời lượng *<input className={input} value={packageDuration} onChange={(e) => setPackageDuration(e.target.value)} required maxLength={120} placeholder="1.5 giờ" /></label></div><label className={label}>Số ảnh trả *<input className={input} value={deliveredPhotos} onChange={(e) => setDeliveredPhotos(e.target.value)} required maxLength={120} placeholder="Toàn bộ ảnh gốc + 15 ảnh chỉnh" /></label></fieldset>
           </>}
-          <div className="space-y-3"><label className={label}>Ảnh đại diện {lab ? 'tiệm' : '/ Avatar'} (link HTTPS, tùy chọn)<input className={input} type="url" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://…" /></label><label className={label}><span className="flex items-center gap-2"><ImagePlus className="h-4 w-4 text-[#C76B3C]" />{lab ? 'Hoặc tải ảnh tiệm' : 'Tải 3–6 ảnh portfolio *'}</span><input className="mt-2 block w-full rounded-xl border border-dashed border-[#B6A88F] bg-white p-3 text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-[#EFE5D4] file:px-3 file:py-2" type="file" accept="image/jpeg,image/png,image/webp" multiple={!lab} onChange={handleFiles} required={!lab} /></label><p className="text-xs text-[#675D52]">JPG, PNG hoặc WebP; tối đa 3 MB/ảnh. Ảnh được lưu trên website.</p></div>
+          <div className="space-y-3"><label className={label}>Ảnh đại diện {lab ? 'tiệm' : '/ Avatar'} (link HTTPS, tùy chọn)<input className={input} type="url" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://…" /></label><label className={label}><span className="flex items-center gap-2"><ImagePlus className="h-4 w-4 text-[#C76B3C]" />{lab ? 'Hoặc tải ảnh tiệm' : 'Tải 3–6 ảnh portfolio *'}</span><input className="mt-2 block w-full rounded-xl border border-dashed border-[#B6A88F] bg-white p-3 text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-[#EFE5D4] file:px-3 file:py-2" type="file" accept="image/jpeg,image/png,image/webp" multiple={!lab} onChange={handleFiles} required={!lab} /></label>{lab && <label className={label}>Ảnh mô tả sản phẩm<input aria-label="Ảnh mô tả sản phẩm" className="mt-2 block w-full rounded-xl border border-dashed border-[#B6A88F] bg-white p-3 text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-[#EFE5D4] file:px-3 file:py-2" type="file" accept="image/jpeg,image/png,image/webp" onChange={handleProductPhoto} /><span className="mt-1 block text-xs font-normal text-[#675D52]">Tùy chọn · JPG, PNG hoặc WebP · tối đa 3 MB</span></label>}{(lab ? productPhotoPreview : '').length > 0 && <img src={productPhotoPreview} alt="Xem trước ảnh mô tả sản phẩm" className="max-h-48 w-full rounded-xl border border-[#D8CFBD] object-cover" />}<p className="text-xs text-[#675D52]">JPG, PNG hoặc WebP; tối đa 3 MB/ảnh. Ảnh được lưu trên website.</p></div>
           <div aria-hidden="true" className="absolute h-0 w-0 overflow-hidden"><label>Website<input name="website" tabIndex={-1} autoComplete="off" /></label></div>
           {error && <p role="alert" className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">{error}</p>}
           <button type="submit" disabled={busy} className="min-h-13 w-full rounded-xl bg-[#C76B3C] px-5 py-3.5 text-base font-bold text-white transition-colors hover:bg-[#AA542D] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#C76B3C] disabled:opacity-60">{busy ? 'Đang lưu thông tin…' : 'Hoàn tất đăng ký'}</button>
           <p className="text-center text-xs leading-relaxed text-[#675D52]">Bằng cách đăng ký, bạn đồng ý công khai thông tin liên hệ và ảnh đã gửi trên website.</p>
         </form>
-        <aside className="lg:sticky lg:top-8"><div className="mb-3 flex items-center justify-between"><h2 className="font-bold">Xem trước thẻ của bạn</h2><span className="text-xs text-[#8B4828]">Cập nhật trực tiếp</span></div><LivePreviewCard data={{ kind, name, image: previews[0] || imageUrl, address, district, phone, openingHours, filmStocks, styles: selectedStyles, shootSpots, packageName, packagePrice, packageDuration, packageDeliverables: deliveredPhotos, portfolio: previews }} /><p className="mt-3 text-xs leading-relaxed text-[#675D52]">Bản xem trước mô phỏng thẻ khách hàng; vị trí và ảnh được xác nhận khi gửi biểu mẫu.</p></aside>
+        <aside className="lg:sticky lg:top-8"><div className="mb-3 flex items-center justify-between"><h2 className="font-bold">Xem trước thẻ của bạn</h2><span className="text-xs text-[#8B4828]">Cập nhật trực tiếp</span></div><LivePreviewCard data={{ kind, name, slogan: lab ? slogan : undefined, image: previews[0] || imageUrl, productImage: productPhotoPreview, minRollPrice, maxRollPrice, address, district, phone, openingHours, filmStocks, styles: selectedStyles, shootSpots, packageName, packagePrice, packageDuration, packageDeliverables: deliveredPhotos, portfolio: previews }} /><p className="mt-3 text-xs leading-relaxed text-[#675D52]">Bản xem trước mô phỏng thẻ khách hàng; vị trí và ảnh được xác nhận khi gửi biểu mẫu.</p></aside>
       </div>}
       <footer className="mt-12 border-t border-[#D8CFBD] pt-5 text-xs text-[#675D52]">© Chụp Gì Bây Giờ · Kết nối trực tiếp với cộng đồng nhiếp ảnh Hà Nội</footer>
     </div>

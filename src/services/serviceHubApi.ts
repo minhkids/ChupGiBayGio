@@ -6,7 +6,11 @@ export interface ServiceListing {
   id: string;
   category: ServiceCategory;
   name: string;
+  slogan?: string;
   imageUrl?: string;
+  productImageUrl?: string;
+  minRollPrice?: number;
+  maxRollPrice?: number;
   filmImageUrl?: string;
   iso?: string;
   format?: string;
@@ -144,7 +148,7 @@ export const serviceHubApi = {
       ...outfits.map((row) => ({ ...row, id: String(row.id), category: 'outfit' as const, spotId: String(row.spot_id || ''), name: String(row.name || ''), description: String(row.description || ''), price: String(row.estimated_price || ''), imageUrl: String(row.image_url || ''), link: String(row.shopee_url || ''), secondaryLink: String(row.tiktok_url || ''), material: String(row.material || ''), hotspots: parseJsonArray(row.hotspots) })),
       ...photographers.map((row) => ({ ...row, id: String(row.id), category: 'photographer' as const, name: String(row.name || ''), address: String(row.address || ''), district: String(row.district || ''), description: String(row.bio || ''), imageUrl: String(row.avatar_url || ''), phone: String(row.phone || ''), link: String(row.instagram || ''), tags: parseList(row.styles), shootSpots: parseList(row.preferred_spots), gearBody: String(row.gear_body || ''), gearLens: String(row.gear_lens || ''), portfolioPhotos: parseList(row.portfolio_photos), packages: Array.isArray(row.packages) ? row.packages as ServiceListing['packages'] : [] })),
       ...films.map((row) => ({ ...row, id: String(row.id), category: 'filmColor' as const, name: String(row.name || ''), iso: String(row.iso || ''), recommendedTime: String(row.tone || ''), filmImageUrl: String(row.package_image_url || ''), imageUrl: String(row.sample_image_url || ''), suitableSeasons: parseList(row.suitable_seasons) })),
-      ...labs.map((row) => ({ ...row, id: String(row.id), category: 'filmLab' as const, name: String(row.name || ''), address: String(row.address || ''), district: String(row.district || ''), imageUrl: String(row.image_url || ''), link: String(row.fanpage_url || ''), phone: String(row.hotline || ''), openingHours: String(row.opening_hours || ''), fastService: Boolean(row.fast_2h), filmStocks: parseList(row.in_stock_films) })),
+      ...labs.map((row) => ({ ...row, id: String(row.id), category: 'filmLab' as const, name: String(row.name || ''), slogan: String(row.slogan || ''), address: String(row.address || ''), district: String(row.district || ''), imageUrl: String(row.image_url || ''), productImageUrl: String(row.product_image_url || ''), minRollPrice: Number(row.min_roll_price) || 0, maxRollPrice: Number(row.max_roll_price) || 0, link: String(row.fanpage_url || ''), phone: String(row.hotline || ''), openingHours: String(row.opening_hours || ''), fastService: Boolean(row.fast_2h), filmStocks: parseList(row.in_stock_films) })),
       ...legacy
     ] as ServiceListing[];
   },

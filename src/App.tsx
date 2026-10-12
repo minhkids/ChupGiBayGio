@@ -26,7 +26,6 @@ const CommunityReportModal = lazy(() => import('./components/modals/CommunityRep
 const AddSpotModal = lazy(() => import('./components/modals/AddSpotModal').then(m => ({ default: m.AddSpotModal })));
 const SavedSpotsModal = lazy(() => import('./components/modals/SavedSpotsModal').then(m => ({ default: m.SavedSpotsModal })));
 const AddFacebookPostModal = lazy(() => import('./components/modals/AddFacebookPostModal').then(m => ({ default: m.AddFacebookPostModal })));
-const MoodboardView = lazy(() => import('./components/views/MoodboardView').then(m => ({ default: m.MoodboardView })));
 const FilmGalleryView = lazy(() => import('./components/views/FilmGalleryView').then(m => ({ default: m.FilmGalleryView })));
 const ServicesHubView = lazy(() => import('./components/layout/ServicesHubView').then(m => ({ default: m.ServicesHubView })));
 const SpotDetailModal = lazy(() => import('./components/modals/SpotDetailModal').then(m => ({ default: m.SpotDetailModal })));
@@ -35,7 +34,7 @@ export function App() {
   const [spots, setSpots] = useState<Spot[]>([]);
   const catalogRevision = useCatalogRevision();
   const [activeRegionId, setActiveRegionId] = useState<string>('hanoi');
-  const [activeView, setActiveView] = useState<'map' | 'grid' | 'moodboard' | 'film' | 'services'>(() =>
+  const [activeView, setActiveView] = useState<'map' | 'grid' | 'film' | 'services'>(() =>
     new URLSearchParams(window.location.search).has('services') ? 'services' : 'map');
   const [uiTheme, setUiTheme] = useState<'modern' | 'editorial'>('modern');
   const currentMonth = useMemo(() => getCurrentMonthInVietnam(), []); // eslint-disable-line react/purity — runs once at mount
@@ -393,7 +392,7 @@ export function App() {
       <div className="flex-1 lg:pl-[76px] flex flex-col min-w-0 pb-20 lg:pb-0 bg-[#F7F5F0]">
         
         {/* Sticky Filter & Search Bar — chỉ thuộc view Tạp chí (grid).
-            Các view khác (Cảm hứng, Màu Film) không render bộ lọc. */}
+            Các view khác (Màu Film) không render bộ lọc. */}
         {activeView === 'grid' && (
           <FilterBar
             filters={filters}
@@ -474,17 +473,7 @@ export function App() {
           </div>
         )}
 
-        {/* VIEW 3: Moodboard & Film Color Recipes */}
-        {activeView === 'moodboard' && (
-          <Suspense fallback={<div className="p-8 text-center">Đang tải bảng cảm hứng...</div>}>
-          <MoodboardView
-            spots={spots}
-            onSelectSpot={setSelectedSpot}
-          />
-          </Suspense>
-        )}
-
-        {/* VIEW 4: Film Rolls Gallery */}
+        {/* VIEW 3: Film Rolls Gallery */}
         {activeView === 'film' && (
           <Suspense fallback={<div className="p-8 text-center">Đang tải gallery film...</div>}>
           <FilmGalleryView />

@@ -291,6 +291,7 @@ const LabCard: React.FC<LabCardProps> = ({
               </span>
             )}
           </div>
+          {lab.slogan && <p className="mt-1 text-xs leading-snug text-[#6E655B]">{lab.slogan}</p>}
           <div className="flex items-center space-x-1.5 text-xs text-[#6E655B] mt-1">
             <MapPin className="w-3.5 h-3.5 text-[#8C8377] shrink-0" />
             <span className="truncate max-w-[280px]" title={lab.address}>
@@ -313,6 +314,8 @@ const LabCard: React.FC<LabCardProps> = ({
           </span>
         </div>
       </div>
+
+      {lab.productImageUrl && <img src={lab.productImageUrl} alt={`Ảnh film đang bán tại ${lab.name}`} className="mb-3 aspect-[16/8] w-full rounded-xl object-cover" />}
 
       {/* Opening Hours & Fast service badge */}
       <div className="flex flex-wrap items-center gap-2 my-2.5 text-xs">

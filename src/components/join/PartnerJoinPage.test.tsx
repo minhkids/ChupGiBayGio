@@ -6,6 +6,39 @@ import { PartnerJoinPage } from './PartnerJoinPage';
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
 describe('partner onboarding pages', () => {
+  it('lets a shop choose an optional 50-character slogan, previews and submits it', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ id: 'lab-id', url: 'https://chupgibaygio.com/?services=film&partner=lab-id' }) });
+    vi.stubGlobal('fetch', fetchMock);
+    render(<PartnerJoinPage kind="lab" />);
+    const slogan = screen.getByLabelText(/Slogan của shop/) as HTMLInputElement;
+    expect(slogan.maxLength).toBe(50);
+    expect(slogan.required).toBe(false);
+    fireEvent.change(slogan, { target: { value: 'Film đẹp cho mọi khoảnh khắc' } });
+    expect(screen.getByTestId('partner-preview').textContent).toContain('Film đẹp cho mọi khoảnh khắc');
+    fireEvent.change(screen.getByLabelText('Tên shop bán film *'), { target: { value: 'Film Mùa Thu' } });
+    fireEvent.change(screen.getByLabelText('Địa chỉ chính xác *'), { target: { value: '36 Lý Quốc Sư, Hà Nội' } });
+    fireEvent.change(screen.getByLabelText('Quận / Huyện *'), { target: { value: 'Hoàn Kiếm' } });
+    fireEvent.change(screen.getByLabelText('Hotline / Số Zalo nhận khách *'), { target: { value: '0912345678' } });
+    fireEvent.change(screen.getByLabelText(/Giá cuộn rẻ nhất/), { target: { value: '120000' } });
+    fireEvent.change(screen.getByLabelText(/Giá cuộn đắt nhất/), { target: { value: '350000' } });
+    fireEvent.submit(screen.getByRole('button', { name: 'Hoàn tất đăng ký' }).closest('form')!);
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+    const form = fetchMock.mock.calls[0][1].body as FormData;
+    expect(JSON.parse(String(form.get('payload'))).slogan).toBe('Film đẹp cho mọi khoảnh khắc');
+  });
+
+  it('collects a product photo and comparable low-to-high roll prices for film shops', () => {
+    render(<PartnerJoinPage kind="lab" />);
+    expect(screen.getByLabelText('Ảnh mô tả sản phẩm')).toBeTruthy();
+    const minPrice = screen.getByLabelText(/Giá cuộn rẻ nhất/) as HTMLInputElement;
+    const maxPrice = screen.getByLabelText(/Giá cuộn đắt nhất/) as HTMLInputElement;
+    expect(minPrice.required).toBe(true);
+    expect(maxPrice.required).toBe(true);
+    fireEvent.change(minPrice, { target: { value: '125000' } });
+    fireEvent.change(maxPrice, { target: { value: '350000' } });
+    expect(screen.getByTestId('partner-preview').textContent).toContain('125.000–350.000đ/cuộn');
+  });
+
   it('shows only film retail fields and preview as the shop types', () => {
     render(<PartnerJoinPage kind="lab" />);
     expect(screen.getByRole('heading', { name: /Đưa Shop Bán Film/i })).toBeTruthy();

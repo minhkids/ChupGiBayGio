@@ -20,7 +20,6 @@ export { OutfitAdvisorCard } from './cards/OutfitAdvisorCard';
 export { SpotCard } from './cards/SpotCard';
 
 // Views & Feeds (lazy-loaded in App.tsx)
-// MoodboardView — imported via React.lazy in App.tsx
 // FilmGalleryView — imported via React.lazy in App.tsx
 export { FacebookFeedView } from './views/FacebookFeedView';
 export { LocalInsightFeed } from './views/LocalInsightFeed';

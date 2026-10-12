@@ -83,14 +83,19 @@ export function useNearestLabs(optionsOrFilter?: string | { filmStockQuery?: str
         const lat = Number(row.lat) || HANOI_DEFAULT_COORDS.lat;
         const lng = Number(row.lng) || HANOI_DEFAULT_COORDS.lng;
         const phone = String(row.hotline || row.phone || '');
+        const minRollPrice = Number(row.min_roll_price) || 0;
+        const maxRollPrice = Number(row.max_roll_price) || 0;
         return {
-          id: String(row.id), name: String(row.name || ''), address, district: String(row.district || ''), lat, lng,
+          id: String(row.id), name: String(row.name || ''), slogan: String(row.slogan || ''), address, district: String(row.district || ''), lat, lng,
           openingHours: String(row.opening_hours || row.openingHours || ''),
 
           availableFilms, phone, zaloUrl: phone ? `https://zalo.me/${phone.replace(/\D/g, '')}` : '',
           fanpageUrl: String(row.fanpage_url || row.fanpageUrl || ''),
+          productImageUrl: String(row.product_image_url || row.productImageUrl || ''),
+          minRollPrice, maxRollPrice,
           googleMapsUrl: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`,
-          services: Array.isArray(row.services) ? row.services.map(String) : [], priceRange: String(row.price_range || ''),
+          services: Array.isArray(row.services) ? row.services.map(String) : [],
+          priceRange: maxRollPrice > 0 ? `${minRollPrice.toLocaleString('vi-VN')}đ – ${maxRollPrice.toLocaleString('vi-VN')}đ/cuộn` : String(row.price_range || ''),
           rating: Number(row.rating) || 0, reviewCount: Number(row.review_count) || 0, description: String(row.description || '')
         } satisfies FilmLab;
       });

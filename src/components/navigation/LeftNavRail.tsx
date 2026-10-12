@@ -2,7 +2,6 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import {
   BookOpen,
-  Palette,
   Film,
   Bookmark,
   Plus,
@@ -22,8 +21,8 @@ import type { LucideIcon } from 'lucide-react';
 import type { WeatherData } from '../../hooks/useWeather';
 
 interface LeftNavRailProps {
-  activeView: 'map' | 'grid' | 'moodboard' | 'film' | 'services';
-  onChangeView: (view: 'map' | 'grid' | 'moodboard' | 'film' | 'services') => void;
+  activeView: 'map' | 'grid' | 'film' | 'services';
+  onChangeView: (view: 'map' | 'grid' | 'film' | 'services') => void;
   savedCount: number;
   onOpenSavedModal: () => void;
   onOpenSubmitSpotModal: () => void;
@@ -39,12 +38,11 @@ interface LeftNavRailProps {
 
 }
 
-type ViewId = 'map' | 'grid' | 'moodboard' | 'film' | 'services';
+type ViewId = 'map' | 'grid' | 'film' | 'services';
 
 const NAV_ITEMS: { id: ViewId; label: string; short: string; icon: LucideIcon }[] = [
   { id: 'map', label: 'Bản đồ', short: 'Bản đồ', icon: Map },
   { id: 'grid', label: 'Tạp chí', short: 'Tạp chí', icon: BookOpen },
-  { id: 'moodboard', label: 'Cảm hứng', short: 'Cảm hứng', icon: Palette },
   { id: 'film', label: 'Màu Film', short: 'Màu Film', icon: Layers },
   { id: 'services', label: 'Dịch vụ', short: 'Dịch vụ', icon: ShoppingBag },
 ];

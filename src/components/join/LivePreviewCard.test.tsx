@@ -1,0 +1,26 @@
+// @vitest-environment jsdom
+import { cleanup, render, screen, within } from '@testing-library/react';
+import { afterEach, expect, it } from 'vitest';
+import { LivePreviewCard } from './LivePreviewCard';
+
+afterEach(cleanup);
+
+it('keeps a shop card compact while showing price, address, film and contact', () => {
+  render(<LivePreviewCard data={{
+    kind: 'lab', name: 'Tiệm Film', image: '/shop.jpg', productImage: '/roll.jpg',
+    address: '2 Phố Long Biên, Hà Nội', district: 'Long Biên', phone: '0912345678',
+    filmStocks: ['Kodak Gold 200', 'Fujifilm 200', 'CineStill 800T', 'Ilford HP5'],
+    minRollPrice: '50000', maxRollPrice: '200000', openingHours: '9:00–18:00',
+  }} />);
+  const card = screen.getByTestId('partner-preview');
+  expect(card.className).toContain('max-w-sm');
+  expect(within(card).getAllByRole('img')).toHaveLength(1);
+  expect(within(card).getByRole('img').getAttribute('src')).toBe('/roll.jpg');
+  expect(within(card).getByRole('heading', { name: 'Tiệm Film' })).toBeTruthy();
+  expect(card.textContent).toContain('50.000–200.000đ/cuộn');
+  expect(card.textContent).toContain('2 Phố Long Biên, Hà Nội');
+  expect(card.textContent).toContain('Kodak Gold 200');
+  expect(card.textContent).toContain('9:00–18:00');
+  expect(within(card).getByRole('link', { name: /0912345678/ }).getAttribute('href')).toBe('tel:0912345678');
+  expect(card.textContent).not.toContain('Thẻ thông tin khách hàng sẽ thấy trên website');
+});

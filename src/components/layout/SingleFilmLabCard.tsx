@@ -55,12 +55,15 @@ export const SingleFilmLabCard: React.FC<SingleFilmLabCardProps> = ({ lab, userC
         <div className="min-w-0">
           <span className="text-[10px] font-mono-spec font-bold uppercase tracking-wider text-[#C76B3C]">Film Lab</span>
           <h2 className="mt-1 truncate text-base font-bold">{lab.name}</h2>
+          {lab.slogan && <p className="mt-1 text-xs leading-snug text-[#6E655B]">{lab.slogan}</p>}
           {distanceLabel && <p className="mt-1 text-xs font-mono font-bold text-[#C76B3C]">{distanceLabel} từ vị trí của bạn</p>}
         </div>
         <button type="button" onClick={onClose} aria-label="Đóng thông tin cửa hàng" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#ECE4D0] text-[#554D43] hover:bg-[#E0D5BE]">
           <X size={17} />
         </button>
       </header>
+
+      {lab.productImageUrl && <img src={lab.productImageUrl} alt={`Ảnh film đang bán tại ${lab.name}`} className="mt-3 aspect-[16/8] w-full rounded-xl object-cover" />}
 
       <div className="mt-4 space-y-2 text-xs text-[#6E655B]">
         <p className="flex items-start gap-2"><MapPin size={15} className="mt-0.5 shrink-0 text-[#C76B3C]" />{lab.address}</p>
