@@ -41,8 +41,20 @@ describe('parseBulkRows', () => {
     expect(parseBulkRows('filmLab', [['Tên lab', 'Film có sẵn', 'Tráng nhanh 2h'], ['Lab X', 'Gold 200, Portra 400', 'Có']]).records[0]).toMatchObject({ name: 'Lab X', filmStocks: ['Gold 200', 'Portra 400'], fastService: true });
   });
 
+  it('parses separate retail film shops and validates the cheapest roll against available stock', () => {
+    const headers = bulkTemplateHeaders('filmShop');
+    const result = parseBulkRows('filmShop', [
+      headers,
+      ['Tiệm Film', 'Kodak Gold 200', 50000, 150000, 'Kodak Gold 200, Fujifilm 200'],
+      ['Shop sai film', 'CineStill 800T', 70000, 180000, 'Kodak Gold 200'],
+    ]);
+    expect(result.records).toHaveLength(1);
+    expect(result.records[0]).toMatchObject({ category: 'filmShop', name: 'Tiệm Film', cheapestRollName: 'Kodak Gold 200', minRollPrice: 50000, maxRollPrice: 150000, filmStocks: ['Kodak Gold 200', 'Fujifilm 200'] });
+    expect(result.errors).toEqual([{ row: 3, message: 'Cuộn rẻ nhất phải có trong danh sách film đang bán, và khoảng giá phải hợp lệ.' }]);
+  });
+
   it('provides a matching Excel template header for every admin category', () => {
-    const categories = ['spot', 'rental', 'outfit', 'photographer', 'filmLab', 'filmColor'] as const;
+    const categories = ['spot', 'rental', 'outfit', 'photographer', 'filmLab', 'filmShop', 'filmColor'] as const;
     for (const category of categories) {
       const headers = bulkTemplateHeaders(category);
       expect(headers.length, category).toBeGreaterThan(1);

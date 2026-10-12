@@ -15,7 +15,7 @@ it('keeps a shop card compact while showing price, ward, district, film and cont
   const card = screen.getByTestId('partner-preview');
   expect(card.className).toContain('max-w-sm');
   expect(within(card).getAllByRole('img')).toHaveLength(1);
-  expect(within(card).getByRole('img').getAttribute('src')).toBe('/roll.jpg');
+  expect(within(card).getByRole('img').getAttribute('src')).toBe('/shop.jpg');
   expect(within(card).getByRole('heading', { name: 'Tiệm Film' })).toBeTruthy();
   expect(card.textContent).toContain('50.000–200.000đ/cuộn');
   expect(card.textContent).toContain('Rẻ nhất: Kodak Gold 200 · 50.000đ/cuộn');

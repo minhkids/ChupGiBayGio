@@ -57,6 +57,19 @@ function array(value: unknown): unknown[] {
   catch { return []; }
 }
 
+function rollPriceFields(body: Record<string, unknown>, films: unknown[]) {
+  const minRollPrice = body.minRollPrice == null || body.minRollPrice === '' ? 0 : Number(body.minRollPrice);
+  const maxRollPrice = body.maxRollPrice == null || body.maxRollPrice === '' ? 0 : Number(body.maxRollPrice);
+  const cheapestRollName = text(body.cheapestRollName, 120);
+  const hasRetailPrice = minRollPrice > 0 || maxRollPrice > 0;
+  if (!Number.isSafeInteger(minRollPrice) || !Number.isSafeInteger(maxRollPrice) || minRollPrice < 0 || maxRollPrice < minRollPrice || maxRollPrice > 50000000
+    || body.adminCategory !== undefined && !['filmLab', 'filmShop'].includes(String(body.adminCategory))
+    || body.adminCategory === 'filmShop' && !hasRetailPrice
+    || body.adminCategory === 'filmLab' && hasRetailPrice
+    || hasRetailPrice && (minRollPrice < 1 || !cheapestRollName || !films.map(String).includes(cheapestRollName))) return null;
+  return { minRollPrice, maxRollPrice, cheapestRollName };
+}
+
 cms.post('/api/admin/spots', async (c) => {
   const body = await c.req.json().catch(() => null) as Record<string, unknown> | null;
   if (!named(body) || !text(body.slug, 180) || !text(body.address)) return c.json({ error: 'Tên, slug và địa chỉ là bắt buộc.' }, 400);
@@ -134,10 +147,11 @@ cms.post('/api/admin/labs', async (c) => {
   const lat = body.lat == null || body.lat === '' ? null : Number(body.lat);
   const lng = body.lng == null || body.lng === '' ? null : Number(body.lng);
   if ((lat !== null && !Number.isFinite(lat)) || (lng !== null && !Number.isFinite(lng))) return c.json({ error: 'Tọa độ không hợp lệ.' }, 400);
-  const id = crypto.randomUUID(); const films = array(body.inStockFilms);
-  await getD1(c.env).prepare('INSERT INTO film_labs (id, name, address, lat, lng, opening_hours, hotline, fast_2h, in_stock_films, cheapest_roll_name) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
-    .bind(id, text(body.name, 160), text(body.address), lat, lng, text(body.openingHours, 300), text(body.hotline, 80), body.fast2h ? 1 : 0, jsonText(films), text(body.cheapestRollName, 120)).run();
-  return c.json({ ...body, id, inStockFilms: films }, 201);
+  const id = crypto.randomUUID(); const films = array(body.inStockFilms); const rollPrices = rollPriceFields(body, films);
+  if (!rollPrices) return c.json({ error: 'Cuộn film và khoảng giá bán chưa hợp lệ.' }, 400);
+  await getD1(c.env).prepare('INSERT INTO film_labs (id, name, slogan, address, district, ward, lat, lng, opening_hours, hotline, fast_2h, in_stock_films, fanpage_url, image_url, product_image_url, cheapest_roll_name, min_roll_price, max_roll_price, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+    .bind(id, text(body.name, 160), text(body.slogan, 50), text(body.address), text(body.district, 80), text(body.ward, 80), lat, lng, text(body.openingHours, 300), text(body.hotline, 80), body.fast2h ? 1 : 0, jsonText(films), text(body.fanpageUrl, 2000), text(body.imageUrl, 2000), text(body.productImageUrl, 2000), rollPrices.cheapestRollName, rollPrices.minRollPrice, rollPrices.maxRollPrice, 'published').run();
+  return c.json({ ...body, id, inStockFilms: films, ...rollPrices }, 201);
 });
 
 cms.get('/api/admin/cms/:table', async (c) => {
@@ -231,8 +245,10 @@ cms.put('/api/admin/cms/:table/:id', async (c) => {
   } else if (table === 'labs') {
     const lat = body.lat == null || body.lat === '' ? null : Number(body.lat); const lng = body.lng == null || body.lng === '' ? null : Number(body.lng);
     if ((lat !== null && !Number.isFinite(lat)) || (lng !== null && !Number.isFinite(lng))) return c.json({ error: 'Tọa độ không hợp lệ.' }, 400);
-    result = await db.prepare('UPDATE film_labs SET name = ?, address = ?, lat = ?, lng = ?, opening_hours = ?, hotline = ?, fast_2h = ?, in_stock_films = ?, cheapest_roll_name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
-      .bind(text(body.name, 160), text(body.address), lat, lng, text(body.openingHours, 300), text(body.hotline, 80), body.fast2h ? 1 : 0, jsonText(array(body.inStockFilms)), text(body.cheapestRollName, 120), id).run();
+    const films = array(body.inStockFilms); const rollPrices = rollPriceFields(body, films);
+    if (!rollPrices) return c.json({ error: 'Cuộn film và khoảng giá bán chưa hợp lệ.' }, 400);
+    result = await db.prepare('UPDATE film_labs SET name = ?, slogan = ?, address = ?, district = ?, ward = ?, lat = ?, lng = ?, opening_hours = ?, hotline = ?, fast_2h = ?, in_stock_films = ?, fanpage_url = ?, image_url = ?, product_image_url = ?, cheapest_roll_name = ?, min_roll_price = ?, max_roll_price = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
+      .bind(text(body.name, 160), text(body.slogan, 50), text(body.address), text(body.district, 80), text(body.ward, 80), lat, lng, text(body.openingHours, 300), text(body.hotline, 80), body.fast2h ? 1 : 0, jsonText(films), text(body.fanpageUrl, 2000), text(body.imageUrl, 2000), text(body.productImageUrl, 2000), rollPrices.cheapestRollName, rollPrices.minRollPrice, rollPrices.maxRollPrice, id).run();
   } else {
     return c.json({ error: 'Danh mục không hợp lệ.' }, 404);
   }

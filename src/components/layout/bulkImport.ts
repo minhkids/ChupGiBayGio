@@ -31,6 +31,12 @@ const fields: Partial<Record<ServiceCategory, Record<string, string[]>>> = {
     openingHours: ['openinghours', 'giomocua'], phone: ['phone', 'hotline', 'sodienthoai'], fastService: ['fastservice', 'fast2h', 'trangnhanh2h', 'cotrangnhanh2h'],
     filmStocks: ['filmstocks', 'instockfilms', 'filmcosan'], services: ['services', 'dichvu']
   },
+  filmShop: {
+    name: ['name', 'ten', 'tenshop', 'tenmuafilm'], cheapestRollName: ['cheapestrollname', 'cuonfilmrenhat', 'cuonrenhat'],
+    minRollPrice: ['minrollprice', 'giacuonfilmrenhat', 'giacuonfilmrenhatvnd', 'giacuonrenhatvnd', 'giathapnhat'], maxRollPrice: ['maxrollprice', 'giacuonfilmdatnhat', 'giacuonfilmdatnhatvnd', 'giacuondatnhatvnd', 'giacaonhat'],
+    filmStocks: ['filmstocks', 'instockfilms', 'filmcosan', 'filmdangban'], ward: ['ward', 'phuongxa'], district: ['district', 'quanhuyen'],
+    openingHours: ['openinghours', 'giomocua'], phone: ['phone', 'hotline', 'sodienthoai'], link: ['link', 'fanpage', 'fanpageurl'], slogan: ['slogan']
+  },
   filmColor: {
     name: ['name', 'ten', 'tenfilm'], iso: ['iso'], format: ['format', 'khofilm'], recommendedTime: ['recommendedtime', 'tone', 'tonemau'],
     suitableSeasons: ['suitableseasons', 'seasons', 'muathichhop', 'muaphuhop'], filmImageUrl: ['filmimageurl', 'packageimageurl', 'anhvofilm', 'anhvocuonfilmurl'],
@@ -39,7 +45,7 @@ const fields: Partial<Record<ServiceCategory, Record<string, string[]>>> = {
 };
 
 const arrays = new Set(['bestMonths', 'hotspots', 'tags', 'portfolioPhotos', 'packages', 'filmStocks', 'services', 'suitableSeasons', 'paletteHex']);
-const strings = new Set(['name', 'slug', 'regionId', 'district', 'address', 'bestTimeOfDay', 'goldenHour', 'entryFee', 'parkingFee', 'coverImageUrl', 'description', 'sourceUrl', 'spotStatus', 'statusValidUntil', 'price', 'spotId', 'material', 'imageUrl', 'link', 'secondaryLink', 'phone', 'gearBody', 'gearLens', 'openingHours', 'filmImageUrl', 'format', 'recommendedTime']);
+const strings = new Set(['name', 'slug', 'regionId', 'district', 'ward', 'slogan', 'cheapestRollName', 'address', 'bestTimeOfDay', 'goldenHour', 'entryFee', 'parkingFee', 'coverImageUrl', 'description', 'sourceUrl', 'spotStatus', 'statusValidUntil', 'price', 'spotId', 'material', 'imageUrl', 'link', 'secondaryLink', 'phone', 'gearBody', 'gearLens', 'openingHours', 'filmImageUrl', 'format', 'recommendedTime']);
 
 function normalizeHeader(value: unknown): string {
   return String(value ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/đ/g, 'd').replace(/[^a-z0-9]/g, '');
@@ -75,6 +81,7 @@ export function parseBulkRows(category: ServiceCategory, rows: unknown[][]): Bul
       if (arrays.has(field)) record[field] = parseArray(value, field);
       else if (field === 'fastService') record[field] = parseBoolean(value);
       else if (field === 'lat' || field === 'lng') record[field] = value === '' || value == null ? undefined : Number(value);
+      else if (field === 'minRollPrice' || field === 'maxRollPrice') record[field] = value === '' || value == null ? undefined : Number(value);
       else if (field === 'iso') record[field] = value === '' || value == null ? '' : String(Number(value) || value);
       else if (strings.has(field)) record[field] = String(value ?? '').trim();
     }
@@ -95,6 +102,14 @@ export function parseBulkRows(category: ServiceCategory, rows: unknown[][]): Bul
         errors.push({ row: line, message: 'Tháng đẹp phải là số từ 1 đến 12.' }); continue;
       }
     }
+    if (category === 'filmShop') {
+      const stocks = record.filmStocks as string[] | undefined;
+      const min = record.minRollPrice;
+      const max = record.maxRollPrice;
+      if (!record.cheapestRollName || !stocks?.includes(String(record.cheapestRollName)) || !Number.isSafeInteger(min) || !Number.isSafeInteger(max) || Number(min) < 1 || Number(max) < Number(min) || Number(max) > 50000000) {
+        errors.push({ row: line, message: 'Cuộn rẻ nhất phải có trong danh sách film đang bán, và khoảng giá phải hợp lệ.' }); continue;
+      }
+    }
     records.push(record as BulkRecord);
   }
   return { records, errors };
@@ -107,6 +122,7 @@ export function bulkTemplateHeaders(category: ServiceCategory): string[] {
     outfit: { name: 'Tên set đồ', spotId: 'ID địa điểm', description: 'Mô tả', material: 'Chất liệu', price: 'Giá ước tính', imageUrl: 'Ảnh mẫu URL', hotspots: 'Hotspots JSON', link: 'Shopee URL', secondaryLink: 'TikTok URL' },
     photographer: { name: 'Tên nhiếp ảnh gia', imageUrl: 'Avatar URL', description: 'Bio', phone: 'Hotline/Zalo', link: 'Instagram URL', gearBody: 'Body', gearLens: 'Lens', tags: 'Hashtag', portfolioPhotos: 'Ảnh portfolio URL', packages: 'Gói chụp JSON' },
     filmLab: { name: 'Tên lab', address: 'Địa chỉ', lat: 'Vĩ độ', lng: 'Kinh độ', openingHours: 'Giờ mở cửa', phone: 'Hotline', fastService: 'Tráng nhanh 2h', filmStocks: 'Film có sẵn', services: 'Dịch vụ' },
+    filmShop: { name: 'Tên shop', cheapestRollName: 'Cuộn film rẻ nhất', minRollPrice: 'Giá cuộn rẻ nhất (VNĐ)', maxRollPrice: 'Giá cuộn đắt nhất (VNĐ)', filmStocks: 'Film đang bán', ward: 'Phường/xã', district: 'Quận/huyện', openingHours: 'Giờ mở cửa', phone: 'Hotline', link: 'Fanpage URL', slogan: 'Slogan' },
     filmColor: { name: 'Tên film', iso: 'ISO', format: 'Khổ film', recommendedTime: 'Tone màu', suitableSeasons: 'Mùa phù hợp', filmImageUrl: 'Ảnh vỏ cuộn film URL', imageUrl: 'Ảnh demo URL', paletteHex: 'Mã màu palette' }
   };
   return Object.keys(fields[category] || {}).map((field) => labels[category]?.[field] || field);

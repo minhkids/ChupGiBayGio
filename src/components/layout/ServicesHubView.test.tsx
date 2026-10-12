@@ -37,9 +37,10 @@ describe('ServicesHubView', () => {
     expect(shopCard.id).toBe('partner-film-shop-1');
   });
 
-  it('shows a partner film-shop product photo and roll price range in the film tab', async () => {
+  it('shows the shop photo on the film card and the description photo first in details', async () => {
     vi.mocked(serviceHubApi.list).mockResolvedValueOnce([{
       id: 'film-shop-1', category: 'filmLab', name: 'Shop Film', address: '36 Lý Quốc Sư',
+      imageUrl: 'https://example.com/shop.jpg',
       productImageUrl: 'https://chupgibaygio.com/api/partner/images/partner/lab/shop/photo.jpg',
       price: '125.000đ – 350.000đ/cuộn', filmStocks: ['Kodak Gold 200'],
     }]);
@@ -49,7 +50,10 @@ describe('ServicesHubView', () => {
     expect(await screen.findByText('Shop Film')).toBeTruthy();
     expect(screen.getByText('125.000đ – 350.000đ/cuộn')).toBeTruthy();
     expect(screen.getByTestId('film-shop-card').className).toContain('p-3');
-    expect(screen.getByRole('img', { name: 'Film shop Shop Film' })).toBeTruthy();
+    expect(screen.getByRole('img', { name: 'Ảnh shop Shop Film' }).getAttribute('src')).toBe('https://example.com/shop.jpg');
+    fireEvent.click(screen.getByRole('button', { name: 'Xem chi tiết Shop Film' }));
+    const detail = await screen.findByRole('dialog', { name: 'Shop Film' });
+    expect(detail.querySelector('section[aria-label="Ảnh cửa hàng và sản phẩm"] > img')?.getAttribute('src')).toBe('https://chupgibaygio.com/api/partner/images/partner/lab/shop/photo.jpg');
   });
 
   it('shows phone contact only after opening the shop detail', async () => {

@@ -24,10 +24,10 @@ export const FilmShopCard: React.FC<FilmShopCardProps> = ({ shop, isFeatured = f
         className="group block w-full rounded-xl text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C76B3C] focus-visible:ring-offset-2"
       >
         <span className="flex items-start gap-3">
-          {shop.productImageUrl ? (
-            <img src={shop.productImageUrl} alt={`Film shop ${shop.name}`} className="h-12 w-12 shrink-0 rounded-lg object-cover" />
-          ) : shop.imageUrl ? (
+          {shop.imageUrl ? (
             <img src={shop.imageUrl} alt={`Ảnh shop ${shop.name}`} className="h-12 w-12 shrink-0 rounded-lg object-cover" />
+          ) : shop.productImageUrl ? (
+            <img src={shop.productImageUrl} alt={`Ảnh film đang bán tại ${shop.name}`} className="h-12 w-12 shrink-0 rounded-lg object-cover" />
           ) : (
             <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-[#EFE9DF] text-[#8B4828]" aria-hidden="true">
               <ShoppingBag className="h-5 w-5" />

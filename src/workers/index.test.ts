@@ -114,6 +114,35 @@ describe('Services Hub admin API', () => {
     }
   });
 
+  it('persists roll prices and cheapest film name through admin shop create and update', async () => {
+    const env = makeEnv();
+    const writes: { sql: string; values: unknown[] }[] = [];
+    vi.spyOn(env.DB, 'prepare').mockImplementation((sql: string) => {
+      let values: unknown[] = [];
+      return {
+        bind(...args: unknown[]) { values = args; return this; },
+        async run() { writes.push({ sql, values }); return { meta: { changes: 1 } }; },
+        async all() { return { results: [] }; },
+        async first() { return null; },
+      } as unknown as D1PreparedStatement;
+    });
+    const login = await worker.request('/api/admin/login', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: 'unit-test-password' })
+    }, env);
+    const { token } = await login.json() as { token: string };
+    const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
+    const body = { adminCategory: 'filmShop', name: 'Tiệm Film', inStockFilms: ['Kodak Gold 200'], cheapestRollName: 'Kodak Gold 200', minRollPrice: 50000, maxRollPrice: 150000 };
+
+    const created = await worker.request('/api/admin/labs', { method: 'POST', headers, body: JSON.stringify(body) }, env);
+    expect(created.status).toBe(201);
+    const updated = await worker.request('/api/admin/cms/labs/shop-1', { method: 'PUT', headers, body: JSON.stringify(body) }, env);
+    expect(updated.status).toBe(200);
+
+    expect(writes).toHaveLength(2);
+    expect(writes.every(({ sql }) => sql.includes('min_roll_price') && sql.includes('max_roll_price') && sql.includes('cheapest_roll_name'))).toBe(true);
+    expect(writes[0].values).toEqual(expect.arrayContaining([50000, 150000, 'Kodak Gold 200']));
+  });
+
   it('requires admin auth and validates image files before storing them in R2', async () => {
     const env = makeEnv();
     const form = new FormData();

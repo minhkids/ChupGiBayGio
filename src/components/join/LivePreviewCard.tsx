@@ -26,7 +26,7 @@ export interface PartnerPreview {
 
 export function LivePreviewCard({ data }: { data: PartnerPreview }) {
   const lab = data.kind === 'lab';
-  const thumbnail = (lab ? data.productImage || data.image : data.portfolio?.[0] || data.image);
+  const thumbnail = (lab ? data.image || data.productImage : data.portfolio?.[0] || data.image);
   const location = lab
     ? [data.ward, data.district, 'Hà Nội'].filter(Boolean).join(', ')
     : data.address
