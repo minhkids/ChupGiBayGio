@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { AnimatePresence } from 'framer-motion';
 import { Camera, ChevronDown, Compass, ExternalLink, FlaskConical, MapPin, MessageCircle, Phone, Plus, Search, Shirt, ShoppingBag, Upload, X, RefreshCw, Settings2 } from 'lucide-react';
 import { useShootPlan } from '../../context/ShootPlanContext';
 import { serviceHubApi, type ServiceListing } from '../../services/serviceHubApi';
@@ -94,6 +95,6 @@ export const ServicesHubView: React.FC<Props> = ({ onClose }) => {
           <span role="status" aria-live="polite" className="pb-3 text-right text-xs text-[#6E655B]">{visibleFilmItems.length} {activeTab === 'labs' ? 'lab' : 'shop'}</span>
         </div><div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{visibleFilmItems.map((x) => activeTab === 'film' ? <FilmShopCard key={x.id} shop={x} isFeatured={x.id === featuredPartner} onOpen={setSelectedFilmShop} /> : <article key={x.id} data-testid="film-shop-card" className={`${card} p-3`}><div className="flex items-start gap-3"><div className="min-w-0 flex-1"><h2 className="truncate font-bold">{x.name}</h2>{x.slogan && <p className="mt-1 text-xs leading-relaxed text-[#6E655B]">{x.slogan}</p>}{(x.ward || x.district) && <p className="mt-1 flex min-w-0 items-center gap-1 text-xs text-[#6E655B]"><MapPin className="h-3.5 w-3.5 shrink-0"/><span className="truncate">{[x.ward, x.district, 'Hà Nội'].filter(Boolean).join(', ')}</span></p>}</div></div>{activeTab === 'labs' && x.openingHours && <p className="mt-2 text-xs text-[#6E655B]">Giờ mở cửa: {x.openingHours}</p>}{activeTab === 'labs' && x.services?.length ? <p className="mt-1 text-xs text-[#6E655B]">{x.services.join(' · ')}</p> : null}<div className="mt-4 flex gap-2 border-t border-[#E2DAD0] pt-3">{x.secondaryLink && <a href={x.secondaryLink} target="_blank" rel="noreferrer" className={secondary}><Compass className="h-4 w-4"/>Chỉ đường</a>}{activeTab === 'labs' && x.link && <a href={x.link} target="_blank" rel="noreferrer" className={primary}><MessageCircle className="h-4 w-4"/>Liên hệ</a>}{activeTab === 'labs' && x.phone && <a href={`tel:${x.phone}`} className={secondary}><Phone className="h-4 w-4"/>{x.phone}</a>}</div></article>)}</div>{visibleFilmItems.length===0 && empty(activeTab === 'labs' ? 'Chưa có phòng lab nào.' : 'Chưa có shop bán film nào.')}</div>}
     </main>
-    {selectedFilmShop && <FilmShopDetailDialog shop={selectedFilmShop} onClose={() => setSelectedFilmShop(null)} />}
+    <AnimatePresence>{selectedFilmShop && <FilmShopDetailDialog key={selectedFilmShop.id} shop={selectedFilmShop} onClose={() => setSelectedFilmShop(null)} />}</AnimatePresence>
   </section>;
 };

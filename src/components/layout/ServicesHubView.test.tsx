@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { ShootPlanProvider } from '../../context/ShootPlanContext';
 import { ServicesHubView } from './ServicesHubView';
 import { serviceHubApi } from '../../services/serviceHubApi';
@@ -29,7 +29,7 @@ describe('ServicesHubView', () => {
     expect(screen.queryByTestId('partner-featured-card')).toBeNull();
     expect(screen.getAllByText('Shop Film')).toHaveLength(1);
     expect(shopCard.querySelector('[data-testid="film-shop-slogan"]')?.textContent).toBe('Film đẹp cho mọi khoảnh khắc');
-    expect(shopCard.textContent).toContain('Cuộn rẻ nhất: Kodak Gold 200 · 50.000đ/cuộn');
+    expect(within(shopCard).getByRole('group', { name: 'Cuộn rẻ nhất: Kodak Gold 200 · 50.000đ/cuộn' }).textContent).toContain('50.000đ/cuộn');
     expect(shopCard.querySelector('a[href="https://example.com/shop"]')).toBeNull();
     expect(screen.queryByRole('link', { name: 'Liên hệ' })).toBeNull();
     expect(shopCard.textContent).not.toContain('0912345678');
@@ -53,7 +53,7 @@ describe('ServicesHubView', () => {
     expect(screen.getByRole('img', { name: 'Ảnh shop Shop Film' }).getAttribute('src')).toBe('https://example.com/shop.jpg');
     fireEvent.click(screen.getByRole('button', { name: 'Xem chi tiết Shop Film' }));
     const detail = await screen.findByRole('dialog', { name: 'Shop Film' });
-    expect(detail.querySelector('section[aria-label="Ảnh cửa hàng và sản phẩm"] > img')?.getAttribute('src')).toBe('https://chupgibaygio.com/api/partner/images/partner/lab/shop/photo.jpg');
+    expect(within(detail).getByRole('img', { name: 'Film đang bán tại Shop Film' }).getAttribute('src')).toBe('https://chupgibaygio.com/api/partner/images/partner/lab/shop/photo.jpg');
   });
 
   it('shows phone contact only after opening the shop detail', async () => {
@@ -102,7 +102,7 @@ describe('ServicesHubView', () => {
     expect(detail.querySelector('a[href="tel:0912345678"]')?.textContent).toContain('0912345678');
 
     fireEvent.keyDown(window, { key: 'Escape' });
-    expect(screen.queryByRole('dialog', { name: 'Tiệm Film Chi Tiết' })).toBeNull();
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Tiệm Film Chi Tiết' })).toBeNull());
   });
 
   it('shows a clear image fallback when a shop photo fails to load', async () => {

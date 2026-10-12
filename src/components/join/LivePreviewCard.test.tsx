@@ -25,3 +25,10 @@ it('keeps a shop card compact while showing price, ward, district, film and cont
   expect(within(card).getByRole('link', { name: /0912345678/ }).getAttribute('href')).toBe('tel:0912345678');
   expect(card.textContent).not.toContain('Thẻ thông tin khách hàng sẽ thấy trên website');
 });
+
+it('previews a shop that supplies only its cheapest roll price', () => {
+  render(<LivePreviewCard data={{ kind: 'lab', name: 'Tiệm Film', cheapestRollName: 'Kodak Gold 200', minRollPrice: '50000' }} />);
+  const card = screen.getByTestId('partner-preview');
+  expect(card.textContent).toContain('Từ 50.000đ/cuộn');
+  expect(card.textContent).toContain('Rẻ nhất: Kodak Gold 200 · 50.000đ/cuộn');
+});

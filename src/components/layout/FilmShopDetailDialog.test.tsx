@@ -1,0 +1,47 @@
+// @vitest-environment jsdom
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { afterEach, expect, it, vi } from 'vitest';
+import { FilmShopDetailDialog } from './FilmShopDetailDialog';
+import type { ServiceListing } from '../../services/serviceHubApi';
+
+const shop: ServiceListing = {
+  id: 'gallery-shop', category: 'filmShop', name: 'Tiệm Film',
+  productImageUrl: '/products.jpg', imageUrl: '/shop.jpg',
+  description: 'Film màu và đen trắng.', filmStocks: ['Kodak Gold 200', 'Ilford HP5'],
+  phone: '0912345678', link: 'https://example.com/shop',
+};
+afterEach(cleanup);
+
+it('cycles gallery photos with controls and arrow keys without leaving the dialog', () => {
+  render(<FilmShopDetailDialog shop={shop} onClose={vi.fn()} />);
+  const dialog = screen.getByRole('dialog', { name: shop.name });
+  const gallery = within(dialog).getByRole('region', { name: 'Ảnh cửa hàng và sản phẩm' });
+  expect(within(gallery).getByRole('img', { name: 'Film đang bán tại Tiệm Film' }).getAttribute('src')).toBe('/products.jpg');
+  fireEvent.click(within(gallery).getByRole('button', { name: 'Ảnh tiếp theo' }));
+  expect(within(gallery).getByRole('img', { name: 'Ảnh cửa hàng Tiệm Film' }).getAttribute('src')).toBe('/shop.jpg');
+  expect(within(gallery).getByText('02 / 02')).toBeTruthy();
+  fireEvent.keyDown(dialog, { key: 'ArrowRight' });
+  expect(within(gallery).getByRole('img', { name: 'Film đang bán tại Tiệm Film' }).getAttribute('src')).toBe('/products.jpg');
+  fireEvent.click(within(gallery).getByRole('button', { name: 'Ảnh trước' }));
+  expect(within(gallery).getByRole('img', { name: 'Ảnh cửa hàng Tiệm Film' })).toBeTruthy();
+});
+
+it('keeps keyboard focus inside details and restores focus and scrolling on close', () => {
+  const opener = document.createElement('button');
+  document.body.appendChild(opener);
+  opener.focus();
+  document.body.style.overflow = 'auto';
+  const { unmount } = render(<FilmShopDetailDialog shop={shop} onClose={vi.fn()} />);
+  const close = screen.getByRole('button', { name: 'Đóng chi tiết shop' });
+  const phone = screen.getByRole('link', { name: /Gọi shop/ });
+  expect(document.activeElement).toBe(close);
+  fireEvent.keyDown(close, { key: 'Tab', shiftKey: true });
+  expect(document.activeElement).toBe(phone);
+  fireEvent.keyDown(phone, { key: 'Tab' });
+  expect(document.activeElement).toBe(close);
+  unmount();
+  expect(document.activeElement).toBe(opener);
+  expect(document.body.style.overflow).toBe('auto');
+  opener.remove();
+  document.body.style.overflow = '';
+});

@@ -349,7 +349,9 @@ app.get('/api/services', async (c) => {
     ...rows(labRows.results).map((row) => {
       const minRollPrice = Number(row.min_roll_price) || 0;
       const maxRollPrice = Number(row.max_roll_price) || 0;
-      const price = maxRollPrice > 0 ? `${minRollPrice.toLocaleString('vi-VN')}đ – ${maxRollPrice.toLocaleString('vi-VN')}đ/cuộn` : '';
+      const price = minRollPrice > 0 && maxRollPrice > 0
+        ? `${minRollPrice.toLocaleString('vi-VN')}đ – ${maxRollPrice.toLocaleString('vi-VN')}đ/cuộn`
+        : minRollPrice > 0 ? `Từ ${minRollPrice.toLocaleString('vi-VN')}đ/cuộn` : '';
       const ward = String(row.ward || '');
       const district = String(row.district || '');
       const area = [ward, district, 'Hà Nội'].filter(Boolean).join(', ');

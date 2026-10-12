@@ -42,7 +42,7 @@ export function LivePreviewCard({ data }: { data: PartnerPreview }) {
         <p className="text-[10px] font-bold uppercase tracking-wide text-[#9A4F29]">{lab ? 'Shop bán film' : 'Nhiếp ảnh gia'}</p>
         <h3 className="mt-1 break-words text-base font-bold leading-snug">{data.name || (lab ? 'Tên tiệm film của bạn' : 'Nghệ danh của bạn')}</h3>
         {lab && data.slogan && <p className="mt-1 break-words text-xs leading-snug text-[#675D52]">{data.slogan}</p>}
-        {lab && data.minRollPrice && data.maxRollPrice && <p className="mt-2 text-sm font-bold leading-snug text-[#8B4828]">{Number(data.minRollPrice).toLocaleString('vi-VN')}–{Number(data.maxRollPrice).toLocaleString('vi-VN')}đ/cuộn</p>}
+        {lab && data.minRollPrice && <p className="mt-2 text-sm font-bold leading-snug text-[#8B4828]">{data.maxRollPrice ? `${Number(data.minRollPrice).toLocaleString('vi-VN')}–${Number(data.maxRollPrice).toLocaleString('vi-VN')}đ/cuộn` : `Từ ${Number(data.minRollPrice).toLocaleString('vi-VN')}đ/cuộn`}</p>}
         {lab && data.cheapestRollName && data.minRollPrice && <p className="mt-1 text-xs font-semibold leading-snug text-[#8B4828]">Rẻ nhất: {data.cheapestRollName} · {Number(data.minRollPrice).toLocaleString('vi-VN')}đ/cuộn</p>}
         {!lab && data.packagePrice && <p className="mt-2 text-sm font-bold text-[#8B4828]">Từ {Number(data.packagePrice).toLocaleString('vi-VN')}đ/gói</p>}
       </div>

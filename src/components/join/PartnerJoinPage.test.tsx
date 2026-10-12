@@ -25,26 +25,26 @@ describe('partner onboarding pages', () => {
     fireEvent.change(screen.getByLabelText('Phường / xã *'), { target: { value: 'Cửa Nam' } });
     fireEvent.change(screen.getByLabelText('Hotline / Số Zalo nhận khách *'), { target: { value: '0912345678' } });
     fireEvent.change(screen.getByLabelText(/Giá cuộn film rẻ nhất/), { target: { value: '120000' } });
-    fireEvent.change(screen.getByLabelText(/Giá cuộn film đắt nhất/), { target: { value: '350000' } });
+    expect(screen.queryByLabelText(/Giá cuộn film đắt nhất/)).toBeNull();
+    expect(screen.getByTestId('partner-preview').textContent).toContain('Từ 120.000đ/cuộn');
     expect(screen.getByTestId('partner-preview').textContent).toContain('Rẻ nhất: Kodak Gold 200 · 120.000đ/cuộn');
     fireEvent.submit(screen.getByRole('button', { name: 'Hoàn tất đăng ký' }).closest('form')!);
     await waitFor(() => expect(fetchMock).toHaveBeenCalled());
     const form = fetchMock.mock.calls[0][1].body as FormData;
     const payload = JSON.parse(String(form.get('payload')));
     expect(payload).toMatchObject({ slogan: 'Film đẹp cho mọi khoảnh khắc', district: 'Hoàn Kiếm', ward: 'Cửa Nam', filmStocks: ['Kodak Gold 200'], cheapestRollName: 'Kodak Gold 200', minRollPrice: 120000 });
+    expect(payload).not.toHaveProperty('maxRollPrice');
     expect(payload).not.toHaveProperty('address');
   });
 
-  it('collects a product photo and comparable low-to-high roll prices for film shops', () => {
+  it('requires only the cheapest roll price on the film-shop registration form', () => {
     render(<PartnerJoinPage kind="lab" />);
     expect(screen.getByLabelText('Ảnh mô tả sản phẩm')).toBeTruthy();
     const minPrice = screen.getByLabelText(/Giá cuộn film rẻ nhất/) as HTMLInputElement;
-    const maxPrice = screen.getByLabelText(/Giá cuộn film đắt nhất/) as HTMLInputElement;
     expect(minPrice.required).toBe(true);
-    expect(maxPrice.required).toBe(true);
+    expect(screen.queryByLabelText(/Giá cuộn film đắt nhất/)).toBeNull();
     fireEvent.change(minPrice, { target: { value: '125000' } });
-    fireEvent.change(maxPrice, { target: { value: '350000' } });
-    expect(screen.getByTestId('partner-preview').textContent).toContain('125.000–350.000đ/cuộn');
+    expect(screen.getByTestId('partner-preview').textContent).toContain('Từ 125.000đ/cuộn');
   });
 
   it('shows only film retail fields and preview as the shop types', () => {

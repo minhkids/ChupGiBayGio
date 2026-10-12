@@ -115,10 +115,10 @@ async function registration(c: Context<{ Bindings: Bindings }>, kind: 'lab' | 'p
     cheapestRollName = text(body.cheapestRollName, 120);
     const parsePrice = (value: unknown) => (typeof value === 'number' || typeof value === 'string' && value.trim() !== '') ? Number(value) : Number.NaN;
     minRollPrice = parsePrice(body.minRollPrice);
-    maxRollPrice = parsePrice(body.maxRollPrice);
+    maxRollPrice = body.maxRollPrice === undefined || body.maxRollPrice === null || body.maxRollPrice === '' ? 0 : parsePrice(body.maxRollPrice);
     if (!districts.has(district) || !ward || !list(body.filmStocks, 20) || !cheapestRollName || !stocks.includes(cheapestRollName)
-      || !Number.isSafeInteger(minRollPrice) || !Number.isSafeInteger(maxRollPrice)
-      || minRollPrice < 1 || maxRollPrice < minRollPrice || maxRollPrice > 50000000) {
+          || !Number.isSafeInteger(minRollPrice) || !Number.isSafeInteger(maxRollPrice)
+          || minRollPrice < 1 || maxRollPrice < 0 || (maxRollPrice > 0 && maxRollPrice < minRollPrice) || maxRollPrice > 50000000) {
       return c.json({ error: 'Vui lòng nhập phường/xã, quận/huyện, cuộn film rẻ nhất và giá hợp lệ.' }, 400);
     }
   } else {

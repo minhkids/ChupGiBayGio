@@ -78,7 +78,10 @@ describe('public partner registration', () => {
     const env = environment({
       photographers: [{ id: 'p-1', name: 'Minh Studio', status: 'published', address: '15 Ngọc Thụy, Hà Nội', district: 'Long Biên', styles: '["MàuFilm"]', preferred_spots: '["Hồ Tây"]', portfolio_photos: '["https://example.com/a.jpg"]' }],
       photographer_packages: [{ id: 'pkg-1', photographer_id: 'p-1', name: 'Ngoại cảnh', price: 600000 }],
-      film_labs: [{ id: 'lab-1', name: 'Film Shop', slogan: 'Film đẹp cho mọi khoảnh khắc', address: '36 Lý Quốc Sư', ward: 'Cửa Nam', district: 'Hoàn Kiếm', status: 'published', in_stock_films: '["Kodak Gold 200"]', product_image_url: 'https://example.com/product.jpg', cheapest_roll_name: 'Kodak Gold 200', min_roll_price: 125000, max_roll_price: 350000 }],
+      film_labs: [
+        { id: 'lab-1', name: 'Film Shop', slogan: 'Film đẹp cho mọi khoảnh khắc', address: '36 Lý Quốc Sư', ward: 'Cửa Nam', district: 'Hoàn Kiếm', status: 'published', in_stock_films: '["Kodak Gold 200"]', product_image_url: 'https://example.com/product.jpg', cheapest_roll_name: 'Kodak Gold 200', min_roll_price: 125000, max_roll_price: 350000 },
+        { id: 'lab-min-only', name: 'Shop chỉ biết giá rẻ nhất', ward: 'Cửa Nam', district: 'Hoàn Kiếm', status: 'published', in_stock_films: '["Kodak Gold 200"]', cheapest_roll_name: 'Kodak Gold 200', min_roll_price: 50000, max_roll_price: 0 },
+      ],
     });
     const people = await worker.request('/api/photographers', {}, env);
     expect(people.status).toBe(200);
@@ -88,6 +91,7 @@ describe('public partner registration', () => {
     const directoryData = await directory.json();
     expect(directoryData).toContainEqual(expect.objectContaining({ id: 'p-1', category: 'photographer', shootSpots: ['Hồ Tây'], address: '15 Ngọc Thụy, Hà Nội', district: 'Long Biên' }));
     expect(directoryData).toContainEqual(expect.objectContaining({ id: 'lab-1', category: 'filmLab', slogan: 'Film đẹp cho mọi khoảnh khắc', address: 'Cửa Nam, Hoàn Kiếm, Hà Nội', ward: 'Cửa Nam', district: 'Hoàn Kiếm', productImageUrl: 'https://example.com/product.jpg', cheapestRollName: 'Kodak Gold 200', minRollPrice: 125000, maxRollPrice: 350000, price: '125.000đ – 350.000đ/cuộn' }));
+    expect(directoryData).toContainEqual(expect.objectContaining({ id: 'lab-min-only', minRollPrice: 50000, maxRollPrice: 0, price: 'Từ 50.000đ/cuộn' }));
     const labs = await worker.request('/api/labs', {}, environment({ film_labs: [{ id: 'lab-1', name: 'Film Shop', address: '36 Lý Quốc Sư', ward: 'Cửa Nam', district: 'Hoàn Kiếm', status: 'published' }] }));
     expect(await labs.json()).toMatchObject([{ id: 'lab-1', address: 'Cửa Nam, Hoàn Kiếm, Hà Nội', ward: 'Cửa Nam' }]);
   });
@@ -141,6 +145,18 @@ describe('public partner registration', () => {
       expect(insert?.values).toContain(null);
       expect(insert?.values).toContain('published');
     } finally { fetchMock.mockRestore(); }
+  });
+
+  it('accepts a shop registration with only the cheapest roll price', async () => {
+    const env = environment();
+    const response = await submit('/api/partner/register-lab', {
+      name: 'Tiệm Film', ward: 'Cửa Nam', district: 'Hoàn Kiếm', phone: '0912345678',
+      filmStocks: ['Kodak Gold 200'], cheapestRollName: 'Kodak Gold 200', minRollPrice: 120000,
+    }, [], env);
+    expect(response.status).toBe(201);
+    const insert = env.writes.find(({ sql }) => sql.includes('INSERT INTO film_labs'));
+    expect(insert?.values).toContain(120000);
+    expect(insert?.values).toContain(0);
   });
 
   it('stores the product photo and comparable film roll price range for a shop', async () => {
