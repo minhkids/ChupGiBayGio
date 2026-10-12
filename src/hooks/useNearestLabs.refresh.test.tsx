@@ -8,7 +8,7 @@ afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
 it('reloads public labs when returning from an admin tab', async () => {
   let name = 'Old lab';
-  const fetcher = vi.fn(async () => new Response(JSON.stringify([{ id: 'lab-1', name, lat: 21, lng: 105 }]), { status: 200 }));
+  const fetcher = vi.fn(async () => new Response(JSON.stringify([{ id: 'lab-1', name, lat: 21.0285, lng: 105.8542 }]), { status: 200 }));
   vi.stubGlobal('fetch', fetcher);
   const { result, unmount } = renderHook(() => useNearestLabs());
   await waitFor(() => expect(result.current.labs[0]?.name).toBe('Old lab'));
@@ -25,11 +25,11 @@ it('reloads public labs after a successful same-tab admin edit', async () => {
   let name = 'Old lab';
   vi.stubGlobal('fetch', vi.fn(async (_url: string, init?: RequestInit) => {
     if (init?.method === 'PUT') { name = 'Edited lab'; return new Response('{}'); }
-    return new Response(JSON.stringify([{ id: 'lab-1', name, lat: 21, lng: 105 }]));
+    return new Response(JSON.stringify([{ id: 'lab-1', name, lat: 21.0285, lng: 105.8542 }]));
   }));
   const { result } = renderHook(() => useNearestLabs());
   await waitFor(() => expect(result.current.labs[0]?.name).toBe('Old lab'));
-  await act(async () => { await serviceHubApi.update({ id: 'lab-1', category: 'filmLab', name: 'Edited lab', lat: 21, lng: 105 }); });
+  await act(async () => { await serviceHubApi.update({ id: 'lab-1', category: 'filmLab', name: 'Edited lab', lat: 21.0285, lng: 105.8542 }); });
   await waitFor(() => expect(result.current.labs[0]?.name).toBe('Edited lab'));
 });
 
@@ -44,4 +44,12 @@ it('exposes a partner-submitted product photo and per-roll price range in shop r
   await waitFor(() => expect(result.current.labs[0]?.productImageUrl).toContain('/photo.jpg'));
   expect(result.current.labs[0]?.priceRange).toBe('125.000đ – 350.000đ/cuộn');
   expect(result.current.labs[0]?.slogan).toBe('Film đẹp cho mọi khoảnh khắc');
+});
+
+it('does not assign map coordinates to a shop that only provided its ward and district', async () => {
+  vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify([{
+    id: 'area-only-lab', name: 'Ward-only shop', ward: 'Cửa Nam', district: 'Hoàn Kiếm', lat: null, lng: null,
+  }]), { status: 200 })));
+  const { result } = renderHook(() => useNearestLabs());
+  await waitFor(() => expect(result.current.labs).toEqual([]));
 });

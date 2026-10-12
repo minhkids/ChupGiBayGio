@@ -72,24 +72,6 @@ async function photos(form: FormData, min: number, max: number, field = 'photos'
   return { uploads };
 }
 
-async function geocode(address: string, district: string, cache: KVNamespace) {
-  const query = [address, district, 'Hà Nội', 'Việt Nam'].join(', ');
-  const key = `geocode:${query.toLocaleLowerCase('vi').replace(/\s+/g, ' ')}`;
-  const cached = await cache.get(key).catch(() => null);
-  if (cached) {
-    const point = JSON.parse(cached) as { lat: number; lng: number };
-    if (validPoint(point.lat, point.lng)) return point;
-  }
-  const params = new URLSearchParams({ q: query, format: 'jsonv2', limit: '1', countrycodes: 'vn', viewbox: '105.2,21.7,106.3,20.4', bounded: '1' });
-  const response = await fetch(`https://nominatim.openstreetmap.org/search?${params}`, { headers: { 'User-Agent': 'ChupGiBayGio/1.0 (https://chupgibaygio.com)', Accept: 'application/json' }, signal: AbortSignal.timeout(7000) });
-  if (!response.ok) return null;
-  const results = await response.json() as { lat: string; lon: string }[];
-  const point = { lat: Number(results[0]?.lat), lng: Number(results[0]?.lon) };
-  if (!results.length || !validPoint(point.lat, point.lng)) return null;
-  await cache.put(key, JSON.stringify(point), { expirationTtl: 86400 * 30 }).catch(() => undefined);
-  return point;
-}
-
 async function registration(c: Context<{ Bindings: Bindings }>, kind: 'lab' | 'photographer') {
   // These unauthenticated endpoints publish immediately; throttle by visitor and keep the form human-operated.
   const origin = c.req.header('Origin');
@@ -114,8 +96,8 @@ async function registration(c: Context<{ Bindings: Bindings }>, kind: 'lab' | 'p
   if ('error' in images) return c.json({ error: images.error }, images.error?.includes('định dạng') ? 415 : 400);
   const productImages = kind === 'lab' ? await photos(form, 0, 1, 'productPhoto') : { uploads: [] as { bytes: Uint8Array; ext: string; type: string }[] };
   if ('error' in productImages) return c.json({ error: productImages.error }, productImages.error?.includes('định dạng') ? 415 : 400);
-  let point: { lat: number; lng: number } | null = null;
   let district = '';
+  let ward = '';
   let address = '';
   let stocks: string[] = [];
   let styles: string[] = [];
@@ -125,20 +107,18 @@ async function registration(c: Context<{ Bindings: Bindings }>, kind: 'lab' | 'p
   let maxRollPrice = 0;
   let slogan = '';
   if (kind === 'lab') {
-    address = text(body.address, 300); district = text(body.district, 80);
+    district = text(body.district, 80); ward = text(body.ward, 80);
     if (body.slogan !== undefined && (typeof body.slogan !== 'string' || body.slogan.trim().length > 50)) return c.json({ error: 'Slogan của shop tối đa 50 ký tự.' }, 400);
     slogan = text(body.slogan, 50);
     stocks = list(body.filmStocks, 20) ?? [];
     const parsePrice = (value: unknown) => (typeof value === 'number' || typeof value === 'string' && value.trim() !== '') ? Number(value) : Number.NaN;
     minRollPrice = parsePrice(body.minRollPrice);
     maxRollPrice = parsePrice(body.maxRollPrice);
-    if (address.length < 8 || !districts.has(district) || !list(body.filmStocks, 20)
+    if (!districts.has(district) || !ward || !list(body.filmStocks, 20)
       || !Number.isSafeInteger(minRollPrice) || !Number.isSafeInteger(maxRollPrice)
       || minRollPrice < 0 || maxRollPrice < minRollPrice || maxRollPrice > 50000000) {
-      return c.json({ error: 'Vui lòng nhập địa chỉ, quận/huyện, danh sách film và khoảng giá hợp lệ.' }, 400);
+      return c.json({ error: 'Vui lòng nhập phường/xã, quận/huyện, danh sách film và khoảng giá hợp lệ.' }, 400);
     }
-    try { point = await geocode(address, district, c.env.CACHE); } catch { return c.json({ error: 'Dịch vụ xác định vị trí tạm gián đoạn. Vui lòng thử lại.' }, 503); }
-    if (!point) return c.json({ error: 'Không xác định được tọa độ. Hãy ghi rõ số nhà, đường và quận/huyện Hà Nội.' }, 422);
   } else {
     address = text(body.address, 300);
     district = text(body.district, 80);
@@ -169,8 +149,8 @@ async function registration(c: Context<{ Bindings: Bindings }>, kind: 'lab' | 'p
         keys.push(key);
         productImageUrl = `${base}/api/partner/images/${key}`;
       }
-      await c.env.DB.prepare(`INSERT INTO film_labs (id, name, slogan, address, district, lat, lng, opening_hours, hotline, fast_2h, in_stock_films, fanpage_url, image_url, product_image_url, min_roll_price, max_roll_price, status)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(id, name, slogan, address, district, point!.lat, point!.lng, text(body.openingHours, 120), number, 0, JSON.stringify(stocks), social || '', urls[0] || imageUrl || '', productImageUrl, minRollPrice, maxRollPrice, 'published').run();
+      await c.env.DB.prepare(`INSERT INTO film_labs (id, name, slogan, address, district, ward, lat, lng, opening_hours, hotline, fast_2h, in_stock_films, fanpage_url, image_url, product_image_url, min_roll_price, max_roll_price, status)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(id, name, slogan, address, district, ward, null, null, text(body.openingHours, 120), number, 0, JSON.stringify(stocks), social || '', urls[0] || imageUrl || '', productImageUrl, minRollPrice, maxRollPrice, 'published').run();
     } else {
       await c.env.DB.batch([
         c.env.DB.prepare(`INSERT INTO photographers (id, name, avatar_url, bio, phone, instagram, gear_body, gear_lens, styles, portfolio_photos, preferred_spots, facebook_url, status, address, district)

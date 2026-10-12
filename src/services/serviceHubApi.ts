@@ -18,6 +18,7 @@ export interface ServiceListing {
   recommendedTime?: string;
   description?: string;
   address?: string;
+  ward?: string;
   price?: string;
   rating?: string;
   reviewCount?: string;
@@ -54,8 +55,21 @@ export interface ServiceListing {
   spotId?: string;
 }
 
-const API_BASE = import.meta.env.VITE_API_URL || '';
+const API_BASE = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
 const ADMIN_TOKEN_KEY = 'service_admin_token';
+async function readJsonResponse<T>(response: Response): Promise<T> {
+  const body = await response.text();
+  if (!body.trim()) return null as T;
+  try {
+    return JSON.parse(body) as T;
+  } catch {
+    const prefix = body.trimStart();
+    if (/^(?:<!doctype\s+html|<html\b)/i.test(prefix)) {
+      throw new Error('API trả về trang HTML thay vì JSON. Kiểm tra API Worker và VITE_API_URL; môi trường local cần Worker chạy tại http://127.0.0.1:8787.');
+    }
+    throw new Error(`API trả về dữ liệu không phải JSON (HTTP ${response.status}). Kiểm tra API Worker và VITE_API_URL.`);
+  }
+}
 const parseList = (value: unknown): string[] => {
   if (Array.isArray(value)) return value.map(String);
   if (typeof value !== 'string') return [];
@@ -95,15 +109,15 @@ export async function request<T>(path: string, init?: RequestInit): Promise<T> {
   if (init?.body && !(typeof FormData !== 'undefined' && init.body instanceof FormData)) headers.set('Content-Type', 'application/json');
   if (token) headers.set('Authorization', `Bearer ${token}`);
   const response = await fetch(`${API_BASE}${path}`, { ...init, headers });
+  const data = await readJsonResponse<unknown>(response);
   if (!response.ok) {
-    const data = await response.json().catch(() => null) as { error?: string } | null;
-    throw new Error(data?.error || `Yêu cầu thất bại (${response.status})`);
+    const message = data && typeof data === 'object' && 'error' in data && typeof data.error === 'string' ? data.error : '';
+    throw new Error(message || `Yêu cầu thất bại (${response.status})`);
   }
-  const data = await response.json() as T;
   if (typeof window !== 'undefined' && path.startsWith('/api/admin/') && path !== '/api/admin/login' && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(init?.method?.toUpperCase() || 'GET')) {
     window.dispatchEvent(new Event(CATALOG_UPDATED_EVENT));
   }
-  return data;
+  return data as T;
 }
 
 export const serviceHubApi = {
@@ -148,7 +162,7 @@ export const serviceHubApi = {
       ...outfits.map((row) => ({ ...row, id: String(row.id), category: 'outfit' as const, spotId: String(row.spot_id || ''), name: String(row.name || ''), description: String(row.description || ''), price: String(row.estimated_price || ''), imageUrl: String(row.image_url || ''), link: String(row.shopee_url || ''), secondaryLink: String(row.tiktok_url || ''), material: String(row.material || ''), hotspots: parseJsonArray(row.hotspots) })),
       ...photographers.map((row) => ({ ...row, id: String(row.id), category: 'photographer' as const, name: String(row.name || ''), address: String(row.address || ''), district: String(row.district || ''), description: String(row.bio || ''), imageUrl: String(row.avatar_url || ''), phone: String(row.phone || ''), link: String(row.instagram || ''), tags: parseList(row.styles), shootSpots: parseList(row.preferred_spots), gearBody: String(row.gear_body || ''), gearLens: String(row.gear_lens || ''), portfolioPhotos: parseList(row.portfolio_photos), packages: Array.isArray(row.packages) ? row.packages as ServiceListing['packages'] : [] })),
       ...films.map((row) => ({ ...row, id: String(row.id), category: 'filmColor' as const, name: String(row.name || ''), iso: String(row.iso || ''), recommendedTime: String(row.tone || ''), filmImageUrl: String(row.package_image_url || ''), imageUrl: String(row.sample_image_url || ''), suitableSeasons: parseList(row.suitable_seasons) })),
-      ...labs.map((row) => ({ ...row, id: String(row.id), category: 'filmLab' as const, name: String(row.name || ''), slogan: String(row.slogan || ''), address: String(row.address || ''), district: String(row.district || ''), imageUrl: String(row.image_url || ''), productImageUrl: String(row.product_image_url || ''), minRollPrice: Number(row.min_roll_price) || 0, maxRollPrice: Number(row.max_roll_price) || 0, link: String(row.fanpage_url || ''), phone: String(row.hotline || ''), openingHours: String(row.opening_hours || ''), fastService: Boolean(row.fast_2h), filmStocks: parseList(row.in_stock_films) })),
+      ...labs.map((row) => ({ ...row, id: String(row.id), category: 'filmLab' as const, name: String(row.name || ''), slogan: String(row.slogan || ''), address: [row.ward, row.district, 'Hà Nội'].filter(Boolean).join(', '), ward: String(row.ward || ''), district: String(row.district || ''), imageUrl: String(row.image_url || ''), productImageUrl: String(row.product_image_url || ''), minRollPrice: Number(row.min_roll_price) || 0, maxRollPrice: Number(row.max_roll_price) || 0, link: String(row.fanpage_url || ''), phone: String(row.hotline || ''), openingHours: String(row.opening_hours || ''), fastService: Boolean(row.fast_2h), filmStocks: parseList(row.in_stock_films) })),
       ...legacy
     ] as ServiceListing[];
   },
@@ -167,11 +181,9 @@ export const serviceHubApi = {
     const token = sessionStorage.getItem(ADMIN_TOKEN_KEY);
     if (token) headers.set('Authorization', `Bearer ${token}`);
     const response = await fetch(`${API_BASE}/api/admin/upload`, { method: 'POST', headers, body: form });
-    if (!response.ok) {
-      const data = await response.json().catch(() => null) as { error?: string } | null;
-      throw new Error(data?.error || `Tải ảnh thất bại (${response.status})`);
-    }
-    return response.json() as Promise<{ key: string; url: string }>;
+    const data = await readJsonResponse<{ key: string; url: string; error?: string }>(response);
+    if (!response.ok) throw new Error(data?.error || `Tải ảnh thất bại (${response.status})`);
+    return data;
   },
   create: (listing: Omit<ServiceListing, 'id'>) => request<ServiceListing>(`/api/admin/${listing.category === 'spot' ? 'spots' : listing.category === 'rental' ? 'rental-shops' : listing.category === 'outfit' ? 'outfits' : listing.category === 'photographer' ? 'photographers' : listing.category === 'filmLab' ? 'labs' : 'films'}`, {
     method: 'POST', body: JSON.stringify(adminPayload(listing as ServiceListing))

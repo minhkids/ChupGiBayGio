@@ -113,6 +113,7 @@ CREATE TABLE IF NOT EXISTS film_labs (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
   slogan TEXT NOT NULL DEFAULT '' CHECK (length(slogan) <= 50),
+  ward TEXT NOT NULL DEFAULT '',
   address TEXT NOT NULL DEFAULT '',
   lat REAL,
   lng REAL,

@@ -4,6 +4,7 @@ export interface FilmLab {
   slogan?: string;
   address: string;
   district: string;
+  ward?: string;
   lat: number;
   lng: number;
   openingHours: string;

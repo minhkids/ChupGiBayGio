@@ -65,6 +65,7 @@ export const NearestFilmShopsDrawer: React.FC<NearestFilmShopsDrawerProps> = ({
     return (
       lab.name.toLowerCase().includes(q) ||
       lab.address.toLowerCase().includes(q) ||
+      (lab.ward || '').toLowerCase().includes(q) ||
       lab.district.toLowerCase().includes(q) ||
       lab.availableFilms.some((f) => f.toLowerCase().includes(q))
     );

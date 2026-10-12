@@ -21,6 +21,7 @@ export function PartnerJoinPage({ kind }: { kind: Kind }) {
   const [imageUrl, setImageUrl] = useState('');
   const [address, setAddress] = useState('');
   const [district, setDistrict] = useState('');
+  const [ward, setWard] = useState('');
   const [openingHours, setOpeningHours] = useState('');
   const [slogan, setSlogan] = useState('');
   const [filmStocks, setFilmStocks] = useState<string[]>([]);
@@ -89,7 +90,7 @@ export function PartnerJoinPage({ kind }: { kind: Kind }) {
     if (lab && Number(minRollPrice) > Number(maxRollPrice)) { setError('Giá cuộn rẻ nhất không được cao hơn giá cuộn đắt nhất.'); return; }
     setBusy(true); setError('');
     const payload = lab
-      ? { name, slogan, address, district, phone, socialUrl, openingHours, filmStocks, imageUrl, minRollPrice: Number(minRollPrice), maxRollPrice: Number(maxRollPrice), website: '' }
+      ? { name, slogan, district, ward, phone, socialUrl, openingHours, filmStocks, imageUrl, minRollPrice: Number(minRollPrice), maxRollPrice: Number(maxRollPrice), website: '' }
       : { name, address, district, phone, socialUrl, imageUrl, gear, styles: selectedStyles, shootSpots, package: { name: packageName, price: Number(packagePrice), duration: packageDuration, deliveredPhotos }, website: '' };
     const body = new FormData();
     body.set('payload', JSON.stringify(payload));
@@ -109,23 +110,28 @@ export function PartnerJoinPage({ kind }: { kind: Kind }) {
     catch { setError('Không thể sao chép tự động; hãy giữ và sao chép liên kết bên dưới.'); }
   };
   const benefits = lab
-    ? ['Hiện trên bản đồ GPS để khách tìm shop bán film gần nhất.', 'Khách xem các dòng film bạn đang bán.', 'Miễn phí, khách liên hệ Zalo / Fanpage trực tiếp.']
+    ? ['Khách tìm shop theo phường/xã và quận/huyện.', 'Khách xem các dòng film bạn đang bán.', 'Miễn phí, khách liên hệ Zalo / Fanpage trực tiếp.']
     : ['Xuất hiện cùng các điểm chụp quen thuộc ở Hà Nội.', 'Khách xem portfolio và giá trước khi liên hệ.', 'Liên hệ Zalo trực tiếp, không thu hoa hồng.'];
   return <main className="min-h-screen bg-[#F7F5F0] pb-[max(2.5rem,env(safe-area-inset-bottom))] text-[#2C2621]">
     <header className="border-b border-[#D8CFBD] bg-[#FAF8F4]"><div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6"><a href="/" className="inline-flex min-h-10 items-center gap-2 text-sm font-bold"><ArrowLeft className="h-4 w-4" />Chụp Gì Bây Giờ</a><span className="text-xs font-semibold uppercase tracking-widest text-[#9A4F29]">Dành cho đối tác</span></div></header>
     <div className="mx-auto max-w-6xl px-4 pt-9 sm:px-6 sm:pt-14">
-      <section className="mb-9 max-w-3xl"><p className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-[#A8512C]"><Sparkles className="h-4 w-4" />Kết nối người yêu nhiếp ảnh</p><h1 className="text-3xl font-bold leading-tight sm:text-5xl">{lab ? 'Đưa Shop Bán Film Của Bạn Lên Bản Đồ Nhiếp Ảnh Hà Nội' : 'Kết Nối Khách Chụp Ảnh Quanh Các Điểm Check-in Hot'}</h1><ul className="mt-6 grid gap-3 text-sm leading-relaxed text-[#554D43] sm:grid-cols-3">{benefits.map((benefit) => <li key={benefit} className="flex items-start gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-[#C76B3C]" />{benefit}</li>)}</ul></section>
+      <section className="mb-9 max-w-3xl"><p className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-[#A8512C]"><Sparkles className="h-4 w-4" />Kết nối người yêu nhiếp ảnh</p><h1 className="text-3xl font-bold leading-tight sm:text-5xl">{lab ? 'Giúp khách tìm Shop Bán Film Tại Hà Nội' : 'Kết Nối Khách Chụp Ảnh Quanh Các Điểm Check-in Hot'}</h1><ul className="mt-6 grid gap-3 text-sm leading-relaxed text-[#554D43] sm:grid-cols-3">{benefits.map((benefit) => <li key={benefit} className="flex items-start gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-[#C76B3C]" />{benefit}</li>)}</ul></section>
       {result ? <section className="mx-auto max-w-xl rounded-3xl border border-[#D8CFBD] bg-[#FAF8F4] p-6 text-center shadow-sm sm:p-10" role="status"><span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#E8E1D4] text-[#A8512C]"><Check className="h-7 w-7" /></span><h2 className="mt-5 text-2xl font-bold">Đã cập nhật thông tin thành công!</h2><p className="mt-3 text-sm text-[#554D43]">Thông tin của bạn đã được đăng. Xem thẻ trên website và chia sẻ với khách hàng.</p><a href={result.url} className="mt-6 flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#C76B3C] px-4 font-bold text-white">Xem thẻ trên website <ArrowUpRight className="h-4 w-4" /></a><button type="button" onClick={() => void copy()} className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-xl border border-[#D8CFBD] px-5 text-sm font-semibold"><Copy className="h-4 w-4" />{copied ? 'Đã sao chép — dán vào Zalo' : 'Sao chép link để chia sẻ qua Zalo'}</button><p className="mt-4 break-all text-xs text-[#675D52]">{result.url}</p></section>
       : <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(320px,.85fr)] lg:gap-12">
         <form onSubmit={(event) => void submit(event)} className="space-y-6 rounded-[28px] border border-[#D8CFBD] bg-[#FAF8F4] p-5 sm:p-8">
           <div><h2 className="text-xl font-bold">Thông tin {lab ? 'shop bán film' : 'nhiếp ảnh gia'}</h2><p className="mt-1 text-sm text-[#675D52]">Điền thông tin thật để khách dễ tìm thấy và liên hệ bạn. Dấu * là bắt buộc.</p></div>
           <label className={label}>{lab ? 'Tên shop bán film *' : 'Tên thợ ảnh / Nghệ danh *'}<input className={input} value={name} onChange={(e) => setName(e.target.value)} required maxLength={160} placeholder={lab ? 'Ví dụ: Tiệm Film Hà Nội' : 'Ví dụ: Minh Studio'} autoComplete="organization" /></label>
           {lab && <label className={label}>Slogan của shop (tùy chọn)<input className={input} value={slogan} onChange={(e) => setSlogan(e.target.value)} maxLength={50} placeholder="Một câu ngắn về shop của bạn" /><span className="mt-1 block text-right text-xs font-normal text-[#675D52]">{slogan.length}/50 ký tự</span></label>}
-          <AddressSuggestionsField label={lab ? 'Địa chỉ chính xác *' : 'Địa chỉ studio / nơi nhận khách (tùy chọn)'} value={address} onChange={setAddress}
-            onPick={(suggestion) => { const found = districts.find((item) => suggestion.toLocaleLowerCase('vi').includes(item.toLocaleLowerCase('vi'))); if (found) setDistrict(found); }}
-            required={lab} inputClassName={input} placeholder={lab ? 'Số nhà, đường, phường — để ghim đúng vị trí' : 'Chỉ nhập nếu bạn muốn công khai địa chỉ studio'} />
-          <label className={label}>Quận / Huyện {lab ? '*' : '(tùy chọn)'}<select className={input} value={district} required={lab} onChange={(e) => setDistrict(e.target.value)}><option value="">Chọn quận / huyện</option>{districts.map((name) => <option key={name}>{name}</option>)}</select></label>
-          <p className="flex items-start gap-2 text-xs leading-relaxed text-[#675D52]"><MapPin className="h-4 w-4 shrink-0 text-[#C76B3C]" />{lab ? 'Chọn gợi ý nếu phù hợp hoặc nhập tay; kiểm tra số nhà và quận/huyện trước khi gửi.' : 'Địa chỉ này sẽ hiển thị công khai. Không nhập địa chỉ nhà riêng nếu bạn không muốn chia sẻ.'}</p>
+          {lab ? <>
+            <label className={label}>Quận / Huyện *<select className={input} value={district} required onChange={(e) => setDistrict(e.target.value)}><option value="">Chọn quận / huyện</option>{districts.map((name) => <option key={name}>{name}</option>)}</select></label>
+            <label className={label}>Phường / xã *<input className={input} value={ward} onChange={(e) => setWard(e.target.value)} required maxLength={80} placeholder="Ví dụ: Cửa Nam" autoComplete="address-level3" /></label>
+          </> : <>
+            <AddressSuggestionsField label="Địa chỉ studio / nơi nhận khách (tùy chọn)" value={address} onChange={setAddress}
+              onPick={(suggestion) => { const found = districts.find((item) => suggestion.toLocaleLowerCase('vi').includes(item.toLocaleLowerCase('vi'))); if (found) setDistrict(found); }}
+              inputClassName={input} placeholder="Chỉ nhập nếu bạn muốn công khai địa chỉ studio" />
+            <label className={label}>Quận / Huyện (tùy chọn)<select className={input} value={district} onChange={(e) => setDistrict(e.target.value)}><option value="">Chọn quận / huyện</option>{districts.map((name) => <option key={name}>{name}</option>)}</select></label>
+          </>}
+          <p className="flex items-start gap-2 text-xs leading-relaxed text-[#675D52]"><MapPin className="h-4 w-4 shrink-0 text-[#C76B3C]" />{lab ? 'Chỉ hiển thị phường/xã và quận/huyện; không cần cung cấp địa chỉ cụ thể.' : 'Địa chỉ này sẽ hiển thị công khai. Không nhập địa chỉ nhà riêng nếu bạn không muốn chia sẻ.'}</p>
           <label className={label}>{lab ? 'Hotline / Số Zalo nhận khách *' : 'Số điện thoại / Zalo *'}<input className={input} type="tel" inputMode="tel" autoComplete="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required pattern="0[0-9 ]{9,14}" placeholder="09xx xxx xxx" /></label>
           <label className={label}>Link Facebook / Instagram<input className={input} type="url" value={socialUrl} onChange={(e) => setSocialUrl(e.target.value)} placeholder="https://facebook.com/…" /></label>
           {lab ? <>
@@ -147,7 +153,7 @@ export function PartnerJoinPage({ kind }: { kind: Kind }) {
           <button type="submit" disabled={busy} className="min-h-13 w-full rounded-xl bg-[#C76B3C] px-5 py-3.5 text-base font-bold text-white transition-colors hover:bg-[#AA542D] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#C76B3C] disabled:opacity-60">{busy ? 'Đang lưu thông tin…' : 'Hoàn tất đăng ký'}</button>
           <p className="text-center text-xs leading-relaxed text-[#675D52]">Bằng cách đăng ký, bạn đồng ý công khai thông tin liên hệ và ảnh đã gửi trên website.</p>
         </form>
-        <aside className="lg:sticky lg:top-8"><div className="mb-3 flex items-center justify-between"><h2 className="font-bold">Xem trước thẻ của bạn</h2><span className="text-xs text-[#8B4828]">Cập nhật trực tiếp</span></div><LivePreviewCard data={{ kind, name, slogan: lab ? slogan : undefined, image: previews[0] || imageUrl, productImage: productPhotoPreview, minRollPrice, maxRollPrice, address, district, phone, openingHours, filmStocks, styles: selectedStyles, shootSpots, packageName, packagePrice, packageDuration, packageDeliverables: deliveredPhotos, portfolio: previews }} /><p className="mt-3 text-xs leading-relaxed text-[#675D52]">Bản xem trước mô phỏng thẻ khách hàng; vị trí và ảnh được xác nhận khi gửi biểu mẫu.</p></aside>
+        <aside className="lg:sticky lg:top-8"><div className="mb-3 flex items-center justify-between"><h2 className="font-bold">Xem trước thẻ của bạn</h2><span className="text-xs text-[#8B4828]">Cập nhật trực tiếp</span></div><LivePreviewCard data={{ kind, name, slogan: lab ? slogan : undefined, image: previews[0] || imageUrl, productImage: productPhotoPreview, minRollPrice, maxRollPrice, address: lab ? undefined : address, district, ward: lab ? ward : undefined, phone, openingHours, filmStocks, styles: selectedStyles, shootSpots, packageName, packagePrice, packageDuration, packageDeliverables: deliveredPhotos, portfolio: previews }} /><p className="mt-3 text-xs leading-relaxed text-[#675D52]">{lab ? 'Thẻ hiển thị phường/xã và quận/huyện bạn đã chọn.' : 'Bản xem trước mô phỏng thẻ khách hàng; vị trí và ảnh được xác nhận khi gửi biểu mẫu.'}</p></aside>
       </div>}
       <footer className="mt-12 border-t border-[#D8CFBD] pt-5 text-xs text-[#675D52]">© Chụp Gì Bây Giờ · Kết nối trực tiếp với cộng đồng nhiếp ảnh Hà Nội</footer>
     </div>

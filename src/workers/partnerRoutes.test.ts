@@ -78,7 +78,7 @@ describe('public partner registration', () => {
     const env = environment({
       photographers: [{ id: 'p-1', name: 'Minh Studio', status: 'published', address: '15 Ngọc Thụy, Hà Nội', district: 'Long Biên', styles: '["MàuFilm"]', preferred_spots: '["Hồ Tây"]', portfolio_photos: '["https://example.com/a.jpg"]' }],
       photographer_packages: [{ id: 'pkg-1', photographer_id: 'p-1', name: 'Ngoại cảnh', price: 600000 }],
-      film_labs: [{ id: 'lab-1', name: 'Film Shop', slogan: 'Film đẹp cho mọi khoảnh khắc', status: 'published', in_stock_films: '["Kodak Gold 200"]', product_image_url: 'https://example.com/product.jpg', min_roll_price: 125000, max_roll_price: 350000 }],
+      film_labs: [{ id: 'lab-1', name: 'Film Shop', slogan: 'Film đẹp cho mọi khoảnh khắc', address: '36 Lý Quốc Sư', ward: 'Cửa Nam', district: 'Hoàn Kiếm', status: 'published', in_stock_films: '["Kodak Gold 200"]', product_image_url: 'https://example.com/product.jpg', min_roll_price: 125000, max_roll_price: 350000 }],
     });
     const people = await worker.request('/api/photographers', {}, env);
     expect(people.status).toBe(200);
@@ -87,7 +87,9 @@ describe('public partner registration', () => {
     expect(directory.status).toBe(200);
     const directoryData = await directory.json();
     expect(directoryData).toContainEqual(expect.objectContaining({ id: 'p-1', category: 'photographer', shootSpots: ['Hồ Tây'], address: '15 Ngọc Thụy, Hà Nội', district: 'Long Biên' }));
-    expect(directoryData).toContainEqual(expect.objectContaining({ id: 'lab-1', category: 'filmLab', slogan: 'Film đẹp cho mọi khoảnh khắc', productImageUrl: 'https://example.com/product.jpg', minRollPrice: 125000, maxRollPrice: 350000, price: '125.000đ – 350.000đ/cuộn' }));
+    expect(directoryData).toContainEqual(expect.objectContaining({ id: 'lab-1', category: 'filmLab', slogan: 'Film đẹp cho mọi khoảnh khắc', address: 'Cửa Nam, Hoàn Kiếm, Hà Nội', ward: 'Cửa Nam', district: 'Hoàn Kiếm', productImageUrl: 'https://example.com/product.jpg', minRollPrice: 125000, maxRollPrice: 350000, price: '125.000đ – 350.000đ/cuộn' }));
+    const labs = await worker.request('/api/labs', {}, environment({ film_labs: [{ id: 'lab-1', name: 'Film Shop', address: '36 Lý Quốc Sư', ward: 'Cửa Nam', district: 'Hoàn Kiếm', status: 'published' }] }));
+    expect(await labs.json()).toMatchObject([{ id: 'lab-1', address: 'Cửa Nam, Hoàn Kiếm, Hà Nội', ward: 'Cửa Nam' }]);
   });
   it('publishes a photographer with package and persisted portfolio images', async () => {
     const env = environment();
@@ -124,48 +126,51 @@ describe('public partner registration', () => {
     expect(response.status).toBe(404);
   });
 
-  it('requires a Hanoi geocode before publishing a film lab', async () => {
+  it('publishes a film shop using ward and district only without geocoding an exact address', async () => {
     const env = environment();
-    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(new Response(JSON.stringify([{ lat: '21.03', lon: '105.85' }]), { status: 200 }));
+    const fetchMock = vi.spyOn(globalThis, 'fetch');
     try {
-      const response = await submit('/api/partner/register-lab', { name: 'Lab Hà Nội', address: '36 Lý Quốc Sư', district: 'Hoàn Kiếm', phone: '0912345678', filmStocks: ['Kodak Gold 200'], minRollPrice: 120000, maxRollPrice: 340000, fast2h: true }, [jpg()], env);
+      const response = await submit('/api/partner/register-lab', { name: 'Lab Hà Nội', ward: 'Cửa Nam', district: 'Hoàn Kiếm', phone: '0912345678', filmStocks: ['Kodak Gold 200'], minRollPrice: 120000, maxRollPrice: 340000, fast2h: true }, [jpg()], env);
       expect(response.status).toBe(201);
-      expect(fetchMock).toHaveBeenCalledOnce();
-      expect(env.writes.some(({ sql, values }) => sql.includes('INSERT INTO film_labs') && values.includes(21.03) && values.includes('published') && values[9] === 0)).toBe(true);
+      expect(fetchMock).not.toHaveBeenCalled();
+      const insert = env.writes.find(({ sql }) => sql.includes('INSERT INTO film_labs'));
+      expect(insert?.sql).toContain('ward');
+      expect(insert?.values).toContain('Cửa Nam');
+      expect(insert?.values).toContain(null);
+      expect(insert?.values).toContain('published');
     } finally { fetchMock.mockRestore(); }
   });
 
   it('stores the product photo and comparable film roll price range for a shop', async () => {
     const env = environment();
-    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(new Response(JSON.stringify([{ lat: '21.03', lon: '105.85' }]), { status: 200 }));
     const form = new FormData();
-    form.set('payload', JSON.stringify({ name: 'Lab Hà Nội', address: '36 Lý Quốc Sư', district: 'Hoàn Kiếm', phone: '0912345678', filmStocks: ['Kodak Gold 200'], minRollPrice: 125000, maxRollPrice: 350000 }));
+    form.set('payload', JSON.stringify({ name: 'Lab Hà Nội', ward: 'Cửa Nam', district: 'Hoàn Kiếm', phone: '0912345678', filmStocks: ['Kodak Gold 200'], minRollPrice: 125000, maxRollPrice: 350000 }));
     form.set('productPhoto', jpg());
-    try {
-      const response = await worker.request('/api/partner/register-lab', { method: 'POST', headers: { Origin: 'https://chupgibaygio.com' }, body: form }, env);
-      expect(response.status).toBe(201);
-      const insert = env.writes.find(({ sql }) => sql.includes('INSERT INTO film_labs'));
-      expect(insert?.sql).toContain('product_image_url');
-      expect(insert?.sql).toContain('min_roll_price');
-      expect(insert?.sql).toContain('max_roll_price');
-      expect(insert?.values).toEqual(expect.arrayContaining([125000, 350000]));
-      expect(insert?.values.some((value) => typeof value === 'string' && value.includes('/api/partner/images/partner/lab/'))).toBe(true);
-      expect(env.bucket.put).toHaveBeenCalledOnce();
-    } finally { fetchMock.mockRestore(); }
+    const response = await worker.request('/api/partner/register-lab', { method: 'POST', headers: { Origin: 'https://chupgibaygio.com' }, body: form }, env);
+    expect(response.status).toBe(201);
+    const insert = env.writes.find(({ sql }) => sql.includes('INSERT INTO film_labs'));
+    expect(insert?.sql).toContain('product_image_url');
+    expect(insert?.sql).toContain('min_roll_price');
+    expect(insert?.sql).toContain('max_roll_price');
+    expect(insert?.values).toEqual(expect.arrayContaining([125000, 350000, 'Cửa Nam']));
+    expect(insert?.values.some((value) => typeof value === 'string' && value.includes('/api/partner/images/partner/lab/'))).toBe(true);
+    expect(env.bucket.put).toHaveBeenCalledOnce();
   });
 
   it('persists a shop slogan of up to 50 characters', async () => {
     const env = environment();
-    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(new Response(JSON.stringify([{ lat: '21.03', lon: '105.85' }]), { status: 200 }));
+    const fetchMock = vi.spyOn(globalThis, 'fetch');
     try {
       const response = await submit('/api/partner/register-lab', {
-        name: 'Lab Hà Nội', slogan: 'a'.repeat(50), address: '36 Lý Quốc Sư', district: 'Hoàn Kiếm',
+        name: 'Lab Hà Nội', slogan: 'a'.repeat(50), ward: 'Cửa Nam', district: 'Hoàn Kiếm',
         phone: '0912345678', filmStocks: [], minRollPrice: 120000, maxRollPrice: 340000,
       }, [], env);
       expect(response.status).toBe(201);
       const insert = env.writes.find(({ sql }) => sql.includes('INSERT INTO film_labs'));
       expect(insert?.sql).toContain('slogan');
       expect(insert?.values).toContain('a'.repeat(50));
+      expect(insert?.values).toContain('Cửa Nam');
+      expect(fetchMock).not.toHaveBeenCalled();
     } finally { fetchMock.mockRestore(); }
   });
 
@@ -174,7 +179,7 @@ describe('public partner registration', () => {
     const fetchMock = vi.spyOn(globalThis, 'fetch');
     try {
       const response = await submit('/api/partner/register-lab', {
-        name: 'Lab Hà Nội', slogan: 'a'.repeat(51), address: '36 Lý Quốc Sư', district: 'Hoàn Kiếm',
+        name: 'Lab Hà Nội', slogan: 'a'.repeat(51), ward: 'Cửa Nam', district: 'Hoàn Kiếm',
         phone: '0912345678', filmStocks: [], minRollPrice: 120000, maxRollPrice: 340000,
       }, [], env);
       expect(response.status).toBe(400);
@@ -186,7 +191,7 @@ describe('public partner registration', () => {
   it('rejects an inverted film price range without storing the shop or image', async () => {
     const env = environment();
     const response = await submit('/api/partner/register-lab', {
-      name: 'Lab Hà Nội', address: '36 Lý Quốc Sư', district: 'Hoàn Kiếm', phone: '0912345678',
+      name: 'Lab Hà Nội', ward: 'Cửa Nam', district: 'Hoàn Kiếm', phone: '0912345678',
       filmStocks: ['Kodak Gold 200'], minRollPrice: 350000, maxRollPrice: 125000,
     }, [jpg()], env);
     expect(response.status).toBe(400);
@@ -194,12 +199,13 @@ describe('public partner registration', () => {
     expect(env.bucket.put).not.toHaveBeenCalled();
   });
 
-  it('refuses unverifiable addresses instead of pinning a fake location', async () => {
+  it('requires a ward and district instead of an exact shop address', async () => {
     const env = environment();
-    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(new Response('[]', { status: 200 }));
+    const fetchMock = vi.spyOn(globalThis, 'fetch');
     try {
-      const response = await submit('/api/partner/register-lab', { name: 'Lab Hà Nội', address: 'Không tìm được', district: 'Hoàn Kiếm', phone: '0912345678', filmStocks: [], minRollPrice: 120000, maxRollPrice: 340000 }, [], env);
-      expect(response.status).toBe(422);
+      const response = await submit('/api/partner/register-lab', { name: 'Lab Hà Nội', district: 'Hoàn Kiếm', phone: '0912345678', filmStocks: [], minRollPrice: 120000, maxRollPrice: 340000 }, [], env);
+      expect(response.status).toBe(400);
+      expect(fetchMock).not.toHaveBeenCalled();
       expect(env.writes).toHaveLength(0);
     } finally { fetchMock.mockRestore(); }
   });

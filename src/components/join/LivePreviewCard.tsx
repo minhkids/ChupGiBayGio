@@ -10,6 +10,7 @@ export interface PartnerPreview {
   maxRollPrice?: string;
   address?: string;
   district?: string;
+  ward?: string;
   phone?: string;
   openingHours?: string;
   filmStocks?: string[];
@@ -25,7 +26,9 @@ export interface PartnerPreview {
 export function LivePreviewCard({ data }: { data: PartnerPreview }) {
   const lab = data.kind === 'lab';
   const thumbnail = (lab ? data.productImage || data.image : data.portfolio?.[0] || data.image);
-  const location = data.address
+  const location = lab
+    ? [data.ward, data.district, 'Hà Nội'].filter(Boolean).join(', ')
+    : data.address
     ? `${data.address}${data.district && !data.address.toLocaleLowerCase('vi').includes(data.district.toLocaleLowerCase('vi')) ? `, ${data.district}` : ''}`
     : data.district;
   const highlights = lab ? data.filmStocks : data.styles;

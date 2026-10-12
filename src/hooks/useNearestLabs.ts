@@ -74,19 +74,25 @@ export function useNearestLabs(optionsOrFilter?: string | { filmStockQuery?: str
       if (!response.ok) throw new Error(`Lỗi tải lab (${response.status})`);
       const rows: unknown = await response.json();
       if (!Array.isArray(rows)) return [];
-      return rows.map((value) => {
+      return rows.filter((value) => {
+        const row = value as Record<string, unknown>;
+        const lat = Number(row.lat);
+        const lng = Number(row.lng);
+        return row.lat !== null && row.lat !== undefined && row.lng !== null && row.lng !== undefined
+          && Number.isFinite(lat) && Number.isFinite(lng) && lat >= 20.4 && lat <= 21.7 && lng >= 105.2 && lng <= 106.3;
+      }).map((value) => {
         const row = value as Record<string, unknown>;
         const address = String(row.address || '');
         const filmsValue = row.in_stock_films ?? row.inStockFilms;
         let availableFilms: string[] = [];
         try { const parsed = typeof filmsValue === 'string' ? JSON.parse(filmsValue) : filmsValue; if (Array.isArray(parsed)) availableFilms = parsed.map(String); } catch { availableFilms = []; }
-        const lat = Number(row.lat) || HANOI_DEFAULT_COORDS.lat;
-        const lng = Number(row.lng) || HANOI_DEFAULT_COORDS.lng;
+        const lat = Number(row.lat);
+        const lng = Number(row.lng);
         const phone = String(row.hotline || row.phone || '');
         const minRollPrice = Number(row.min_roll_price) || 0;
         const maxRollPrice = Number(row.max_roll_price) || 0;
         return {
-          id: String(row.id), name: String(row.name || ''), slogan: String(row.slogan || ''), address, district: String(row.district || ''), lat, lng,
+          id: String(row.id), name: String(row.name || ''), slogan: String(row.slogan || ''), address, district: String(row.district || ''), ward: String(row.ward || ''), lat, lng,
           openingHours: String(row.opening_hours || row.openingHours || ''),
 
           availableFilms, phone, zaloUrl: phone ? `https://zalo.me/${phone.replace(/\D/g, '')}` : '',

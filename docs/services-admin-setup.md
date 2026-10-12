@@ -20,4 +20,4 @@ Each category in `/admin` has a “Nhập nhiều dòng từ Excel” panel. Dow
 
 ## Local development
 
-Set `VITE_API_URL` to the local Worker origin when running the Worker separately, and provide local `ADMIN_PASSWORD` / `ADMIN_SESSION_SECRET` through Wrangler's local secret configuration. Apply migrations to the local D1 database before adding records.
+Start the API in one terminal with `npx wrangler dev --local --config wrangler-worker.toml --port 8787`, then run `npm run dev` in another. Leave `VITE_API_URL` unset to use Vite's `/api/*` proxy to the local Worker; set it only when your local Worker uses another origin. Provide local `ADMIN_PASSWORD` / `ADMIN_SESSION_SECRET` through Wrangler's local secret configuration and apply migrations to local D1 before adding records.

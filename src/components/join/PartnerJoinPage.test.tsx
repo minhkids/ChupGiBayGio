@@ -16,15 +16,17 @@ describe('partner onboarding pages', () => {
     fireEvent.change(slogan, { target: { value: 'Film đẹp cho mọi khoảnh khắc' } });
     expect(screen.getByTestId('partner-preview').textContent).toContain('Film đẹp cho mọi khoảnh khắc');
     fireEvent.change(screen.getByLabelText('Tên shop bán film *'), { target: { value: 'Film Mùa Thu' } });
-    fireEvent.change(screen.getByLabelText('Địa chỉ chính xác *'), { target: { value: '36 Lý Quốc Sư, Hà Nội' } });
     fireEvent.change(screen.getByLabelText('Quận / Huyện *'), { target: { value: 'Hoàn Kiếm' } });
+    fireEvent.change(screen.getByLabelText('Phường / xã *'), { target: { value: 'Cửa Nam' } });
     fireEvent.change(screen.getByLabelText('Hotline / Số Zalo nhận khách *'), { target: { value: '0912345678' } });
     fireEvent.change(screen.getByLabelText(/Giá cuộn rẻ nhất/), { target: { value: '120000' } });
     fireEvent.change(screen.getByLabelText(/Giá cuộn đắt nhất/), { target: { value: '350000' } });
     fireEvent.submit(screen.getByRole('button', { name: 'Hoàn tất đăng ký' }).closest('form')!);
     await waitFor(() => expect(fetchMock).toHaveBeenCalled());
     const form = fetchMock.mock.calls[0][1].body as FormData;
-    expect(JSON.parse(String(form.get('payload'))).slogan).toBe('Film đẹp cho mọi khoảnh khắc');
+    const payload = JSON.parse(String(form.get('payload')));
+    expect(payload).toMatchObject({ slogan: 'Film đẹp cho mọi khoảnh khắc', district: 'Hoàn Kiếm', ward: 'Cửa Nam' });
+    expect(payload).not.toHaveProperty('address');
   });
 
   it('collects a product photo and comparable low-to-high roll prices for film shops', () => {
@@ -41,7 +43,7 @@ describe('partner onboarding pages', () => {
 
   it('shows only film retail fields and preview as the shop types', () => {
     render(<PartnerJoinPage kind="lab" />);
-    expect(screen.getByRole('heading', { name: /Đưa Shop Bán Film/i })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: /Giúp khách tìm Shop Bán Film/i })).toBeTruthy();
     fireEvent.change(screen.getByLabelText('Tên shop bán film *'), { target: { value: 'Film Mùa Thu' } });
     expect(screen.getByTestId('partner-preview').textContent).toContain('Film Mùa Thu');
     expect(screen.queryByText(/tráng|scan|ECN-2|C-41/i)).toBeNull();
@@ -49,21 +51,17 @@ describe('partner onboarding pages', () => {
     expect(screen.getByLabelText('Quận / Huyện *')).toBeTruthy();
   });
 
-  it('shows a selectable address suggestion for the shop while preserving manual entry', async () => {
-    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => [{ label: 'Ngọc Thụy, Long Biên, Hà Nội' }] });
-    vi.stubGlobal('fetch', fetchMock);
+  it('asks film shops for their ward instead of an exact street address', () => {
     render(<PartnerJoinPage kind="lab" />);
-    fireEvent.focus(screen.getByLabelText('Địa chỉ chính xác *'));
-    fireEvent.change(screen.getByLabelText('Địa chỉ chính xác *'), { target: { value: 'Ngọc Thụy' } });
-    fireEvent.click(await screen.findByRole('option', { name: 'Ngọc Thụy, Long Biên, Hà Nội' }));
-    expect((screen.getByLabelText('Địa chỉ chính xác *') as HTMLInputElement).value).toBe('Ngọc Thụy, Long Biên, Hà Nội');
-    expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining('/api/partner/address-suggestions?q='), expect.anything());
+    expect(screen.queryByLabelText('Địa chỉ chính xác *')).toBeNull();
+    expect((screen.getByLabelText('Phường / xã *') as HTMLInputElement).required).toBe(true);
+    expect(screen.getByLabelText('Quận / Huyện *').hasAttribute('required')).toBe(true);
   });
 
   it('explains when the address provider has no match instead of leaving a silent blank', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => [] }));
-    render(<PartnerJoinPage kind="lab" />);
-    const address = screen.getByLabelText('Địa chỉ chính xác *');
+    render(<PartnerJoinPage kind="photographer" />);
+    const address = screen.getByLabelText('Địa chỉ studio / nơi nhận khách (tùy chọn)');
     fireEvent.focus(address);
     fireEvent.change(address, { target: { value: '264/88 Ngọc Thụy' } });
     expect(screen.getByText(/gõ ít nhất 3 ký tự/i)).toBeTruthy();

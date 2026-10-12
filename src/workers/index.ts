@@ -350,8 +350,12 @@ app.get('/api/services', async (c) => {
       const minRollPrice = Number(row.min_roll_price) || 0;
       const maxRollPrice = Number(row.max_roll_price) || 0;
       const price = maxRollPrice > 0 ? `${minRollPrice.toLocaleString('vi-VN')}đ – ${maxRollPrice.toLocaleString('vi-VN')}đ/cuộn` : '';
+      const ward = String(row.ward || '');
+      const district = String(row.district || '');
+      const area = [ward, district, 'Hà Nội'].filter(Boolean).join(', ');
       return {
-        ...mapFields(row, { slogan: 'slogan', address: 'address', district: 'district', phone: 'hotline', openingHours: 'opening_hours', fastService: 'fast_2h', link: 'fanpage_url', imageUrl: 'image_url', productImageUrl: 'product_image_url', minRollPrice: 'min_roll_price', maxRollPrice: 'max_roll_price', lat: 'lat', lng: 'lng' }),
+        ...mapFields(row, { slogan: 'slogan', phone: 'hotline', openingHours: 'opening_hours', fastService: 'fast_2h', link: 'fanpage_url', imageUrl: 'image_url', productImageUrl: 'product_image_url', minRollPrice: 'min_roll_price', maxRollPrice: 'max_roll_price', lat: 'lat', lng: 'lng' }),
+        address: area, ward, district,
         id: row.id, name: row.name, category: 'filmLab', price, filmStocks: parseJsonField(String(row.in_stock_films || '[]'), [])
       };
     })
@@ -366,7 +370,12 @@ app.get('/api/films', async (c) => {
 
 app.get('/api/labs', async (c) => {
   const { results } = await getD1(c.env).prepare("SELECT * FROM film_labs WHERE status = 'published' ORDER BY created_at DESC").all();
-  return c.json(results || []);
+  return c.json((results || []).map((value) => {
+    const row = value as Record<string, unknown>;
+    const ward = String(row.ward || '');
+    const district = String(row.district || '');
+    return { ...row, ward, address: [ward, district, 'Hà Nội'].filter(Boolean).join(', ') };
+  }));
 });
 
 app.get('/api/outfits', async (c) => {

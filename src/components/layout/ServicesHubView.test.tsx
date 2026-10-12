@@ -16,16 +16,20 @@ afterEach(() => { cleanup(); sessionStorage.clear(); window.history.replaceState
 const renderView = () => render(<ShootPlanProvider><ServicesHubView onClose={() => undefined} /></ShootPlanProvider>);
 
 describe('ServicesHubView', () => {
-  it('shows the shop slogan in the featured compact card and directory', async () => {
+  it('shows a compact featured shop card and slogan in the directory', async () => {
     window.history.replaceState(null, '', '/?services=film&partner=film-shop-1');
     Element.prototype.scrollIntoView = vi.fn();
     vi.mocked(serviceHubApi.list).mockResolvedValueOnce([{
       id: 'film-shop-1', category: 'filmLab', name: 'Shop Film', slogan: 'Film đẹp cho mọi khoảnh khắc',
-      address: '36 Lý Quốc Sư', phone: '0912345678', filmStocks: ['Kodak Gold 200'],
+      address: 'Cửa Nam, Hoàn Kiếm, Hà Nội', ward: 'Cửa Nam', district: 'Hoàn Kiếm', phone: '0912345678', filmStocks: ['Kodak Gold 200'],
     }]);
     renderView();
-    expect((await screen.findByTestId('partner-preview')).textContent).toContain('Film đẹp cho mọi khoảnh khắc');
-    expect(screen.getAllByText('Film đẹp cho mọi khoảnh khắc')).toHaveLength(2);
+    const featured = await screen.findByTestId('partner-featured-card');
+    expect(featured.textContent).toContain('Shop Film');
+    expect(featured.textContent).toContain('Cửa Nam, Hoàn Kiếm, Hà Nội');
+    expect(featured.className).toContain('p-3');
+    expect(screen.queryByTestId('partner-preview')).toBeNull();
+    expect(screen.getByText('Film đẹp cho mọi khoảnh khắc')).toBeTruthy();
   });
 
   it('shows a partner film-shop product photo and roll price range in the film tab', async () => {
@@ -35,11 +39,77 @@ describe('ServicesHubView', () => {
       price: '125.000đ – 350.000đ/cuộn', filmStocks: ['Kodak Gold 200'],
     }]);
     renderView();
-    fireEvent.click(screen.getByRole('button', { name: /Mua film & Lab/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'Mua film' }));
 
     expect(await screen.findByText('Shop Film')).toBeTruthy();
     expect(screen.getByText('125.000đ – 350.000đ/cuộn')).toBeTruthy();
+    expect(screen.getByTestId('film-shop-card').className).toContain('p-3');
     expect(screen.getByRole('img', { name: 'Film shop Shop Film' })).toBeTruthy();
+  });
+
+  it('hides the redundant shop heading and refresh action in the film-buying tab', async () => {
+    vi.mocked(serviceHubApi.list).mockResolvedValueOnce([{
+      id: 'film-shop-1', category: 'filmLab', name: 'Shop Film', district: 'Hoàn Kiếm', filmStocks: ['Kodak Gold 200'],
+    }]);
+    renderView();
+    fireEvent.click(screen.getByRole('button', { name: 'Mua film' }));
+    expect(await screen.findByText('Shop Film')).toBeTruthy();
+    expect(screen.queryByRole('heading', { name: 'Cửa hàng bán film' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Làm mới' })).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Lab' }));
+    expect(await screen.findByRole('heading', { name: 'Danh sách Lab' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Làm mới' })).toBeTruthy();
+  });
+
+  it('separates the Lab list from the film-buying list', async () => {
+    vi.mocked(serviceHubApi.list).mockResolvedValueOnce([{
+      id: 'lab-1', category: 'filmLab', name: 'Tiệm Film', ward: 'Cửa Nam', district: 'Hoàn Kiếm',
+      filmStocks: ['Kodak Gold 200'], services: ['Tráng C-41', 'Scan film'], openingHours: '09:00–18:00',
+    }]);
+    renderView();
+    fireEvent.click(screen.getByRole('button', { name: 'Lab' }));
+    expect(await screen.findByRole('heading', { name: 'Danh sách Lab' })).toBeTruthy();
+    expect(screen.getByText('Tráng C-41 · Scan film')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Mua film' }));
+    expect(screen.queryByRole('heading', { name: 'Cửa hàng bán film' })).toBeNull();
+    expect(screen.getByText(/Kodak Gold 200/)).toBeTruthy();
+  });
+
+  it('shows the district selector as a labeled field and keeps the count aligned with the search', async () => {
+    window.history.replaceState(null, '', '/?services=film');
+    vi.mocked(serviceHubApi.list).mockResolvedValueOnce([{
+      id: 'film-shop-1', category: 'filmLab', name: 'Shop Film', district: 'Hoàn Kiếm', filmStocks: ['Kodak Gold 200'],
+    }]);
+    renderView();
+    const district = await screen.findByLabelText('Quận / huyện');
+    expect(screen.getByText('Tìm kiếm')).toBeTruthy();
+    expect(district.tagName).toBe('SELECT');
+    expect(district.className).toContain('w-full');
+    expect(screen.getByText('1 shop')).toBeTruthy();
+  });
+
+  it('does not show an empty-directory message when loading failed', async () => {
+    vi.mocked(serviceHubApi.list).mockRejectedValueOnce(new Error('API trả về trang HTML thay vì JSON.'));
+    renderView();
+    fireEvent.click(screen.getByRole('button', { name: 'Mua film' }));
+    expect((await screen.findByRole('alert')).textContent).toContain('API trả về trang HTML thay vì JSON.');
+    expect(screen.queryByText('Chưa có shop bán film nào.')).toBeNull();
+  });
+
+  it('shows and filters film shops by ward and district without street addresses', async () => {
+    window.history.replaceState(null, '', '/?services=film');
+    vi.mocked(serviceHubApi.list).mockResolvedValueOnce([{
+      id: 'film-shop-1', category: 'filmLab', name: 'Shop Film', address: 'Cửa Nam, Hoàn Kiếm, Hà Nội',
+      ward: 'Cửa Nam', district: 'Hoàn Kiếm', filmStocks: ['Kodak Gold 200'],
+    }]);
+    renderView();
+    expect(await screen.findByText('Shop Film')).toBeTruthy();
+    expect(screen.getByText('Cửa Nam, Hoàn Kiếm, Hà Nội')).toBeTruthy();
+    fireEvent.change(screen.getByPlaceholderText('Tìm film, cửa hàng, phường hoặc quận'), { target: { value: 'Cửa Nam' } });
+    expect(screen.getByText('Shop Film')).toBeTruthy();
+    fireEvent.change(screen.getByLabelText('Quận / huyện'), { target: { value: 'Ba Đình' } });
+    expect(screen.queryByText('Shop Film')).toBeNull();
   });
 
   it('starts the directories empty and uses equal-width navigation tabs', async () => {
@@ -49,8 +119,8 @@ describe('ServicesHubView', () => {
     expect(screen.getByText('Chưa có trang phục nào. Quản trị viên có thể thêm thông tin.')).toBeDefined();
     expect(screen.queryByText('Tiệm Áo Dài Thơ')).toBeNull();
     const nav = screen.getByRole('navigation', { name: 'Danh mục dịch vụ' });
-    expect(nav.firstElementChild?.className).toContain('grid-cols-3');
-    expect(nav.querySelectorAll('button')).toHaveLength(3);
+    expect(nav.firstElementChild?.className).toContain('grid-cols-4');
+    expect(nav.querySelectorAll('button')).toHaveLength(4);
     expect(nav.querySelector('button')?.className).toContain('w-full');
     expect(nav.querySelector('button span')?.className).toContain('whitespace-nowrap');
 
@@ -58,8 +128,10 @@ describe('ServicesHubView', () => {
     expect(await screen.findByText('Chưa có nhiếp ảnh gia nào. Quản trị viên có thể thêm thông tin.')).toBeDefined();
     expect(screen.queryByText('Dương Tuấn Anh')).toBeNull();
 
-    fireEvent.click(screen.getByRole('button', { name: /Mua film & Lab/i }));
-    expect(await screen.findByText('Chưa có film lab nào. Quản trị viên có thể thêm thông tin.')).toBeDefined();
+    fireEvent.click(screen.getByRole('button', { name: 'Lab' }));
+    expect(await screen.findByText('Chưa có phòng lab nào.')).toBeDefined();
+    fireEvent.click(screen.getByRole('button', { name: 'Mua film' }));
+    expect(await screen.findByText('Chưa có shop bán film nào.')).toBeDefined();
     expect(screen.queryByText('Nadar Club')).toBeNull();
   });
 
