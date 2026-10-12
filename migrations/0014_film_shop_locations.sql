@@ -1,0 +1,1 @@
+ALTER TABLE film_labs ADD COLUMN locations TEXT NOT NULL DEFAULT '[]';

@@ -4,6 +4,7 @@ import { getD1, jsonText } from './d1Client';
 type Bindings = { DB: D1Database; R2_BUCKET: R2Bucket; ADMIN_SESSION_SECRET?: string; R2_PUBLIC_BASE_URL?: string };
 const cms = new Hono<{ Bindings: Bindings }>();
 const encoder = new TextEncoder();
+const districts = new Set(['Ba Đình', 'Hoàn Kiếm', 'Đống Đa', 'Cầu Giấy', 'Hai Bà Trưng', 'Tây Hồ', 'Thanh Xuân', 'Long Biên', 'Hà Đông', 'Hoàng Mai', 'Nam Từ Liêm', 'Bắc Từ Liêm', 'Gia Lâm', 'Đông Anh', 'Sóc Sơn', 'Thanh Trì', 'Hoài Đức', 'Đan Phượng', 'Thanh Oai', 'Thường Tín', 'Phúc Thọ', 'Quốc Oai', 'Thạch Thất', 'Chương Mỹ', 'Mỹ Đức', 'Ứng Hòa', 'Ba Vì', 'Sơn Tây', 'Mê Linh']);
 
 async function validSession(token: string, secret: string): Promise<boolean> {
   try {
@@ -68,6 +69,18 @@ function rollPriceFields(body: Record<string, unknown>, films: unknown[]) {
     || body.adminCategory === 'filmLab' && hasRetailPrice
     || hasRetailPrice && (minRollPrice < 1 || !cheapestRollName || !films.map(String).includes(cheapestRollName))) return null;
   return { minRollPrice, maxRollPrice, cheapestRollName };
+}
+
+function shopLocations(body: Record<string, unknown>) {
+  const submitted = body.locations === undefined
+    ? body.ward || body.district ? [{ ward: body.ward, district: body.district, openingHours: body.openingHours }] : []
+    : body.locations;
+  if (!Array.isArray(submitted) || submitted.length > 3 || body.locations !== undefined && submitted.length < 1) return null;
+  const locations = submitted.map((value) => {
+    const item = value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {};
+    return { ward: text(item.ward, 80), district: text(item.district, 80), openingHours: text(item.openingHours, 120) };
+  });
+  return locations.some((item) => !item.ward || !districts.has(item.district)) ? null : locations;
 }
 
 cms.post('/api/admin/spots', async (c) => {
@@ -149,8 +162,11 @@ cms.post('/api/admin/labs', async (c) => {
   if ((lat !== null && !Number.isFinite(lat)) || (lng !== null && !Number.isFinite(lng))) return c.json({ error: 'Tọa độ không hợp lệ.' }, 400);
   const id = crypto.randomUUID(); const films = array(body.inStockFilms); const rollPrices = rollPriceFields(body, films);
   if (!rollPrices) return c.json({ error: 'Cuộn film và khoảng giá bán chưa hợp lệ.' }, 400);
-  await getD1(c.env).prepare('INSERT INTO film_labs (id, name, slogan, address, district, ward, lat, lng, opening_hours, hotline, fast_2h, in_stock_films, fanpage_url, image_url, product_image_url, cheapest_roll_name, min_roll_price, max_roll_price, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
-    .bind(id, text(body.name, 160), text(body.slogan, 50), text(body.address), text(body.district, 80), text(body.ward, 80), lat, lng, text(body.openingHours, 300), text(body.hotline, 80), body.fast2h ? 1 : 0, jsonText(films), text(body.fanpageUrl, 2000), text(body.imageUrl, 2000), text(body.productImageUrl, 2000), rollPrices.cheapestRollName, rollPrices.minRollPrice, rollPrices.maxRollPrice, 'published').run();
+  const locations = shopLocations(body);
+  if (!locations || rollPrices.minRollPrice > 0 && !locations.length) return c.json({ error: 'Shop cần khai báo 1–3 địa chỉ Hà Nội hợp lệ.' }, 400);
+  const mainLocation = locations[0] || { ward: text(body.ward, 80), district: text(body.district, 80), openingHours: text(body.openingHours, 120) };
+  await getD1(c.env).prepare('INSERT INTO film_labs (id, name, slogan, address, district, ward, lat, lng, opening_hours, hotline, fast_2h, in_stock_films, fanpage_url, image_url, product_image_url, cheapest_roll_name, min_roll_price, max_roll_price, locations, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+    .bind(id, text(body.name, 160), text(body.slogan, 50), text(body.address), mainLocation.district, mainLocation.ward, lat, lng, mainLocation.openingHours, text(body.hotline, 80), body.fast2h ? 1 : 0, jsonText(films), text(body.fanpageUrl, 2000), text(body.imageUrl, 2000), text(body.productImageUrl, 2000), rollPrices.cheapestRollName, rollPrices.minRollPrice, rollPrices.maxRollPrice, jsonText(locations), 'published').run();
   return c.json({ ...body, id, inStockFilms: films, ...rollPrices }, 201);
 });
 
@@ -247,8 +263,11 @@ cms.put('/api/admin/cms/:table/:id', async (c) => {
     if ((lat !== null && !Number.isFinite(lat)) || (lng !== null && !Number.isFinite(lng))) return c.json({ error: 'Tọa độ không hợp lệ.' }, 400);
     const films = array(body.inStockFilms); const rollPrices = rollPriceFields(body, films);
     if (!rollPrices) return c.json({ error: 'Cuộn film và khoảng giá bán chưa hợp lệ.' }, 400);
-    result = await db.prepare('UPDATE film_labs SET name = ?, slogan = ?, address = ?, district = ?, ward = ?, lat = ?, lng = ?, opening_hours = ?, hotline = ?, fast_2h = ?, in_stock_films = ?, fanpage_url = ?, image_url = ?, product_image_url = ?, cheapest_roll_name = ?, min_roll_price = ?, max_roll_price = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
-      .bind(text(body.name, 160), text(body.slogan, 50), text(body.address), text(body.district, 80), text(body.ward, 80), lat, lng, text(body.openingHours, 300), text(body.hotline, 80), body.fast2h ? 1 : 0, jsonText(films), text(body.fanpageUrl, 2000), text(body.imageUrl, 2000), text(body.productImageUrl, 2000), rollPrices.cheapestRollName, rollPrices.minRollPrice, rollPrices.maxRollPrice, id).run();
+    const locations = shopLocations(body);
+    if (!locations || rollPrices.minRollPrice > 0 && !locations.length) return c.json({ error: 'Shop cần khai báo 1–3 địa chỉ Hà Nội hợp lệ.' }, 400);
+    const mainLocation = locations[0] || { ward: text(body.ward, 80), district: text(body.district, 80), openingHours: text(body.openingHours, 120) };
+    result = await db.prepare('UPDATE film_labs SET name = ?, slogan = ?, address = ?, district = ?, ward = ?, lat = ?, lng = ?, opening_hours = ?, hotline = ?, fast_2h = ?, in_stock_films = ?, fanpage_url = ?, image_url = ?, product_image_url = ?, cheapest_roll_name = ?, min_roll_price = ?, max_roll_price = ?, locations = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
+      .bind(text(body.name, 160), text(body.slogan, 50), text(body.address), mainLocation.district, mainLocation.ward, lat, lng, mainLocation.openingHours, text(body.hotline, 80), body.fast2h ? 1 : 0, jsonText(films), text(body.fanpageUrl, 2000), text(body.imageUrl, 2000), text(body.productImageUrl, 2000), rollPrices.cheapestRollName, rollPrices.minRollPrice, rollPrices.maxRollPrice, jsonText(locations), id).run();
   } else {
     return c.json({ error: 'Danh mục không hợp lệ.' }, 404);
   }

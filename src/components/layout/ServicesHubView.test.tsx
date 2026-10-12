@@ -6,6 +6,7 @@ import { ServicesHubView } from './ServicesHubView';
 import { serviceHubApi } from '../../services/serviceHubApi';
 
 vi.mock('../../services/serviceHubApi', () => ({
+  filmShopLocations: (shop: { locations?: { ward: string; district: string; openingHours?: string }[]; ward?: string; district?: string; openingHours?: string }) => shop.locations?.length ? shop.locations : (shop.ward || shop.district ? [{ ward: shop.ward || '', district: shop.district || '', openingHours: shop.openingHours }] : []),
   serviceHubApi: {
     list: vi.fn().mockResolvedValue([]), adminList: vi.fn().mockResolvedValue([]),
     login: vi.fn().mockResolvedValue(undefined), logout: vi.fn(), create: vi.fn(), update: vi.fn(), remove: vi.fn()
@@ -213,6 +214,37 @@ describe('ServicesHubView', () => {
     expect(screen.getByText('Shop Film')).toBeTruthy();
     fireEvent.change(screen.getByLabelText('Quận / huyện'), { target: { value: 'Ba Đình' } });
     expect(screen.queryByText('Shop Film')).toBeNull();
+  });
+
+  it('filters one shop by any of its branch areas and shows every branch in its details', async () => {
+    window.history.replaceState(null, '', '/?services=film');
+    vi.mocked(serviceHubApi.list).mockResolvedValueOnce([{
+      id: 'multi-branch-shop', category: 'filmLab', name: 'Nhiều Chi Nhánh', minRollPrice: 50000,
+      locations: [
+        { ward: 'Cửa Nam', district: 'Hoàn Kiếm', openingHours: '09:00–18:00' },
+        { ward: 'Dịch Vọng', district: 'Cầu Giấy', openingHours: '10:00–20:00' },
+      ],
+    }]);
+    renderView();
+
+    expect(await screen.findByText('Nhiều Chi Nhánh')).toBeTruthy();
+    const district = screen.getByLabelText('Quận / huyện');
+    expect([...district.querySelectorAll('option')].map((option) => option.textContent)).toContain('Cầu Giấy');
+    fireEvent.change(district, { target: { value: 'Cầu Giấy' } });
+    const ward = screen.getByLabelText('Phường / xã');
+    expect([...ward.querySelectorAll('option')].map((option) => option.textContent)).toContain('Dịch Vọng');
+    fireEvent.change(ward, { target: { value: 'Dịch Vọng' } });
+    expect(screen.getByRole('status').textContent).toBe('1 shop');
+    const card = screen.getByTestId('film-shop-card');
+    expect(card.textContent).toContain('2 cơ sở');
+    expect(card.textContent).toContain('Cửa Nam, Hoàn Kiếm, Hà Nội');
+    expect(card.textContent).toContain('Dịch Vọng, Cầu Giấy, Hà Nội');
+    fireEvent.click(within(card).getByRole('button', { name: 'Xem chi tiết Nhiều Chi Nhánh' }));
+    const detail = await screen.findByRole('dialog', { name: 'Nhiều Chi Nhánh' });
+    expect(detail.textContent).toContain('Cửa Nam, Hoàn Kiếm, Hà Nội');
+    expect(detail.textContent).toContain('Dịch Vọng, Cầu Giấy, Hà Nội');
+    expect(detail.textContent).toContain('09:00–18:00');
+    expect(detail.textContent).toContain('10:00–20:00');
   });
 
   it('starts the directories empty and uses equal-width navigation tabs', async () => {

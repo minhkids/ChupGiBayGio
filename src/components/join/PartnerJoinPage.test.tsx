@@ -64,6 +64,33 @@ describe('partner onboarding pages', () => {
     expect(screen.getByLabelText('Quận / Huyện *').hasAttribute('required')).toBe(true);
   });
 
+  it('lets a film shop add multiple branches and submits every district and ward', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ id: 'lab-id', url: 'https://chupgibaygio.com/?services=film&partner=lab-id' }) });
+    vi.stubGlobal('fetch', fetchMock);
+    render(<PartnerJoinPage kind="lab" />);
+    fireEvent.change(screen.getByLabelText('Tên shop bán film *'), { target: { value: 'Film Mùa Thu' } });
+    fireEvent.change(screen.getByLabelText('Quận / Huyện *'), { target: { value: 'Hoàn Kiếm' } });
+    fireEvent.change(screen.getByLabelText('Phường / xã *'), { target: { value: 'Cửa Nam' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Thêm địa chỉ' }));
+    fireEvent.change(screen.getByLabelText('Quận / Huyện địa chỉ 2 *'), { target: { value: 'Cầu Giấy' } });
+    fireEvent.change(screen.getByLabelText('Phường / xã địa chỉ 2 *'), { target: { value: 'Dịch Vọng' } });
+    fireEvent.change(screen.getByLabelText('Giờ mở cửa địa chỉ 2'), { target: { value: '10:00–20:00' } });
+    fireEvent.change(screen.getByLabelText('Hotline / Số Zalo nhận khách *'), { target: { value: '0912345678' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Kodak Gold 200' }));
+    fireEvent.change(screen.getByLabelText(/Cuộn film rẻ nhất trong danh sách đang bán/), { target: { value: 'Kodak Gold 200' } });
+    fireEvent.change(screen.getByLabelText(/Giá cuộn film rẻ nhất/), { target: { value: '120000' } });
+    expect(screen.getByTestId('partner-preview').textContent).toContain('Cơ sở 1: Cửa Nam, Hoàn Kiếm, Hà Nội');
+    expect(screen.getByTestId('partner-preview').textContent).toContain('Cơ sở 2: Dịch Vọng, Cầu Giấy, Hà Nội');
+    fireEvent.submit(screen.getByRole('button', { name: 'Hoàn tất đăng ký' }).closest('form')!);
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+    const form = fetchMock.mock.calls[0][1].body as FormData;
+    const payload = JSON.parse(String(form.get('payload')));
+    expect(payload.locations).toEqual([
+      { ward: 'Cửa Nam', district: 'Hoàn Kiếm', openingHours: '' },
+      { ward: 'Dịch Vọng', district: 'Cầu Giấy', openingHours: '10:00–20:00' },
+    ]);
+  });
+
   it('explains when the address provider has no match instead of leaving a silent blank', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => [] }));
     render(<PartnerJoinPage kind="photographer" />);

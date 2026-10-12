@@ -18,3 +18,15 @@ it('keeps the shop card usable if both photos fail', () => {
   fireEvent.click(screen.getByRole('button', { name: 'Xem chi tiết Tiệm Film' }));
   expect(onOpen).toHaveBeenCalledWith(shop);
 });
+
+it('shows every branch address in the public shop card', () => {
+  const shop = {
+    id: 'branches', category: 'filmShop' as const, name: 'Nhiều cơ sở', minRollPrice: 50000,
+    locations: [{ ward: 'Minh Khai', district: 'Mê Linh' }, { ward: 'Cửa Nam', district: 'Sóc Sơn' }],
+  };
+  render(<FilmShopCard shop={shop} onOpen={vi.fn()} />);
+  const card = screen.getByTestId('film-shop-card');
+  expect(card.textContent).toContain('Minh Khai, Mê Linh, Hà Nội');
+  expect(card.textContent).toContain('Cửa Nam, Sóc Sơn, Hà Nội');
+  expect(card.textContent).toContain('2 cơ sở');
+});

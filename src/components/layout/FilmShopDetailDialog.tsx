@@ -2,7 +2,7 @@ import { createPortal } from 'react-dom';
 import React, { useEffect, useRef, useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { ArrowUpRight, ChevronLeft, ChevronRight, Clock3, Film, MapPin, MessageCircle, Phone, ShoppingBag, X } from 'lucide-react';
-import type { ServiceListing } from '../../services/serviceHubApi';
+import { filmShopLocations, type ServiceListing } from '../../services/serviceHubApi';
 
 interface FilmShopDetailDialogProps {
   shop: ServiceListing;
@@ -27,7 +27,7 @@ export const FilmShopDetailDialog: React.FC<FilmShopDetailDialogProps> = ({ shop
   const images = [...new Set([shop.productImageUrl, shop.imageUrl].filter((value): value is string => Boolean(value)))];
   const [activeImage, setActiveImage] = useState(images[0] || '');
   const [unavailableImages, setUnavailableImages] = useState<string[]>([]);
-  const location = [shop.ward, shop.district, 'Hà Nội'].filter(Boolean).join(', ');
+  const locations = filmShopLocations(shop);
   const priceLabel = getPriceLabel(shop);
   const availableImages = images.filter((image) => !unavailableImages.includes(image));
   const imageIndex = availableImages.indexOf(activeImage);
@@ -138,8 +138,8 @@ export const FilmShopDetailDialog: React.FC<FilmShopDetailDialogProps> = ({ shop
               </section>}
 
               <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                {location && <div className="rounded-xl border border-[#E2DAD0] bg-[#FAF8F4] p-3.5"><p className="flex items-center gap-2 text-xs font-semibold text-[#554D43]"><MapPin className="h-4 w-4 text-[#C76B3C]" />Khu vực</p><p className="mt-2 text-sm leading-relaxed">{location}</p></div>}
-                {shop.openingHours && <div className="rounded-xl border border-[#E2DAD0] bg-[#FAF8F4] p-3.5"><p className="flex items-center gap-2 text-xs font-semibold text-[#554D43]"><Clock3 className="h-4 w-4 text-[#C76B3C]" />Giờ mở cửa</p><p className="mt-2 text-sm leading-relaxed">{shop.openingHours}</p></div>}
+                {!!locations.length && <div className="rounded-xl border border-[#E2DAD0] bg-[#FAF8F4] p-3.5 sm:col-span-2"><p className="flex items-center gap-2 text-xs font-semibold text-[#554D43]"><MapPin className="h-4 w-4 text-[#C76B3C]" />{locations.length === 1 ? 'Địa chỉ shop' : `${locations.length} địa chỉ shop`}</p><ul className="mt-2 space-y-3">{locations.map((branch, index) => <li key={`${branch.ward}-${branch.district}-${index}`} className="border-t border-[#E2DAD0] pt-2 first:border-0 first:pt-0"><p className="text-sm leading-relaxed">{[branch.ward, branch.district, 'Hà Nội'].filter(Boolean).join(', ')}</p>{branch.openingHours && <p className="mt-1 flex items-center gap-1.5 text-xs text-[#6E655B]"><Clock3 className="h-3.5 w-3.5" />{branch.openingHours}</p>}</li>)}</ul></div>}
+                {!locations.length && shop.openingHours && <div className="rounded-xl border border-[#E2DAD0] bg-[#FAF8F4] p-3.5"><p className="flex items-center gap-2 text-xs font-semibold text-[#554D43]"><Clock3 className="h-4 w-4 text-[#C76B3C]" />Giờ mở cửa</p><p className="mt-2 text-sm leading-relaxed">{shop.openingHours}</p></div>}
               </div>
 
               {shop.description && <section className="mt-5"><h2 className="text-sm font-bold">Thông tin shop</h2><p className="mt-2 whitespace-pre-line break-words text-sm leading-relaxed text-[#554D43]">{shop.description}</p></section>}

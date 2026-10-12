@@ -128,6 +128,7 @@ CREATE TABLE IF NOT EXISTS film_labs (
   min_roll_price INTEGER NOT NULL DEFAULT 0,
   max_roll_price INTEGER NOT NULL DEFAULT 0,
   cheapest_roll_name TEXT NOT NULL DEFAULT '',
+  locations TEXT NOT NULL DEFAULT '[]',
   status TEXT NOT NULL DEFAULT 'published' CHECK (status IN ('published', 'pending_review')),
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP

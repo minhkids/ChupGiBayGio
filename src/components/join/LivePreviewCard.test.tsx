@@ -32,3 +32,16 @@ it('previews a shop that supplies only its cheapest roll price', () => {
   expect(card.textContent).toContain('Từ 50.000đ/cuộn');
   expect(card.textContent).toContain('Rẻ nhất: Kodak Gold 200 · 50.000đ/cuộn');
 });
+
+it('shows every shop branch in the registration preview instead of only a count', () => {
+  render(<LivePreviewCard data={{ kind: 'lab', name: 'Tiệm Film', locations: [
+    { ward: 'Minh Khai', district: 'Mê Linh' },
+    { ward: 'Cửa Nam', district: 'Sóc Sơn' },
+  ] }} />);
+  const card = screen.getByTestId('partner-preview');
+  expect(card.textContent).toContain('Cơ sở 1');
+  expect(card.textContent).toContain('Minh Khai, Mê Linh, Hà Nội');
+  expect(card.textContent).toContain('Cơ sở 2');
+  expect(card.textContent).toContain('Cửa Nam, Sóc Sơn, Hà Nội');
+  expect(card.textContent).not.toContain('2 địa chỉ');
+});

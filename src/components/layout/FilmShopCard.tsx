@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { ArrowUpRight, Compass, Film, MapPin, ShoppingBag } from 'lucide-react';
-import type { ServiceListing } from '../../services/serviceHubApi';
+import { filmShopLocations, type ServiceListing } from '../../services/serviceHubApi';
 
 interface FilmShopCardProps {
   shop: ServiceListing;
@@ -13,7 +13,7 @@ export const FilmShopCard: React.FC<FilmShopCardProps> = ({ shop, isFeatured = f
   const reducedMotion = useReducedMotion();
   const [unavailableImages, setUnavailableImages] = useState<string[]>([]);
   const thumbnail = [shop.imageUrl, shop.productImageUrl].find((image) => image && !unavailableImages.includes(image));
-  const area = [shop.ward, shop.district, 'Hà Nội'].filter(Boolean).join(', ');
+  const locations = filmShopLocations(shop);
   const hasCheapestRoll = Boolean(shop.cheapestRollName && Number(shop.minRollPrice) > 0);
 
   return (
@@ -40,7 +40,7 @@ export const FilmShopCard: React.FC<FilmShopCardProps> = ({ shop, isFeatured = f
           <span className="min-w-0 flex-1">
             <span className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-[#9A4F29]">Shop bán film</span>
             <span className="block break-words text-base font-bold leading-snug text-[#2C2621]">{shop.name}</span>
-            {area && <span className="mt-2 flex min-w-0 items-start gap-1 text-xs leading-relaxed text-[#6E655B]"><MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" /><span>{area}</span></span>}
+            {!!locations.length && <span className="mt-2 flex min-w-0 items-start gap-1 text-xs leading-relaxed text-[#6E655B]"><MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" /><span className="min-w-0 flex-1"><span className="mb-1 block text-[11px] font-semibold text-[#8B4828]">{locations.length} cơ sở</span>{locations.map((location, index) => <span key={`${location.ward}-${location.district}-${index}`} className="block break-words"><span className="font-semibold">Cơ sở {index + 1}: </span>{[location.ward, location.district, 'Hà Nội'].filter(Boolean).join(', ')}</span>)}</span></span>}
           </span>
         </span>
         {(hasCheapestRoll || shop.price || Number(shop.minRollPrice) > 0) && <span role="group" aria-label={hasCheapestRoll ? `Cuộn rẻ nhất: ${shop.cheapestRollName} · ${Number(shop.minRollPrice).toLocaleString('vi-VN')}đ/cuộn` : 'Giá film'} className="relative mt-4 block w-full rounded-xl border border-[#E2D3BD] bg-[#F3EBDD] p-3">

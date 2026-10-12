@@ -49,4 +49,19 @@ describe('serviceHubApi.request', () => {
     const payload = JSON.parse(fetchMock.mock.calls[0][1].body as string);
     expect(payload).toMatchObject({ adminCategory: 'filmShop', minRollPrice: 45000, maxRollPrice: 120000, cheapestRollName: 'Kodak Gold 200', inStockFilms: ['Kodak Gold 200'] });
   });
+
+  it('preserves multiple shop locations in admin mapping and write payloads', async () => {
+    const locations = [
+      { ward: 'Cửa Nam', district: 'Hoàn Kiếm', openingHours: '09:00–18:00' },
+      { ward: 'Dịch Vọng', district: 'Cầu Giấy', openingHours: '10:00–20:00' },
+    ];
+    vi.stubGlobal('fetch', vi.fn((url: string) => Promise.resolve(Response.json(url === '/api/admin/cms/labs' ? [{ id: 'shop-3', name: 'Nhiều chi nhánh', min_roll_price: 50000, locations: JSON.stringify(locations) }] : []))));
+    const [shop] = await serviceHubApi.adminList();
+    expect(shop.locations).toEqual(locations);
+
+    const fetchMock = vi.fn().mockResolvedValue(Response.json({ id: 'shop-4' }));
+    vi.stubGlobal('fetch', fetchMock);
+    await serviceHubApi.create({ category: 'filmShop', name: 'Nhiều chi nhánh', locations, filmStocks: ['Kodak Gold 200'], cheapestRollName: 'Kodak Gold 200', minRollPrice: 50000 });
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body as string).locations).toEqual(locations);
+  });
 });

@@ -147,6 +147,45 @@ describe('public partner registration', () => {
     } finally { fetchMock.mockRestore(); }
   });
 
+  it('persists multiple validated branch locations for one film shop', async () => {
+    const env = environment();
+    const locations = [
+      { ward: 'Cửa Nam', district: 'Hoàn Kiếm', openingHours: '09:00–18:00' },
+      { ward: 'Dịch Vọng', district: 'Cầu Giấy', openingHours: '10:00–20:00' },
+    ];
+    const response = await submit('/api/partner/register-lab', {
+      name: 'Tiệm Film', locations, phone: '0912345678', filmStocks: ['Kodak Gold 200'],
+      cheapestRollName: 'Kodak Gold 200', minRollPrice: 120000,
+    }, [], env);
+    expect(response.status).toBe(201);
+    const insert = env.writes.find(({ sql }) => sql.includes('INSERT INTO film_labs'));
+    expect(insert?.sql).toContain('locations');
+    expect(insert?.values).toContain(JSON.stringify(locations));
+    expect(insert?.values).toContain('Cửa Nam');
+  });
+
+  it('rejects invalid film-shop branch locations without uploading or writing', async () => {
+    const env = environment();
+    const invalid = await submit('/api/partner/register-lab', {
+      name: 'Tiệm Film', locations: [{ ward: 'Cửa Nam', district: 'Không tồn tại' }], phone: '0912345678',
+      filmStocks: ['Kodak Gold 200'], cheapestRollName: 'Kodak Gold 200', minRollPrice: 120000,
+    }, [jpg()], env);
+    expect(invalid.status).toBe(400);
+    expect(env.writes).toHaveLength(0);
+    expect(env.bucket.put).not.toHaveBeenCalled();
+  });
+
+  it('caps a shop at three Hanoi branches', async () => {
+    const env = environment();
+    const locations = Array.from({ length: 4 }, (_, index) => ({ ward: `Phường ${index + 1}`, district: 'Cầu Giấy' }));
+    const response = await submit('/api/partner/register-lab', {
+      name: 'Tiệm Film', locations, phone: '0912345678', filmStocks: ['Kodak Gold 200'],
+      cheapestRollName: 'Kodak Gold 200', minRollPrice: 120000,
+    }, [], env);
+    expect(response.status).toBe(400);
+    expect(env.writes).toHaveLength(0);
+  });
+
   it('accepts a shop registration with only the cheapest roll price', async () => {
     const env = environment();
     const response = await submit('/api/partner/register-lab', {

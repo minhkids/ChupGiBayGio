@@ -22,6 +22,18 @@ describe('Services Hub admin API', () => {
     expect(await response.json()).toEqual([]);
   });
 
+  it('publishes multiple shop branch locations through the public directory API', async () => {
+    const env = makeEnv();
+    const locations = [{ ward: 'Cửa Nam', district: 'Hoàn Kiếm', openingHours: '09:00–18:00' }, { ward: 'Dịch Vọng', district: 'Cầu Giấy', openingHours: '10:00–20:00' }];
+    vi.spyOn(env.DB, 'prepare').mockImplementation((sql: string) => ({
+      bind() { return this; },
+      async all() { return { results: sql.includes("FROM film_labs WHERE status = 'published'") ? [{ id: 'multi', name: 'Tiệm Film', min_roll_price: 50000, max_roll_price: 0, locations: JSON.stringify(locations) }] : [] }; },
+    }) as unknown as D1PreparedStatement);
+    const response = await worker.request('/api/services', {}, env);
+    expect(response.status).toBe(200);
+    expect((await response.json()).find((item: { id: string }) => item.id === 'multi')).toMatchObject({ category: 'filmLab', locations });
+  });
+
   it('requires a signed admin session for listing or changing directory entries', async () => {
     const env = makeEnv();
     const unauthorized = await worker.request('/api/admin/services', {}, env);
@@ -131,7 +143,8 @@ describe('Services Hub admin API', () => {
     }, env);
     const { token } = await login.json() as { token: string };
     const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
-    const body = { adminCategory: 'filmShop', name: 'Tiệm Film', inStockFilms: ['Kodak Gold 200'], cheapestRollName: 'Kodak Gold 200', minRollPrice: 50000, maxRollPrice: 150000 };
+    const locations = [{ ward: 'Cửa Nam', district: 'Hoàn Kiếm', openingHours: '09:00–18:00' }, { ward: 'Dịch Vọng', district: 'Cầu Giấy', openingHours: '10:00–20:00' }];
+    const body = { adminCategory: 'filmShop', name: 'Tiệm Film', locations, inStockFilms: ['Kodak Gold 200'], cheapestRollName: 'Kodak Gold 200', minRollPrice: 50000, maxRollPrice: 150000 };
 
     const created = await worker.request('/api/admin/labs', { method: 'POST', headers, body: JSON.stringify(body) }, env);
     expect(created.status).toBe(201);
@@ -141,6 +154,10 @@ describe('Services Hub admin API', () => {
     expect(writes).toHaveLength(2);
     expect(writes.every(({ sql }) => sql.includes('min_roll_price') && sql.includes('max_roll_price') && sql.includes('cheapest_roll_name'))).toBe(true);
     expect(writes[0].values).toEqual(expect.arrayContaining([50000, 150000, 'Kodak Gold 200']));
+    expect(writes.every(({ sql }) => sql.includes('locations'))).toBe(true);
+    expect(writes[0].values).toContain(JSON.stringify(locations));
+    const excessive = await worker.request('/api/admin/labs', { method: 'POST', headers, body: JSON.stringify({ ...body, locations: [...locations, ...locations.slice(0, 2)] }) }, env);
+    expect(excessive.status).toBe(400);
   });
 
   it('requires admin auth and validates image files before storing them in R2', async () => {

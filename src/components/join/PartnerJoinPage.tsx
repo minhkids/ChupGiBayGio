@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'r
 import { ArrowLeft, ArrowUpRight, Check, Copy, ImagePlus, MapPin, Sparkles } from 'lucide-react';
 import { LivePreviewCard } from './LivePreviewCard';
 import { AddressSuggestionsField } from './AddressSuggestionsField';
+import type { FilmShopLocation } from '../../services/serviceHubApi';
 
 const districts = ['Ba Đình', 'Hoàn Kiếm', 'Đống Đa', 'Cầu Giấy', 'Hai Bà Trưng', 'Tây Hồ', 'Thanh Xuân', 'Long Biên', 'Hà Đông', 'Hoàng Mai', 'Nam Từ Liêm', 'Bắc Từ Liêm', 'Gia Lâm', 'Đông Anh', 'Sóc Sơn', 'Thanh Trì', 'Hoài Đức', 'Đan Phượng', 'Thanh Oai', 'Thường Tín', 'Phúc Thọ', 'Quốc Oai', 'Thạch Thất', 'Chương Mỹ', 'Mỹ Đức', 'Ứng Hòa', 'Ba Vì', 'Sơn Tây', 'Mê Linh'];
 const films = ['Kodak Gold 200', 'Kodak ColorPlus', 'Fujifilm 200', 'CineStill 800T', 'Ilford HP5', 'Vision3 chiết'];
@@ -21,8 +22,7 @@ export function PartnerJoinPage({ kind }: { kind: Kind }) {
   const [imageUrl, setImageUrl] = useState('');
   const [address, setAddress] = useState('');
   const [district, setDistrict] = useState('');
-  const [ward, setWard] = useState('');
-  const [openingHours, setOpeningHours] = useState('');
+  const [locations, setLocations] = useState<FilmShopLocation[]>([{ ward: '', district: '', openingHours: '' }]);
   const [slogan, setSlogan] = useState('');
   const [filmStocks, setFilmStocks] = useState<string[]>([]);
   const [cheapestRollName, setCheapestRollName] = useState('');
@@ -51,6 +51,7 @@ export function PartnerJoinPage({ kind }: { kind: Kind }) {
   }, []);
 
   const toggle = (item: string, values: string[], setter: (items: string[]) => void) => setter(values.includes(item) ? values.filter((value) => value !== item) : [...values, item]);
+  const updateLocation = (index: number, key: keyof FilmShopLocation, value: string) => setLocations((current) => current.map((location, itemIndex) => itemIndex === index ? { ...location, [key]: value } : location));
   const toggleFilmStock = (film: string) => {
     const next = filmStocks.includes(film) ? filmStocks.filter((item) => item !== film) : [...filmStocks, film];
     setFilmStocks(next);
@@ -96,7 +97,7 @@ export function PartnerJoinPage({ kind }: { kind: Kind }) {
     if (lab && Number(minRollPrice) < 1) { setError('Giá cuộn film rẻ nhất phải lớn hơn 0.'); return; }
     setBusy(true); setError('');
     const payload = lab
-      ? { name, slogan, district, ward, phone, socialUrl, openingHours, filmStocks, cheapestRollName: cheapestRollName.trim(), imageUrl, minRollPrice: Number(minRollPrice), website: '' }
+      ? { name, slogan, locations, district: locations[0].district, ward: locations[0].ward, phone, socialUrl, openingHours: locations[0].openingHours, filmStocks, cheapestRollName: cheapestRollName.trim(), imageUrl, minRollPrice: Number(minRollPrice), website: '' }
       : { name, address, district, phone, socialUrl, imageUrl, gear, styles: selectedStyles, shootSpots, package: { name: packageName, price: Number(packagePrice), duration: packageDuration, deliveredPhotos }, website: '' };
     const body = new FormData();
     body.set('payload', JSON.stringify(payload));
@@ -129,8 +130,7 @@ export function PartnerJoinPage({ kind }: { kind: Kind }) {
           <label className={label}>{lab ? 'Tên shop bán film *' : 'Tên thợ ảnh / Nghệ danh *'}<input className={input} value={name} onChange={(e) => setName(e.target.value)} required maxLength={160} placeholder={lab ? 'Ví dụ: Tiệm Film Hà Nội' : 'Ví dụ: Minh Studio'} autoComplete="organization" /></label>
           {lab && <label className={label}>Slogan của shop (tùy chọn)<input className={input} value={slogan} onChange={(e) => setSlogan(e.target.value)} maxLength={50} placeholder="Một câu ngắn về shop của bạn" /><span className="mt-1 block text-right text-xs font-normal text-[#675D52]">{slogan.length}/50 ký tự</span></label>}
           {lab ? <>
-            <label className={label}>Quận / Huyện *<select className={input} value={district} required onChange={(e) => setDistrict(e.target.value)}><option value="">Chọn quận / huyện</option>{districts.map((name) => <option key={name}>{name}</option>)}</select></label>
-            <label className={label}>Phường / xã *<input className={input} value={ward} onChange={(e) => setWard(e.target.value)} required maxLength={80} placeholder="Ví dụ: Cửa Nam" autoComplete="address-level3" /></label>
+            <fieldset className="space-y-4 rounded-2xl border border-[#D8CFBD] bg-[#F7F5F0] p-4"><legend className="px-2 font-bold">Địa chỉ các chi nhánh</legend><p className="text-xs font-normal text-[#675D52]">Chỉ công khai phường/xã và quận/huyện; không nhập địa chỉ nhà/số đường. Tối đa 3 địa chỉ tại Hà Nội.</p>{locations.map((location, index) => <div key={index} className="space-y-3 rounded-xl border border-[#E2DAD0] bg-[#FAF8F4] p-3"><div className="flex items-center justify-between"><span className="text-xs font-bold">Địa chỉ {index + 1}</span>{locations.length > 1 && <button type="button" onClick={() => setLocations((current) => current.filter((_, itemIndex) => itemIndex !== index))} className="text-xs font-semibold text-[#8B4828]">Xóa</button>}</div><label className={label}>{index === 0 ? 'Quận / Huyện *' : `Quận / Huyện địa chỉ ${index + 1} *`}<select className={input} value={location.district} required onChange={(e) => updateLocation(index, 'district', e.target.value)}><option value="">Chọn quận / huyện</option>{districts.map((name) => <option key={name}>{name}</option>)}</select></label><label className={label}>{index === 0 ? 'Phường / xã *' : `Phường / xã địa chỉ ${index + 1} *`}<input className={input} value={location.ward} onChange={(e) => updateLocation(index, 'ward', e.target.value)} required maxLength={80} placeholder="Ví dụ: Cửa Nam" autoComplete="address-level3" /></label><label className={label}>{index === 0 ? 'Giờ mở cửa' : `Giờ mở cửa địa chỉ ${index + 1}`}<input className={input} value={location.openingHours || ''} onChange={(e) => updateLocation(index, 'openingHours', e.target.value)} maxLength={120} placeholder="09:00 – 19:30" /></label></div>)}<button type="button" aria-label="Thêm địa chỉ" disabled={locations.length >= 3} onClick={() => setLocations((current) => [...current, { ward: '', district: '', openingHours: '' }])} className="min-h-10 rounded-xl border border-[#C76B3C] px-4 text-sm font-semibold text-[#8B4828] disabled:opacity-50">+ Thêm địa chỉ</button></fieldset>
           </> : <>
             <AddressSuggestionsField label="Địa chỉ studio / nơi nhận khách (tùy chọn)" value={address} onChange={setAddress}
               onPick={(suggestion) => { const found = districts.find((item) => suggestion.toLocaleLowerCase('vi').includes(item.toLocaleLowerCase('vi'))); if (found) setDistrict(found); }}
@@ -141,7 +141,6 @@ export function PartnerJoinPage({ kind }: { kind: Kind }) {
           <label className={label}>{lab ? 'Hotline / Số Zalo nhận khách *' : 'Số điện thoại / Zalo *'}<input className={input} type="tel" inputMode="tel" autoComplete="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required pattern="0[0-9 ]{9,14}" placeholder="09xx xxx xxx" /></label>
           <label className={label}>Link Facebook / Instagram<input className={input} type="url" value={socialUrl} onChange={(e) => setSocialUrl(e.target.value)} placeholder="https://facebook.com/…" /></label>
           {lab ? <>
-            <label className={label}>Giờ mở cửa<input className={input} value={openingHours} onChange={(e) => setOpeningHours(e.target.value)} maxLength={120} placeholder="09:00 – 19:30 hàng ngày" /></label>
             <fieldset><legend className={label}>Các dòng film đang bán</legend><div className="mt-3 flex flex-wrap gap-2">{films.map((film) => <button type="button" key={film} aria-pressed={filmStocks.includes(film)} onClick={() => toggleFilmStock(film)} className={`min-h-10 rounded-full border px-3 py-2 text-xs font-semibold ${filmStocks.includes(film) ? 'border-[#C76B3C] bg-[#C76B3C] text-white' : 'border-[#D8CFBD] bg-white'}`}>{film}</button>)}{filmStocks.filter((film) => !films.includes(film)).map((film) => <button type="button" key={film} aria-label={`Bỏ ${film}`} onClick={() => toggleFilmStock(film)} className="min-h-10 rounded-full border border-[#C76B3C] bg-[#F3E6D6] px-3 text-xs">{film} ×</button>)}</div><div className="mt-3 flex gap-2"><input aria-label="Thêm tên film" className={input + ' !mt-0'} value={customFilm} onChange={(e) => setCustomFilm(e.target.value)} maxLength={100} placeholder="Tên film khác" /><button type="button" onClick={addFilm} className="rounded-xl border border-[#C76B3C] px-4 text-sm font-semibold text-[#8B4828]">Thêm</button></div></fieldset>
             <label className={label}>Cuộn film rẻ nhất trong danh sách đang bán *<select className={input} value={cheapestRollName} onChange={(e) => setCheapestRollName(e.target.value)} required disabled={!filmStocks.length}><option value="">Chọn cuộn film</option>{filmStocks.map((film) => <option key={film} value={film}>{film}</option>)}</select><span className="mt-1 block text-xs font-normal text-[#675D52]">Chọn một dòng film đã đánh dấu là đang bán.</span></label>
             <label className={label}>Giá cuộn film rẻ nhất (VNĐ) *<input className={input} type="number" inputMode="numeric" min="1" max="50000000" step="1" value={minRollPrice} onChange={(e) => setMinRollPrice(e.target.value)} required placeholder="120000" /></label>
@@ -157,7 +156,7 @@ export function PartnerJoinPage({ kind }: { kind: Kind }) {
           <button type="submit" disabled={busy} className="min-h-13 w-full rounded-xl bg-[#C76B3C] px-5 py-3.5 text-base font-bold text-white transition-colors hover:bg-[#AA542D] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#C76B3C] disabled:opacity-60">{busy ? 'Đang lưu thông tin…' : 'Hoàn tất đăng ký'}</button>
           <p className="text-center text-xs leading-relaxed text-[#675D52]">Bằng cách đăng ký, bạn đồng ý công khai thông tin liên hệ và ảnh đã gửi trên website.</p>
         </form>
-        <aside className="lg:sticky lg:top-8"><div className="mb-3 flex items-center justify-between"><h2 className="font-bold">Xem trước thẻ của bạn</h2><span className="text-xs text-[#8B4828]">Cập nhật trực tiếp</span></div><LivePreviewCard data={{ kind, name, slogan: lab ? slogan : undefined, image: previews[0] || imageUrl, productImage: productPhotoPreview, cheapestRollName: lab ? cheapestRollName : undefined, minRollPrice, address: lab ? undefined : address, district, ward: lab ? ward : undefined, phone, openingHours, filmStocks, styles: selectedStyles, shootSpots, packageName, packagePrice, packageDuration, packageDeliverables: deliveredPhotos, portfolio: previews }} /><p className="mt-3 text-xs leading-relaxed text-[#675D52]">{lab ? 'Thẻ hiển thị phường/xã và quận/huyện bạn đã chọn.' : 'Bản xem trước mô phỏng thẻ khách hàng; vị trí và ảnh được xác nhận khi gửi biểu mẫu.'}</p></aside>
+        <aside className="lg:sticky lg:top-8"><div className="mb-3 flex items-center justify-between"><h2 className="font-bold">Xem trước thẻ của bạn</h2><span className="text-xs text-[#8B4828]">Cập nhật trực tiếp</span></div><LivePreviewCard data={{ kind, name, slogan: lab ? slogan : undefined, image: previews[0] || imageUrl, productImage: productPhotoPreview, cheapestRollName: lab ? cheapestRollName : undefined, minRollPrice, address: lab ? undefined : address, district: lab ? undefined : district, ward: undefined, locations: lab ? locations : undefined, phone, filmStocks, styles: selectedStyles, shootSpots, packageName, packagePrice, packageDuration, packageDeliverables: deliveredPhotos, portfolio: previews }} /><p className="mt-3 text-xs leading-relaxed text-[#675D52]">{lab ? 'Thẻ hiển thị nhiều địa chỉ chi nhánh; khách có thể lọc shop theo quận/huyện.' : 'Bản xem trước mô phỏng thẻ khách hàng; vị trí và ảnh được xác nhận khi gửi biểu mẫu.'}</p></aside>
       </div>}
       <footer className="mt-12 border-t border-[#D8CFBD] pt-5 text-xs text-[#675D52]">© Chụp Gì Bây Giờ · Kết nối trực tiếp với cộng đồng nhiếp ảnh Hà Nội</footer>
     </div>

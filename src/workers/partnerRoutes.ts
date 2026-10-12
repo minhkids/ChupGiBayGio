@@ -107,8 +107,15 @@ async function registration(c: Context<{ Bindings: Bindings }>, kind: 'lab' | 'p
   let maxRollPrice = 0;
   let cheapestRollName = '';
   let slogan = '';
+  let locations: { ward: string; district: string; openingHours: string }[] = [];
   if (kind === 'lab') {
-    district = text(body.district, 80); ward = text(body.ward, 80);
+    const submittedLocations = body.locations === undefined ? [{ ward: body.ward, district: body.district, openingHours: body.openingHours }] : body.locations;
+    if (!Array.isArray(submittedLocations) || submittedLocations.length < 1 || submittedLocations.length > 3) return c.json({ error: 'Shop cần khai báo từ 1 đến 3 địa chỉ tại Hà Nội.' }, 400);
+    locations = submittedLocations.map((item) => {
+      const location = item && typeof item === 'object' && !Array.isArray(item) ? item as Record<string, unknown> : {};
+      return { ward: text(location.ward, 80), district: text(location.district, 80), openingHours: text(location.openingHours, 120) };
+    });
+    district = locations[0].district; ward = locations[0].ward;
     if (body.slogan !== undefined && (typeof body.slogan !== 'string' || body.slogan.trim().length > 50)) return c.json({ error: 'Slogan của shop tối đa 50 ký tự.' }, 400);
     slogan = text(body.slogan, 50);
     stocks = list(body.filmStocks, 20) ?? [];
@@ -116,7 +123,8 @@ async function registration(c: Context<{ Bindings: Bindings }>, kind: 'lab' | 'p
     const parsePrice = (value: unknown) => (typeof value === 'number' || typeof value === 'string' && value.trim() !== '') ? Number(value) : Number.NaN;
     minRollPrice = parsePrice(body.minRollPrice);
     maxRollPrice = body.maxRollPrice === undefined || body.maxRollPrice === null || body.maxRollPrice === '' ? 0 : parsePrice(body.maxRollPrice);
-    if (!districts.has(district) || !ward || !list(body.filmStocks, 20) || !cheapestRollName || !stocks.includes(cheapestRollName)
+    if (locations.some((location) => !districts.has(location.district) || !location.ward)
+          || !list(body.filmStocks, 20) || !cheapestRollName || !stocks.includes(cheapestRollName)
           || !Number.isSafeInteger(minRollPrice) || !Number.isSafeInteger(maxRollPrice)
           || minRollPrice < 1 || maxRollPrice < 0 || (maxRollPrice > 0 && maxRollPrice < minRollPrice) || maxRollPrice > 50000000) {
       return c.json({ error: 'Vui lòng nhập phường/xã, quận/huyện, cuộn film rẻ nhất và giá hợp lệ.' }, 400);
@@ -151,8 +159,8 @@ async function registration(c: Context<{ Bindings: Bindings }>, kind: 'lab' | 'p
         keys.push(key);
         productImageUrl = `${base}/api/partner/images/${key}`;
       }
-      await c.env.DB.prepare(`INSERT INTO film_labs (id, name, slogan, address, district, ward, lat, lng, opening_hours, hotline, fast_2h, in_stock_films, fanpage_url, image_url, product_image_url, cheapest_roll_name, min_roll_price, max_roll_price, status)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(id, name, slogan, address, district, ward, null, null, text(body.openingHours, 120), number, 0, JSON.stringify(stocks), social || '', urls[0] || imageUrl || '', productImageUrl, cheapestRollName, minRollPrice, maxRollPrice, 'published').run();
+      await c.env.DB.prepare(`INSERT INTO film_labs (id, name, slogan, address, district, ward, lat, lng, opening_hours, hotline, fast_2h, in_stock_films, fanpage_url, image_url, product_image_url, cheapest_roll_name, min_roll_price, max_roll_price, locations, status)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(id, name, slogan, address, district, ward, null, null, locations[0].openingHours, number, 0, JSON.stringify(stocks), social || '', urls[0] || imageUrl || '', productImageUrl, cheapestRollName, minRollPrice, maxRollPrice, JSON.stringify(locations), 'published').run();
     } else {
       await c.env.DB.batch([
         c.env.DB.prepare(`INSERT INTO photographers (id, name, avatar_url, bio, phone, instagram, gear_body, gear_lens, styles, portfolio_photos, preferred_spots, facebook_url, status, address, district)

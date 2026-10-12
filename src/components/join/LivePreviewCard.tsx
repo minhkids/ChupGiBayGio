@@ -1,4 +1,5 @@
 import { Camera, Clock3, Film, MapPin, Phone } from 'lucide-react';
+import type { FilmShopLocation } from '../../services/serviceHubApi';
 
 export interface PartnerPreview {
   kind: 'lab' | 'photographer';
@@ -12,6 +13,7 @@ export interface PartnerPreview {
   address?: string;
   district?: string;
   ward?: string;
+  locations?: FilmShopLocation[];
   phone?: string;
   openingHours?: string;
   filmStocks?: string[];
@@ -27,6 +29,7 @@ export interface PartnerPreview {
 export function LivePreviewCard({ data }: { data: PartnerPreview }) {
   const lab = data.kind === 'lab';
   const thumbnail = (lab ? data.image || data.productImage : data.portfolio?.[0] || data.image);
+  const branches = lab ? data.locations?.filter((item) => item.ward.trim() || item.district.trim()) || [] : [];
   const location = lab
     ? [data.ward, data.district, 'Hà Nội'].filter(Boolean).join(', ')
     : data.address
@@ -48,8 +51,8 @@ export function LivePreviewCard({ data }: { data: PartnerPreview }) {
       </div>
     </div>
     <div className="mt-3 space-y-2.5 border-t border-[#E2DAD0] pt-3 text-xs text-[#554D43]">
-      {location && <p className="flex items-start gap-2"><MapPin aria-hidden="true" className="h-4 w-4 shrink-0 text-[#C76B3C]" /><span>{location}</span></p>}
-      {lab && data.openingHours && <p className="flex items-start gap-2"><Clock3 aria-hidden="true" className="h-4 w-4 shrink-0 text-[#C76B3C]" /><span>{data.openingHours}</span></p>}
+      {branches.length > 0 ? <ul aria-label="Các cơ sở trong bản xem trước" className="space-y-1.5">{branches.map((branch, index) => <li key={`${branch.ward}-${branch.district}-${index}`} className="flex items-start gap-2"><MapPin aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-[#C76B3C]" /><span><span className="font-semibold">Cơ sở {index + 1}: </span>{[branch.ward, branch.district, 'Hà Nội'].filter(Boolean).join(', ')}{branch.openingHours && <span className="block pl-0 text-[11px] text-[#6E655B]">Giờ mở cửa: {branch.openingHours}</span>}</span></li>)}</ul> : location && <p className="flex items-start gap-2"><MapPin aria-hidden="true" className="h-4 w-4 shrink-0 text-[#C76B3C]" /><span>{location}</span></p>}
+      {lab && !branches.length && data.openingHours && <p className="flex items-start gap-2"><Clock3 aria-hidden="true" className="h-4 w-4 shrink-0 text-[#C76B3C]" /><span>{data.openingHours}</span></p>}
       {!!highlights?.length && <p className="leading-relaxed"><span className="font-semibold">{lab ? 'Film: ' : 'Phong cách: '}</span>{highlights.slice(0, 3).join(' · ')}{highlights.length > 3 && ` · +${highlights.length - 3} loại khác`}</p>}
       {!lab && data.packageName && <p className="leading-relaxed"><span className="font-semibold">{data.packageName}</span>{[data.packageDuration, data.packageDeliverables].filter(Boolean).length ? ` · ${[data.packageDuration, data.packageDeliverables].filter(Boolean).join(' · ')}` : ''}</p>}
       {!lab && !!data.shootSpots?.length && <p className="leading-relaxed">Khu vực chụp: {data.shootSpots.join(' · ')}</p>}
