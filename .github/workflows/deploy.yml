@@ -5,18 +5,26 @@ on:
     branches: [main, master]
   pull_request:
     branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cloudflare-${{ github.ref }}
+  cancel-in-progress: false
 
 env:
   NODE_VERSION: '22'
-  CF_PAGES_BRANCH: ${{ github.ref_name }}
 
 jobs:
   # =========================================================================
   # 1. LINT & TYPE CHECK (fail fast)
   # =========================================================================
   lint-and-typecheck:
-    name: Lint & TypeCheck
+    name: Lint, Tests & Build
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -33,20 +41,47 @@ jobs:
       - name: Run lint
         run: npm run lint
 
-      - name: Run typecheck
-        run: npm run build --if-present
+      - name: Run tests
+        run: npx vitest run
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Build API Worker
+        run: npm run build:worker
+
+      - name: Upload frontend build
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: dist
+          if-no-files-found: error
+          retention-days: 3
 
   # =========================================================================
-  # 2. DEPLOY TO CLOUDFLARE PAGES (Preview for PR, Production for main)
+  # 2. DEPLOY BOTH PRODUCTION WORKERS (never from a pull request)
   # =========================================================================
-  deploy-pages:
-    name: Deploy to Cloudflare Pages
+  deploy-production:
+    name: Deploy Production Workers
     needs: lint-and-typecheck
+    if: github.event_name != 'pull_request' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      deployments: write
+    timeout-minutes: 15
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
     steps:
+      - name: Validate Cloudflare configuration
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "::error::Missing Actions secret CLOUDFLARE_API_TOKEN. Add a scoped Cloudflare API token in repository Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+          if [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "::error::Missing Actions variable CLOUDFLARE_ACCOUNT_ID."
+            exit 1
+          fi
+
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -59,65 +94,38 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build
-        run: npm run build
-        env:
-          # Build-time env vars (public)
-          VITE_APP_TITLE: "Chụp Gì Bây Giờ"
-          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
+      - name: Download verified frontend build
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: dist
 
-      - name: Deploy to Cloudflare Pages
+      - name: Deploy API Worker
         uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name=chupgibaygio --branch=${{ github.ref_name }}
-          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+          accountId: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          wranglerVersion: '4'
+          command: deploy --env production --config wrangler-worker.toml --keep-vars
 
-  # =========================================================================
-  # 3. DEPLOY WORKERS (if you have API functions)
-  # =========================================================================
-  deploy-workers:
-    name: Deploy Cloudflare Workers
-    needs: lint-and-typecheck
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - name: Deploy frontend Worker
+        uses: cloudflare/wrangler-action@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          wranglerVersion: '4'
+          command: deploy --config wrangler.toml --keep-vars
 
-      - name: Install Wrangler
-        run: npm install -g wrangler
-
-      - name: Deploy Workers
-        run: wrangler deploy --env production --config wrangler-worker.toml
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          # Worker secrets (set via wrangler secret put or dashboard)
-          # DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          # R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
-          # R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
-
-  # =========================================================================
-  # 4. NOTIFY (optional - Slack, Discord, Telegram)
-  # =========================================================================
-  notify:
-    name: Notify Deployment
-    needs: [deploy-pages, deploy-workers]
-    if: always()
-    runs-on: ubuntu-latest
-    steps:
-      - name: Deployment status
+      - name: Verify production responses
         run: |
-          echo "✅ Deploy completed!"
-          echo "Branch: ${{ github.ref_name }}"
-          echo "Commit: ${{ github.sha }}"
-          echo "Pages: https://${{ github.ref_name == 'main' && 'chupgibaygio.pages.dev' || github.ref_name }}.chupgibaygio.pages.dev"
-          # Add your notification webhook here (Slack/Discord/Telegram)
+          curl --fail --silent --show-error --retry 3 https://chupgibaygio.com/ -o /dev/null
+          curl --fail --silent --show-error --retry 3 https://chupgibaygio.com/api/services -o services.json
+          node --input-type=module -e "import fs from 'node:fs'; if (!Array.isArray(JSON.parse(fs.readFileSync('services.json', 'utf8')))) throw new Error('Expected a JSON services array');"
+
+      - name: Report successful deployment
+        run: |
+          {
+            echo "Production frontend and API deployed and HTTP checks passed."
+            echo "Commit: $GITHUB_SHA"
+            echo "Website: https://chupgibaygio.com/"
+          } >> "$GITHUB_STEP_SUMMARY"
