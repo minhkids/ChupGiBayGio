@@ -101,20 +101,11 @@ jobs:
           path: dist
 
       - name: Deploy API Worker
-        uses: cloudflare/wrangler-action@v4
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
-          wranglerVersion: '4'
-          command: deploy --env production --config wrangler-worker.toml --keep-vars
+        # Keep the deploy CLI isolated from this repo's Wrangler 3/types 4 dependencies.
+        run: npx --yes wrangler@4.149.0 deploy --env production --config wrangler-worker.toml --keep-vars
 
       - name: Deploy frontend Worker
-        uses: cloudflare/wrangler-action@v4
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
-          wranglerVersion: '4'
-          command: deploy --config wrangler.toml --keep-vars
+        run: npx --yes wrangler@4.149.0 deploy --config wrangler.toml --keep-vars
 
       - name: Verify production responses
         run: |
