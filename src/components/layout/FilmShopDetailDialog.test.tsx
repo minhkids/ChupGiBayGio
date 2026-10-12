@@ -26,6 +26,20 @@ it('cycles gallery photos with controls and arrow keys without leaving the dialo
   expect(within(gallery).getByRole('img', { name: 'Ảnh cửa hàng Tiệm Film' })).toBeTruthy();
 });
 
+it('opens a selected shop photo full screen and closes only the photo viewer', () => {
+  render(<FilmShopDetailDialog shop={shop} onClose={vi.fn()} />);
+  const detail = screen.getByRole('dialog', { name: shop.name });
+  fireEvent.click(within(detail).getByRole('button', { name: 'Phóng to ảnh' }));
+  const viewer = screen.getByRole('dialog', { name: 'Ảnh phóng to' });
+  expect(within(viewer).getByRole('img', { name: 'Film đang bán tại Tiệm Film' }).getAttribute('src')).toBe('/products.jpg');
+  expect(document.activeElement).toBe(within(viewer).getByRole('button', { name: 'Đóng ảnh phóng to' }));
+
+  fireEvent.keyDown(window, { key: 'Escape' });
+  expect(screen.queryByRole('dialog', { name: 'Ảnh phóng to' })).toBeNull();
+  expect(screen.getByRole('dialog', { name: shop.name })).toBeTruthy();
+  expect(document.activeElement).toBe(within(detail).getByRole('button', { name: 'Phóng to ảnh' }));
+});
+
 it('keeps keyboard focus inside details and restores focus and scrolling on close', () => {
   const opener = document.createElement('button');
   document.body.appendChild(opener);

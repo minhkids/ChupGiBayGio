@@ -24,9 +24,14 @@ function getPriceLabel(shop: ServiceListing): string {
 export const FilmShopDetailDialog: React.FC<FilmShopDetailDialogProps> = ({ shop, onClose }) => {
   const reducedMotion = useReducedMotion();
   const dialogRef = useRef<HTMLElement>(null);
+  const imageViewerRef = useRef<HTMLElement>(null);
+  const zoomButtonRef = useRef<HTMLButtonElement>(null);
+  const wasExpandedRef = useRef(false);
   const images = [...new Set([shop.productImageUrl, shop.imageUrl].filter((value): value is string => Boolean(value)))];
   const [activeImage, setActiveImage] = useState(images[0] || '');
+  const [isImageExpanded, setIsImageExpanded] = useState(false);
   const [unavailableImages, setUnavailableImages] = useState<string[]>([]);
+  const expandedRef = useRef(isImageExpanded);
   const locations = filmShopLocations(shop);
   const priceLabel = getPriceLabel(shop);
   const availableImages = images.filter((image) => !unavailableImages.includes(image));
@@ -47,9 +52,14 @@ export const FilmShopDetailDialog: React.FC<FilmShopDetailDialogProps> = ({ shop
     document.body.style.overflow = 'hidden';
     dialogRef.current?.querySelector<HTMLButtonElement>('button')?.focus({ preventScroll: true });
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose();
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        if (expandedRef.current) setIsImageExpanded(false);
+        else onClose();
+      }
       if (event.key === 'Tab') {
-        const controls = dialogRef.current?.querySelectorAll<HTMLElement>('button:not(:disabled), a[href]');
+        const scope = expandedRef.current ? imageViewerRef.current : dialogRef.current;
+        const controls = scope?.querySelectorAll<HTMLElement>('button:not(:disabled), a[href]');
         if (!controls?.length) return;
         const first = controls[0];
         const last = controls[controls.length - 1];
@@ -65,6 +75,13 @@ export const FilmShopDetailDialog: React.FC<FilmShopDetailDialogProps> = ({ shop
     };
   }, [onClose]);
 
+  useEffect(() => {
+    expandedRef.current = isImageExpanded;
+    if (isImageExpanded) imageViewerRef.current?.querySelector<HTMLButtonElement>('button')?.focus({ preventScroll: true });
+    else if (wasExpandedRef.current) zoomButtonRef.current?.focus({ preventScroll: true });
+    wasExpandedRef.current = isImageExpanded;
+  }, [isImageExpanded]);
+
   return createPortal(
     <motion.div
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -79,6 +96,7 @@ export const FilmShopDetailDialog: React.FC<FilmShopDetailDialogProps> = ({ shop
         exit={reducedMotion ? { opacity: 0 } : { opacity: 0, y: 16, scale: 0.98 }}
         transition={reducedMotion ? { duration: 0 } : { type: 'spring', stiffness: 320, damping: 30 }}
         onKeyDown={(event) => {
+          if (expandedRef.current) return;
           if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') {
             event.preventDefault();
             changeImage(event.key === 'ArrowRight' ? 1 : -1);
@@ -106,7 +124,10 @@ export const FilmShopDetailDialog: React.FC<FilmShopDetailDialogProps> = ({ shop
                 <div aria-hidden="true" className="mb-3 flex justify-between gap-2">{Array.from({ length: 10 }, (_, index) => <span key={index} className="h-2 w-4 rounded-sm bg-[#F3EBDD]/70" />)}</div>
                 <div className="relative overflow-hidden rounded-lg bg-[#EFE9DF]">
                   {activeImage ? (
-                    <motion.img key={activeImage} initial={reducedMotion ? false : { opacity: 0, scale: 1.025 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: reducedMotion ? 0 : 0.3 }} src={activeImage} onError={() => markImageUnavailable(activeImage)} alt={activeImage === shop.productImageUrl ? `Film đang bán tại ${shop.name}` : `Ảnh cửa hàng ${shop.name}`} className="aspect-[4/3] w-full object-cover" />
+                    <button ref={zoomButtonRef} type="button" aria-label="Phóng to ảnh" onClick={() => setIsImageExpanded(true)} className="group block w-full cursor-zoom-in focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-[#C76B3C]">
+                      <motion.img key={activeImage} initial={reducedMotion ? false : { opacity: 0, scale: 1.025 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: reducedMotion ? 0 : 0.3 }} src={activeImage} onError={() => markImageUnavailable(activeImage)} alt={activeImage === shop.productImageUrl ? `Film đang bán tại ${shop.name}` : `Ảnh cửa hàng ${shop.name}`} className="aspect-[4/3] w-full object-cover transition-[filter] group-hover:brightness-95" />
+                      <span className="sr-only">Nhấn để xem ảnh toàn màn hình</span>
+                    </button>
                   ) : (
                     <div className="flex aspect-[4/3] w-full flex-col items-center justify-center gap-3 text-[#8B4828]">
                       <ShoppingBag className="h-8 w-8" />
@@ -156,6 +177,19 @@ export const FilmShopDetailDialog: React.FC<FilmShopDetailDialogProps> = ({ shop
           {shop.link && <motion.a href={shop.link} target="_blank" rel="noreferrer" whileHover={reducedMotion ? undefined : { y: -2 }} whileTap={reducedMotion ? undefined : { scale: 0.98 }} className="inline-flex min-h-14 items-center justify-center gap-2 rounded-xl bg-[#C76B3C] px-3 text-sm font-bold text-white hover:bg-[#B35D30] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#C76B3C]"><MessageCircle className="h-4 w-4 shrink-0" />Liên hệ shop<ArrowUpRight className="hidden h-4 w-4 sm:block" /></motion.a>}
           {shop.phone && <motion.a href={`tel:${shop.phone.replace(/\D/g, '')}`} whileHover={reducedMotion ? undefined : { y: -2 }} whileTap={reducedMotion ? undefined : { scale: 0.98 }} className="inline-flex min-h-14 items-center justify-center gap-2 rounded-xl bg-[#ECE4D0] px-3 text-sm font-bold text-[#2C2621] hover:bg-[#E0D5BE] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#C76B3C]"><Phone className="h-4 w-4 shrink-0" /><span className="flex flex-col items-start leading-tight"><span className="text-xs">Gọi shop</span><span className="font-mono text-sm">{shop.phone}</span></span></motion.a>}
         </footer>}
+        {isImageExpanded && activeImage && createPortal(
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[var(--z-camera)] flex flex-col bg-[#161310]/95 text-[#FAF8F4] backdrop-blur-sm" onMouseDown={(event) => { if (event.target === event.currentTarget) setIsImageExpanded(false); }}>
+            <section ref={imageViewerRef} role="dialog" aria-modal="true" aria-label="Ảnh phóng to" className="flex min-h-0 flex-1 flex-col" onKeyDown={(event) => { if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') { event.preventDefault(); changeImage(event.key === 'ArrowRight' ? 1 : -1); } }}>
+              <header className="flex shrink-0 items-center justify-between gap-4 px-4 py-3 sm:px-7"><p className="truncate text-sm font-medium">{shop.name}</p><button type="button" onClick={() => setIsImageExpanded(false)} aria-label="Đóng ảnh phóng to" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#FAF8F4]/15 hover:bg-[#FAF8F4]/25 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#F3C08E]"><X className="h-5 w-5" /></button></header>
+              <div className="flex min-h-0 flex-1 items-center justify-center gap-2 px-2 pb-2 sm:gap-5 sm:px-6">
+                {availableImages.length > 1 && <button type="button" aria-label="Ảnh phóng to trước" onClick={() => changeImage(-1)} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#FAF8F4]/15 hover:bg-[#FAF8F4]/25"><ChevronLeft className="h-5 w-5" /></button>}
+                <img src={activeImage} alt={activeImage === shop.productImageUrl ? `Film đang bán tại ${shop.name}` : `Ảnh cửa hàng ${shop.name}`} className="max-h-[calc(100dvh-7rem)] max-w-[calc(100vw-8rem)] object-contain sm:max-w-[calc(100vw-12rem)]" />
+                {availableImages.length > 1 && <button type="button" aria-label="Ảnh phóng to tiếp theo" onClick={() => changeImage(1)} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#FAF8F4]/15 hover:bg-[#FAF8F4]/25"><ChevronRight className="h-5 w-5" /></button>}
+              </div>
+              <p className="shrink-0 pb-4 text-center font-mono text-xs text-[#F3EBDD]/80" aria-live="polite">{String(imageIndex + 1).padStart(2, '0')} / {String(availableImages.length).padStart(2, '0')}</p>
+            </section>
+          </motion.div>, document.body
+        )}
       </motion.section>
     </motion.div>,
     document.body
