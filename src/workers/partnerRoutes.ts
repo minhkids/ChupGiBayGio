@@ -13,6 +13,7 @@ const link = (value: unknown) => {
 const phone = (value: unknown) => /^0\d{9,10}$/.test(String(value ?? '').replace(/\s/g, '')) ? String(value).replace(/\s/g, '') : '';
 const validPoint = (lat: number, lng: number) => Number.isFinite(lat) && Number.isFinite(lng) && lat >= 20.4 && lat <= 21.7 && lng >= 105.2 && lng <= 106.3;
 const types = new Map([['image/jpeg', 'jpg'], ['image/png', 'png'], ['image/webp', 'webp']]);
+const MAX_DAILY_REGISTRATIONS_PER_IP = 5;
 
 routes.get('/api/partner/address-suggestions', async (c) => {
   const query = (c.req.query('q') || '').trim().replace(/\s+/g, ' ');
@@ -73,13 +74,14 @@ async function photos(form: FormData, min: number, max: number, field = 'photos'
 }
 
 async function registration(c: Context<{ Bindings: Bindings }>, kind: 'lab' | 'photographer') {
-  // These unauthenticated endpoints publish immediately; throttle by visitor and keep the form human-operated.
+  // These unauthenticated endpoints publish immediately; cap burst registrations without blocking every shop on a shared network after one success.
   const origin = c.req.header('Origin');
   if (origin && !['https://chupgibaygio.com', 'https://www.chupgibaygio.com', 'http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', 'http://127.0.0.1:5173'].includes(origin)) return c.json({ error: 'Nguồn gửi không hợp lệ.' }, 403);
   if (Number(c.req.header('Content-Length') || 0) > 20 * 1024 * 1024) return c.json({ error: 'Tệp gửi vượt quá 20 MB.' }, 413);
   const ip = c.req.header('CF-Connecting-IP') || 'local';
-  const quota = `partner:${kind}:${ip}`;
-  if (await c.env.CACHE.get(quota)) return c.json({ error: 'Vui lòng thử lại sau 24 giờ hoặc liên hệ quản trị viên.' }, 429);
+  const quota = `partner:${kind}:daily-count:${ip}`;
+  const registrationsToday = Number(await c.env.CACHE.get(quota).catch(() => null)) || 0;
+  if (registrationsToday >= MAX_DAILY_REGISTRATIONS_PER_IP) return c.json({ error: 'Mạng này đã đăng ký tối đa 5 shop trong 24 giờ. Vui lòng thử lại sau.' }, 429);
   const form = await c.req.formData().catch(() => null);
   if (!form) return c.json({ error: 'Biểu mẫu không hợp lệ.' }, 400);
   const raw = form.get('payload');
@@ -169,7 +171,7 @@ async function registration(c: Context<{ Bindings: Bindings }>, kind: 'lab' | 'p
           .bind(crypto.randomUUID(), id, pkg!.name, pkg!.price, pkg!.duration, 0, pkg!.deliveredPhotos)
       ]);
     }
-    await c.env.CACHE.put(quota, '1', { expirationTtl: 86400 }).catch(() => undefined);
+    await c.env.CACHE.put(quota, String(registrationsToday + 1), { expirationTtl: 86400 }).catch(() => undefined);
     const section = kind === 'lab' ? 'film' : 'photographers';
     return c.json({ id, status: 'published', url: `https://chupgibaygio.com/?services=${section}&partner=${id}` }, 201);
   } catch (error) {

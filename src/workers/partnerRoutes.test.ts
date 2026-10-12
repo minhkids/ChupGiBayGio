@@ -21,7 +21,11 @@ function environment(seed: Record<string, Record<string, unknown>[]> = {}) {
     get: vi.fn(async (key: string) => objects.has(key) ? { body: objects.get(key), httpMetadata: { contentType: 'image/jpeg' } } : null),
     delete: vi.fn(async (key: string) => { objects.delete(key); })
   };
-  const cache = { get: vi.fn(async () => null), put: vi.fn(async () => undefined) };
+  const cacheValues = new Map<string, string>();
+  const cache = {
+    get: vi.fn(async (key: string) => cacheValues.get(key) || null),
+    put: vi.fn(async (key: string, value: string) => { cacheValues.set(key, value); })
+  };
   return { DB: db as unknown as D1Database, R2_BUCKET: bucket as unknown as R2Bucket, CACHE: cache as unknown as KVNamespace, writes, bucket };
 }
 
@@ -184,6 +188,24 @@ describe('public partner registration', () => {
     }, [], env);
     expect(response.status).toBe(400);
     expect(env.writes).toHaveLength(0);
+  });
+
+  it('allows several different shops from one shared IP but rate-limits beyond five per day', async () => {
+    const env = environment();
+    await env.CACHE.put('partner:lab:local', '1', { expirationTtl: 86400 }); // Legacy one-success lock from the old policy.
+    for (let index = 0; index < 5; index += 1) {
+      const response = await submit('/api/partner/register-lab', {
+        name: `Tiệm Film ${index + 1}`, ward: 'Cửa Nam', district: 'Hoàn Kiếm',
+        phone: `091234567${index}`, filmStocks: ['Kodak Gold 200'], cheapestRollName: 'Kodak Gold 200', minRollPrice: 120000,
+      }, [], env);
+      expect(response.status).toBe(201);
+    }
+    const blocked = await submit('/api/partner/register-lab', {
+      name: 'Tiệm Film thứ sáu', ward: 'Cửa Nam', district: 'Hoàn Kiếm',
+      phone: '0912345678', filmStocks: ['Kodak Gold 200'], cheapestRollName: 'Kodak Gold 200', minRollPrice: 120000,
+    }, [], env);
+    expect(blocked.status).toBe(429);
+    expect(env.writes).toHaveLength(5);
   });
 
   it('accepts a shop registration with only the cheapest roll price', async () => {
