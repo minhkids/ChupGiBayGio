@@ -135,8 +135,8 @@ cms.post('/api/admin/labs', async (c) => {
   const lng = body.lng == null || body.lng === '' ? null : Number(body.lng);
   if ((lat !== null && !Number.isFinite(lat)) || (lng !== null && !Number.isFinite(lng))) return c.json({ error: 'Tọa độ không hợp lệ.' }, 400);
   const id = crypto.randomUUID(); const films = array(body.inStockFilms);
-  await getD1(c.env).prepare('INSERT INTO film_labs (id, name, address, lat, lng, opening_hours, hotline, fast_2h, in_stock_films) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
-    .bind(id, text(body.name, 160), text(body.address), lat, lng, text(body.openingHours, 300), text(body.hotline, 80), body.fast2h ? 1 : 0, jsonText(films)).run();
+  await getD1(c.env).prepare('INSERT INTO film_labs (id, name, address, lat, lng, opening_hours, hotline, fast_2h, in_stock_films, cheapest_roll_name) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+    .bind(id, text(body.name, 160), text(body.address), lat, lng, text(body.openingHours, 300), text(body.hotline, 80), body.fast2h ? 1 : 0, jsonText(films), text(body.cheapestRollName, 120)).run();
   return c.json({ ...body, id, inStockFilms: films }, 201);
 });
 
@@ -231,8 +231,8 @@ cms.put('/api/admin/cms/:table/:id', async (c) => {
   } else if (table === 'labs') {
     const lat = body.lat == null || body.lat === '' ? null : Number(body.lat); const lng = body.lng == null || body.lng === '' ? null : Number(body.lng);
     if ((lat !== null && !Number.isFinite(lat)) || (lng !== null && !Number.isFinite(lng))) return c.json({ error: 'Tọa độ không hợp lệ.' }, 400);
-    result = await db.prepare('UPDATE film_labs SET name = ?, address = ?, lat = ?, lng = ?, opening_hours = ?, hotline = ?, fast_2h = ?, in_stock_films = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
-      .bind(text(body.name, 160), text(body.address), lat, lng, text(body.openingHours, 300), text(body.hotline, 80), body.fast2h ? 1 : 0, jsonText(array(body.inStockFilms)), id).run();
+    result = await db.prepare('UPDATE film_labs SET name = ?, address = ?, lat = ?, lng = ?, opening_hours = ?, hotline = ?, fast_2h = ?, in_stock_films = ?, cheapest_roll_name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
+      .bind(text(body.name, 160), text(body.address), lat, lng, text(body.openingHours, 300), text(body.hotline, 80), body.fast2h ? 1 : 0, jsonText(array(body.inStockFilms)), text(body.cheapestRollName, 120), id).run();
   } else {
     return c.json({ error: 'Danh mục không hợp lệ.' }, 404);
   }

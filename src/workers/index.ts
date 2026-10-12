@@ -354,7 +354,7 @@ app.get('/api/services', async (c) => {
       const district = String(row.district || '');
       const area = [ward, district, 'Hà Nội'].filter(Boolean).join(', ');
       return {
-        ...mapFields(row, { slogan: 'slogan', phone: 'hotline', openingHours: 'opening_hours', fastService: 'fast_2h', link: 'fanpage_url', imageUrl: 'image_url', productImageUrl: 'product_image_url', minRollPrice: 'min_roll_price', maxRollPrice: 'max_roll_price', lat: 'lat', lng: 'lng' }),
+        ...mapFields(row, { slogan: 'slogan', phone: 'hotline', openingHours: 'opening_hours', fastService: 'fast_2h', link: 'fanpage_url', imageUrl: 'image_url', productImageUrl: 'product_image_url', cheapestRollName: 'cheapest_roll_name', minRollPrice: 'min_roll_price', maxRollPrice: 'max_roll_price', lat: 'lat', lng: 'lng' }),
         address: area, ward, district,
         id: row.id, name: row.name, category: 'filmLab', price, filmStocks: parseJsonField(String(row.in_stock_films || '[]'), [])
       };

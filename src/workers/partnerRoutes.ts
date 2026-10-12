@@ -105,19 +105,21 @@ async function registration(c: Context<{ Bindings: Bindings }>, kind: 'lab' | 'p
   let pkg: { name: string; price: number; duration: string; deliveredPhotos: string } | null = null;
   let minRollPrice = 0;
   let maxRollPrice = 0;
+  let cheapestRollName = '';
   let slogan = '';
   if (kind === 'lab') {
     district = text(body.district, 80); ward = text(body.ward, 80);
     if (body.slogan !== undefined && (typeof body.slogan !== 'string' || body.slogan.trim().length > 50)) return c.json({ error: 'Slogan của shop tối đa 50 ký tự.' }, 400);
     slogan = text(body.slogan, 50);
     stocks = list(body.filmStocks, 20) ?? [];
+    cheapestRollName = text(body.cheapestRollName, 120);
     const parsePrice = (value: unknown) => (typeof value === 'number' || typeof value === 'string' && value.trim() !== '') ? Number(value) : Number.NaN;
     minRollPrice = parsePrice(body.minRollPrice);
     maxRollPrice = parsePrice(body.maxRollPrice);
-    if (!districts.has(district) || !ward || !list(body.filmStocks, 20)
+    if (!districts.has(district) || !ward || !list(body.filmStocks, 20) || !cheapestRollName || !stocks.includes(cheapestRollName)
       || !Number.isSafeInteger(minRollPrice) || !Number.isSafeInteger(maxRollPrice)
-      || minRollPrice < 0 || maxRollPrice < minRollPrice || maxRollPrice > 50000000) {
-      return c.json({ error: 'Vui lòng nhập phường/xã, quận/huyện, danh sách film và khoảng giá hợp lệ.' }, 400);
+      || minRollPrice < 1 || maxRollPrice < minRollPrice || maxRollPrice > 50000000) {
+      return c.json({ error: 'Vui lòng nhập phường/xã, quận/huyện, cuộn film rẻ nhất và giá hợp lệ.' }, 400);
     }
   } else {
     address = text(body.address, 300);
@@ -149,8 +151,8 @@ async function registration(c: Context<{ Bindings: Bindings }>, kind: 'lab' | 'p
         keys.push(key);
         productImageUrl = `${base}/api/partner/images/${key}`;
       }
-      await c.env.DB.prepare(`INSERT INTO film_labs (id, name, slogan, address, district, ward, lat, lng, opening_hours, hotline, fast_2h, in_stock_films, fanpage_url, image_url, product_image_url, min_roll_price, max_roll_price, status)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(id, name, slogan, address, district, ward, null, null, text(body.openingHours, 120), number, 0, JSON.stringify(stocks), social || '', urls[0] || imageUrl || '', productImageUrl, minRollPrice, maxRollPrice, 'published').run();
+      await c.env.DB.prepare(`INSERT INTO film_labs (id, name, slogan, address, district, ward, lat, lng, opening_hours, hotline, fast_2h, in_stock_films, fanpage_url, image_url, product_image_url, cheapest_roll_name, min_roll_price, max_roll_price, status)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(id, name, slogan, address, district, ward, null, null, text(body.openingHours, 120), number, 0, JSON.stringify(stocks), social || '', urls[0] || imageUrl || '', productImageUrl, cheapestRollName, minRollPrice, maxRollPrice, 'published').run();
     } else {
       await c.env.DB.batch([
         c.env.DB.prepare(`INSERT INTO photographers (id, name, avatar_url, bio, phone, instagram, gear_body, gear_lens, styles, portfolio_photos, preferred_spots, facebook_url, status, address, district)

@@ -10,7 +10,7 @@ it('keeps a shop card compact while showing price, ward, district, film and cont
     kind: 'lab', name: 'Tiệm Film', image: '/shop.jpg', productImage: '/roll.jpg',
     ward: 'Bồ Đề', district: 'Long Biên', phone: '0912345678',
     filmStocks: ['Kodak Gold 200', 'Fujifilm 200', 'CineStill 800T', 'Ilford HP5'],
-    minRollPrice: '50000', maxRollPrice: '200000', openingHours: '9:00–18:00',
+    cheapestRollName: 'Kodak Gold 200', minRollPrice: '50000', maxRollPrice: '200000', openingHours: '9:00–18:00',
   }} />);
   const card = screen.getByTestId('partner-preview');
   expect(card.className).toContain('max-w-sm');
@@ -18,6 +18,7 @@ it('keeps a shop card compact while showing price, ward, district, film and cont
   expect(within(card).getByRole('img').getAttribute('src')).toBe('/roll.jpg');
   expect(within(card).getByRole('heading', { name: 'Tiệm Film' })).toBeTruthy();
   expect(card.textContent).toContain('50.000–200.000đ/cuộn');
+  expect(card.textContent).toContain('Rẻ nhất: Kodak Gold 200 · 50.000đ/cuộn');
   expect(card.textContent).toContain('Bồ Đề, Long Biên, Hà Nội');
   expect(card.textContent).toContain('Kodak Gold 200');
   expect(card.textContent).toContain('9:00–18:00');

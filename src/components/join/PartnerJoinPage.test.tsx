@@ -15,25 +15,31 @@ describe('partner onboarding pages', () => {
     expect(slogan.required).toBe(false);
     fireEvent.change(slogan, { target: { value: 'Film đẹp cho mọi khoảnh khắc' } });
     expect(screen.getByTestId('partner-preview').textContent).toContain('Film đẹp cho mọi khoảnh khắc');
+    fireEvent.click(screen.getByRole('button', { name: 'Kodak Gold 200' }));
+    const cheapestRoll = screen.getByLabelText(/Cuộn film rẻ nhất trong danh sách đang bán/);
+    expect(cheapestRoll.hasAttribute('required')).toBe(true);
+    expect([...cheapestRoll.querySelectorAll('option')].map((option) => option.value)).toContain('Kodak Gold 200');
+    fireEvent.change(cheapestRoll, { target: { value: 'Kodak Gold 200' } });
     fireEvent.change(screen.getByLabelText('Tên shop bán film *'), { target: { value: 'Film Mùa Thu' } });
     fireEvent.change(screen.getByLabelText('Quận / Huyện *'), { target: { value: 'Hoàn Kiếm' } });
     fireEvent.change(screen.getByLabelText('Phường / xã *'), { target: { value: 'Cửa Nam' } });
     fireEvent.change(screen.getByLabelText('Hotline / Số Zalo nhận khách *'), { target: { value: '0912345678' } });
-    fireEvent.change(screen.getByLabelText(/Giá cuộn rẻ nhất/), { target: { value: '120000' } });
-    fireEvent.change(screen.getByLabelText(/Giá cuộn đắt nhất/), { target: { value: '350000' } });
+    fireEvent.change(screen.getByLabelText(/Giá cuộn film rẻ nhất/), { target: { value: '120000' } });
+    fireEvent.change(screen.getByLabelText(/Giá cuộn film đắt nhất/), { target: { value: '350000' } });
+    expect(screen.getByTestId('partner-preview').textContent).toContain('Rẻ nhất: Kodak Gold 200 · 120.000đ/cuộn');
     fireEvent.submit(screen.getByRole('button', { name: 'Hoàn tất đăng ký' }).closest('form')!);
     await waitFor(() => expect(fetchMock).toHaveBeenCalled());
     const form = fetchMock.mock.calls[0][1].body as FormData;
     const payload = JSON.parse(String(form.get('payload')));
-    expect(payload).toMatchObject({ slogan: 'Film đẹp cho mọi khoảnh khắc', district: 'Hoàn Kiếm', ward: 'Cửa Nam' });
+    expect(payload).toMatchObject({ slogan: 'Film đẹp cho mọi khoảnh khắc', district: 'Hoàn Kiếm', ward: 'Cửa Nam', filmStocks: ['Kodak Gold 200'], cheapestRollName: 'Kodak Gold 200', minRollPrice: 120000 });
     expect(payload).not.toHaveProperty('address');
   });
 
   it('collects a product photo and comparable low-to-high roll prices for film shops', () => {
     render(<PartnerJoinPage kind="lab" />);
     expect(screen.getByLabelText('Ảnh mô tả sản phẩm')).toBeTruthy();
-    const minPrice = screen.getByLabelText(/Giá cuộn rẻ nhất/) as HTMLInputElement;
-    const maxPrice = screen.getByLabelText(/Giá cuộn đắt nhất/) as HTMLInputElement;
+    const minPrice = screen.getByLabelText(/Giá cuộn film rẻ nhất/) as HTMLInputElement;
+    const maxPrice = screen.getByLabelText(/Giá cuộn film đắt nhất/) as HTMLInputElement;
     expect(minPrice.required).toBe(true);
     expect(maxPrice.required).toBe(true);
     fireEvent.change(minPrice, { target: { value: '125000' } });

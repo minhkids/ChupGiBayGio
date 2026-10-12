@@ -25,6 +25,7 @@ export function PartnerJoinPage({ kind }: { kind: Kind }) {
   const [openingHours, setOpeningHours] = useState('');
   const [slogan, setSlogan] = useState('');
   const [filmStocks, setFilmStocks] = useState<string[]>([]);
+  const [cheapestRollName, setCheapestRollName] = useState('');
   const [customFilm, setCustomFilm] = useState('');
   const [minRollPrice, setMinRollPrice] = useState('');
   const [maxRollPrice, setMaxRollPrice] = useState('');
@@ -51,6 +52,11 @@ export function PartnerJoinPage({ kind }: { kind: Kind }) {
   }, []);
 
   const toggle = (item: string, values: string[], setter: (items: string[]) => void) => setter(values.includes(item) ? values.filter((value) => value !== item) : [...values, item]);
+  const toggleFilmStock = (film: string) => {
+    const next = filmStocks.includes(film) ? filmStocks.filter((item) => item !== film) : [...filmStocks, film];
+    setFilmStocks(next);
+    if (cheapestRollName && !next.includes(cheapestRollName)) setCheapestRollName('');
+  };
   const handleFiles = (event: ChangeEvent<HTMLInputElement>) => {
     const next = Array.from(event.target.files || []);
     if (next.length > (lab ? 1 : 6) || next.some((file) => !['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 3 * 1024 * 1024)) {
@@ -87,10 +93,12 @@ export function PartnerJoinPage({ kind }: { kind: Kind }) {
     event.preventDefault();
     if (busy) return;
     if (!lab && (files.length < 3 || files.length > 6)) { setError('Vui lòng chọn 3–6 ảnh portfolio.'); return; }
+    if (lab && (!cheapestRollName || !filmStocks.includes(cheapestRollName))) { setError('Vui lòng chọn cuộn rẻ nhất trong danh sách film đang bán.'); return; }
+    if (lab && Number(minRollPrice) < 1) { setError('Giá cuộn film rẻ nhất phải lớn hơn 0.'); return; }
     if (lab && Number(minRollPrice) > Number(maxRollPrice)) { setError('Giá cuộn rẻ nhất không được cao hơn giá cuộn đắt nhất.'); return; }
     setBusy(true); setError('');
     const payload = lab
-      ? { name, slogan, district, ward, phone, socialUrl, openingHours, filmStocks, imageUrl, minRollPrice: Number(minRollPrice), maxRollPrice: Number(maxRollPrice), website: '' }
+      ? { name, slogan, district, ward, phone, socialUrl, openingHours, filmStocks, cheapestRollName: cheapestRollName.trim(), imageUrl, minRollPrice: Number(minRollPrice), maxRollPrice: Number(maxRollPrice), website: '' }
       : { name, address, district, phone, socialUrl, imageUrl, gear, styles: selectedStyles, shootSpots, package: { name: packageName, price: Number(packagePrice), duration: packageDuration, deliveredPhotos }, website: '' };
     const body = new FormData();
     body.set('payload', JSON.stringify(payload));
@@ -136,11 +144,12 @@ export function PartnerJoinPage({ kind }: { kind: Kind }) {
           <label className={label}>Link Facebook / Instagram<input className={input} type="url" value={socialUrl} onChange={(e) => setSocialUrl(e.target.value)} placeholder="https://facebook.com/…" /></label>
           {lab ? <>
             <label className={label}>Giờ mở cửa<input className={input} value={openingHours} onChange={(e) => setOpeningHours(e.target.value)} maxLength={120} placeholder="09:00 – 19:30 hàng ngày" /></label>
+            <fieldset><legend className={label}>Các dòng film đang bán</legend><div className="mt-3 flex flex-wrap gap-2">{films.map((film) => <button type="button" key={film} aria-pressed={filmStocks.includes(film)} onClick={() => toggleFilmStock(film)} className={`min-h-10 rounded-full border px-3 py-2 text-xs font-semibold ${filmStocks.includes(film) ? 'border-[#C76B3C] bg-[#C76B3C] text-white' : 'border-[#D8CFBD] bg-white'}`}>{film}</button>)}{filmStocks.filter((film) => !films.includes(film)).map((film) => <button type="button" key={film} aria-label={`Bỏ ${film}`} onClick={() => toggleFilmStock(film)} className="min-h-10 rounded-full border border-[#C76B3C] bg-[#F3E6D6] px-3 text-xs">{film} ×</button>)}</div><div className="mt-3 flex gap-2"><input aria-label="Thêm tên film" className={input + ' !mt-0'} value={customFilm} onChange={(e) => setCustomFilm(e.target.value)} maxLength={100} placeholder="Tên film khác" /><button type="button" onClick={addFilm} className="rounded-xl border border-[#C76B3C] px-4 text-sm font-semibold text-[#8B4828]">Thêm</button></div></fieldset>
+            <label className={label}>Cuộn film rẻ nhất trong danh sách đang bán *<select className={input} value={cheapestRollName} onChange={(e) => setCheapestRollName(e.target.value)} required disabled={!filmStocks.length}><option value="">Chọn cuộn film</option>{filmStocks.map((film) => <option key={film} value={film}>{film}</option>)}</select><span className="mt-1 block text-xs font-normal text-[#675D52]">Chọn một dòng film đã đánh dấu là đang bán.</span></label>
             <div className="grid gap-4 sm:grid-cols-2">
-              <label className={label}>Giá cuộn rẻ nhất (VNĐ) *<input className={input} type="number" inputMode="numeric" min="0" max="50000000" step="1" value={minRollPrice} onChange={(e) => setMinRollPrice(e.target.value)} required placeholder="120000" /></label>
-              <label className={label}>Giá cuộn đắt nhất (VNĐ) *<input className={input} type="number" inputMode="numeric" min={minRollPrice || '0'} max="50000000" step="1" value={maxRollPrice} onChange={(e) => setMaxRollPrice(e.target.value)} required placeholder="450000" /></label>
+              <label className={label}>Giá cuộn film rẻ nhất (VNĐ) *<input className={input} type="number" inputMode="numeric" min="1" max="50000000" step="1" value={minRollPrice} onChange={(e) => setMinRollPrice(e.target.value)} required placeholder="120000" /></label>
+              <label className={label}>Giá cuộn film đắt nhất (VNĐ) *<input className={input} type="number" inputMode="numeric" min={minRollPrice || '1'} max="50000000" step="1" value={maxRollPrice} onChange={(e) => setMaxRollPrice(e.target.value)} required placeholder="450000" /></label>
             </div>
-            <fieldset><legend className={label}>Các dòng film đang bán</legend><div className="mt-3 flex flex-wrap gap-2">{films.map((film) => <button type="button" key={film} aria-pressed={filmStocks.includes(film)} onClick={() => toggle(film, filmStocks, setFilmStocks)} className={`min-h-10 rounded-full border px-3 py-2 text-xs font-semibold ${filmStocks.includes(film) ? 'border-[#C76B3C] bg-[#C76B3C] text-white' : 'border-[#D8CFBD] bg-white'}`}>{film}</button>)}{filmStocks.filter((film) => !films.includes(film)).map((film) => <button type="button" key={film} aria-label={`Bỏ ${film}`} onClick={() => toggle(film, filmStocks, setFilmStocks)} className="min-h-10 rounded-full border border-[#C76B3C] bg-[#F3E6D6] px-3 text-xs">{film} ×</button>)}</div><div className="mt-3 flex gap-2"><input aria-label="Thêm tên film" className={input + ' !mt-0'} value={customFilm} onChange={(e) => setCustomFilm(e.target.value)} maxLength={100} placeholder="Tên film khác" /><button type="button" onClick={addFilm} className="rounded-xl border border-[#C76B3C] px-4 text-sm font-semibold text-[#8B4828]">Thêm</button></div></fieldset>
           </> : <>
             <label className={label}>Thiết bị sử dụng chính<input className={input} value={gear} onChange={(e) => setGear(e.target.value)} maxLength={200} placeholder="Ví dụ: Fujifilm X-T5, Sony A7 IV" /></label>
             <fieldset><legend className={label}>Phong cách chụp</legend><div className="mt-3 flex flex-wrap gap-2">{styles.map((style) => <button type="button" key={style} aria-pressed={selectedStyles.includes(style)} onClick={() => toggle(style, selectedStyles, setSelectedStyles)} className={`min-h-10 rounded-full border px-3 py-2 text-xs font-semibold ${selectedStyles.includes(style) ? 'border-[#C76B3C] bg-[#C76B3C] text-white' : 'border-[#D8CFBD] bg-white'}`}>#{style}</button>)}</div></fieldset>
@@ -153,7 +162,7 @@ export function PartnerJoinPage({ kind }: { kind: Kind }) {
           <button type="submit" disabled={busy} className="min-h-13 w-full rounded-xl bg-[#C76B3C] px-5 py-3.5 text-base font-bold text-white transition-colors hover:bg-[#AA542D] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#C76B3C] disabled:opacity-60">{busy ? 'Đang lưu thông tin…' : 'Hoàn tất đăng ký'}</button>
           <p className="text-center text-xs leading-relaxed text-[#675D52]">Bằng cách đăng ký, bạn đồng ý công khai thông tin liên hệ và ảnh đã gửi trên website.</p>
         </form>
-        <aside className="lg:sticky lg:top-8"><div className="mb-3 flex items-center justify-between"><h2 className="font-bold">Xem trước thẻ của bạn</h2><span className="text-xs text-[#8B4828]">Cập nhật trực tiếp</span></div><LivePreviewCard data={{ kind, name, slogan: lab ? slogan : undefined, image: previews[0] || imageUrl, productImage: productPhotoPreview, minRollPrice, maxRollPrice, address: lab ? undefined : address, district, ward: lab ? ward : undefined, phone, openingHours, filmStocks, styles: selectedStyles, shootSpots, packageName, packagePrice, packageDuration, packageDeliverables: deliveredPhotos, portfolio: previews }} /><p className="mt-3 text-xs leading-relaxed text-[#675D52]">{lab ? 'Thẻ hiển thị phường/xã và quận/huyện bạn đã chọn.' : 'Bản xem trước mô phỏng thẻ khách hàng; vị trí và ảnh được xác nhận khi gửi biểu mẫu.'}</p></aside>
+        <aside className="lg:sticky lg:top-8"><div className="mb-3 flex items-center justify-between"><h2 className="font-bold">Xem trước thẻ của bạn</h2><span className="text-xs text-[#8B4828]">Cập nhật trực tiếp</span></div><LivePreviewCard data={{ kind, name, slogan: lab ? slogan : undefined, image: previews[0] || imageUrl, productImage: productPhotoPreview, cheapestRollName: lab ? cheapestRollName : undefined, minRollPrice, maxRollPrice, address: lab ? undefined : address, district, ward: lab ? ward : undefined, phone, openingHours, filmStocks, styles: selectedStyles, shootSpots, packageName, packagePrice, packageDuration, packageDeliverables: deliveredPhotos, portfolio: previews }} /><p className="mt-3 text-xs leading-relaxed text-[#675D52]">{lab ? 'Thẻ hiển thị phường/xã và quận/huyện bạn đã chọn.' : 'Bản xem trước mô phỏng thẻ khách hàng; vị trí và ảnh được xác nhận khi gửi biểu mẫu.'}</p></aside>
       </div>}
       <footer className="mt-12 border-t border-[#D8CFBD] pt-5 text-xs text-[#675D52]">© Chụp Gì Bây Giờ · Kết nối trực tiếp với cộng đồng nhiếp ảnh Hà Nội</footer>
     </div>
