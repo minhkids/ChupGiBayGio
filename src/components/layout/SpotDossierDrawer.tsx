@@ -1,15 +1,13 @@
 import { lazy, Suspense, useEffect, useId, useRef, useState, useSyncExternalStore } from 'react';
 import { Drawer } from 'vaul';
-import { Camera, Check, ExternalLink, MapPin, Pin, X } from 'lucide-react';
+import { Camera, Check, ExternalLink, Pin, X } from 'lucide-react';
 import type { Photographer, PoseItem, PostOutfit, RentalShop, Spot } from '../../types';
 import { useShootPlan } from '../../context/ShootPlanContext';
 import { db } from '../../services/db';
 import { fetchSpotOutfits } from '../../services/outfitService';
 import { getPhotographersForSpot } from '../../data/mockPhotographers';
 import { PartnerPhotographersForSpot } from '../photographers/PartnerPhotographersForSpot';
-import { recommendFilmForSpot } from '../../utils/filmAdvisor';
 import { calculateDistanceKm, formatDistance } from '../../utils/geo';
-import { openNearestFilmShops } from '../../hooks/useNearestLabs';
 
 const PoseCamera = lazy(() => import('../features/PoseCamera').then(module => ({ default: module.PoseCamera })));
 
@@ -65,7 +63,6 @@ function DossierContent({ spot, month, onClose, onSelectPhotographer, onOpenPhot
   const id = useId();
   const photos = [...new Set([spot.coverImageUrl, ...spot.galleryUrls].filter(Boolean))];
   const photo = photos[photoIndex];
-  const film = recommendFilmForSpot(spot, month);
   const photographers = getPhotographersForSpot(spot.id, spot.name);
   const [shops, setShops] = useState<(RentalShop & { distance: number })[]>([]);
   const [poses, setPoses] = useState<PoseItem[]>([]);
@@ -143,20 +140,6 @@ function DossierContent({ spot, month, onClose, onSelectPhotographer, onOpenPhot
         </>}
         {index === 2 && <>
           <section><h3 className={heading}>Ống kính & chi phí</h3><div className="flex flex-wrap gap-2">{spot.recommendedLenses.map(lens => <span key={lens} className="rounded border border-editorial-border bg-editorial-surface px-3 py-2 text-xs">{lens}</span>)}</div><p className="mt-4 text-sm text-kodak-amber">{spot.ticketPriceRange}</p><p className="mt-2 text-xs leading-6 text-stone-400">{spot.cameraFeePolicy}</p></section>
-          <section className="rounded-md border border-editorial-border bg-editorial-surface p-4">
-            <h3 className={heading}>Film gợi ý · Tháng {month}</h3>
-            <h4 className="font-editorial text-xl">{film.film.fullName}</h4>
-            <p className="mt-2 text-xs text-kodak-amber">ISO {film.film.iso} · {film.film.format}</p>
-            <p className="mt-3 text-sm leading-6 text-stone-300">{film.rationale}</p>
-            <p className="mt-4 border-t border-editorial-border pt-3 text-xs leading-6 text-stone-400">{film.recommendedSettings}</p>
-            <button
-              type="button"
-              onClick={() => openNearestFilmShops(film.film.fullName)}
-              className={`${control} mt-3 w-full border-amber-500/50 text-amber-400 hover:bg-amber-500/10`}
-            >
-              <MapPin size={16} /> Tìm Lab gần đây còn sẵn cuộn này
-            </button>
-          </section>
           <ShopSection title="Địa chỉ thuê thiết bị" shop={shops.find(shop => shop.type === 'CAMERA')} />
           <section><h3 className={heading}>Thợ ảnh ở điểm chụp</h3>{photographers.length === 0 && <p className="text-sm text-stone-400">Chưa có hồ sơ thợ ảnh cho địa điểm này.</p>}<div className="space-y-3">{photographers.map(person => <article key={person.id} className="border-b border-editorial-border pb-4"><div className="flex items-center gap-3"><img src={person.avatarUrl} alt="" loading="lazy" className="h-11 w-11 rounded-full object-cover" /><div className="min-w-0"><h4 className="text-sm font-semibold">{person.name}</h4><p className="mt-1 text-xs text-kodak-amber">Từ {person.startingPriceFormatted}</p></div></div><p className="my-3 text-xs leading-6 text-stone-400">{person.gear}</p><div className="flex flex-wrap gap-2">{onSelectPhotographer && <button type="button" className={control} onClick={() => { onClose(); onSelectPhotographer(person); }}>Xem hồ sơ</button>}<a className={control} href={person.contact.zaloUrl} target="_blank" rel="noopener noreferrer">Liên hệ Zalo <ExternalLink size={12} /></a><button type="button" className={control} onClick={() => plan.setPhotographer(person)}>{plan.photographer?.id === person.id ? 'Đã chọn thợ ảnh' : 'Chọn vào kế hoạch'}</button></div></article>)}</div>{onOpenPhotographers && <button type="button" className={`${control} mt-4 w-full`} onClick={() => { onClose(); onOpenPhotographers(); }}>Xem danh bạ thợ ảnh</button>}</section>
           <PartnerPhotographersForSpot spotName={spot.name} />

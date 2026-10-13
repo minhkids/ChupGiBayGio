@@ -23,7 +23,6 @@ import { useShootPlan } from '../../context/ShootPlanContext';
 import { getStatusBadgeInfo, getEffectiveSeasonalStatus, MONTH_SHORT_LABELS } from '../../utils/season';
 import { formatCoordinates, formatDistance } from '../../utils/geo';
 import { FacebookPostCard } from '../cards/FacebookPostCard';
-import { FilmSpecsCard } from '../cards/FilmSpecsCard';
 import { OutfitAdvisorCard } from '../cards/OutfitAdvisorCard';
 import { CameraGearAdvisorCard } from '../cards/CameraGearAdvisorCard';
 import { SpotPhotographersSection } from '../photographers/SpotPhotographersSection';
@@ -377,9 +376,6 @@ export const SpotDetailModal: React.FC<SpotDetailModalProps> = ({
               * Biểu đồ thể hiện mức độ nở hoa và tính hoàn mỹ của bối cảnh theo từng tháng. Ô có viền đen là tháng hiện tại.
             </p>
           </div>
-
-          {/* Section: Film Photography Recommendation Engine Card */}
-          <FilmSpecsCard spot={spot} />
 
           {/* Section: Thông số nhiếp ảnh thực tế (Photography Specs Box) */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

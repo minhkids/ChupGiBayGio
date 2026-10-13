@@ -25,7 +25,6 @@ import { CONCEPT_METADATA } from '../utils/season';
 import { REGIONS } from '../data/regions';
 import { SpotMap } from './map/SpotMap';
 import { AtmosphericFX } from './features/AtmosphericFX';
-import { FilmSpecsCard } from './cards/FilmSpecsCard';
 import { LeftNavRail } from './navigation/LeftNavRail';
 import { MobileViewMenuItems } from './navigation/MobileViewMenuItems';
 import { PoseCamera } from './features/PoseCamera';
@@ -725,15 +724,6 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                     </p>
                   </div>
 
-                  {/* FILM PHOTOGRAPHY ADVISOR SPEC CARD */}
-                  <FilmSpecsCard
-                    spot={selectedSpot}
-                    onOpenNearestLabs={(filmName) => {
-                      setFilmFilterForLabs(filmName || '');
-                      setIsAllLabsDrawerOpen(true);
-                    }}
-                  />
-
                   {/* PHOTOGRAPHY TIPS (Ống kính, Giờ vàng, Concept) */}
                   <div className="space-y-3 pt-1">
                     <h3 className="text-sm font-bold text-[#2C2621] flex items-center">
@@ -1045,15 +1035,6 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                   {selectedSpot.description}
                 </p>
               </div>
-
-              {/* FILM PHOTOGRAPHY ADVISOR SPEC CARD (Mobile) */}
-              <FilmSpecsCard
-                spot={selectedSpot}
-                onOpenNearestLabs={(filmName) => {
-                  setFilmFilterForLabs(filmName || '');
-                  setIsAllLabsDrawerOpen(true);
-                }}
-              />
 
               {/* Photography Guide */}
               <div className="space-y-3 pt-1">

@@ -141,7 +141,6 @@ const SpotDetailInfoTab: React.FC<SpotDetailInfoTabProps> = ({ spot, callbacks }
     <>
       <QuickActions spot={spot} callbacks={callbacks} />
       <BloomCondition spot={spot} />
-      {/* FilmSpecsCard is imported dynamically to avoid circular deps */}
       <PhotographyTips spot={spot} />
       {/* Nhiếp ảnh gia chuyên chụp góc này */}
       {callbacks.onSelectPhotographer && (
