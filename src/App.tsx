@@ -13,7 +13,8 @@ import {
 import { useWeather } from './hooks/useWeather';
 import { useMapLocationPicker } from './hooks/useMapLocationPicker';
 import { useCatalogRevision } from './hooks/useCatalogRevision';
-import { getCurrentMonthInVietnam, isSpotActiveInMonth, matchesSeasonalStatusFilter } from './utils/season';
+import { getCurrentMonthInVietnam, matchesSeasonalStatusFilter } from './utils/season';
+import { matchesSpotMonth } from './utils/upcomingSpots';
 import { calculateDistanceKm } from './utils/geo';
 import { recommendFilmForSpot } from './utils/filmAdvisor';
 import { readSavedSpotIds } from './utils/savedSpots';
@@ -205,14 +206,7 @@ export function App() {
         }
 
         // Month
-        if (filters.month !== null) {
-          const isActive = isSpotActiveInMonth(
-            spot.seasonalTrend.startMonth,
-            spot.seasonalTrend.endMonth,
-            filters.month
-          );
-          if (!isActive) return false;
-        }
+        if (!matchesSpotMonth(spot.seasonalTrend, filters.month)) return false;
 
         // Status
         if (!matchesSeasonalStatusFilter(spot.seasonalTrend, filters.status)) return false;

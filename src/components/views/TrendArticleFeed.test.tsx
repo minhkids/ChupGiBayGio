@@ -11,7 +11,26 @@ const articles: TrendArticle[] = [
 ];
 
 describe('TrendArticleFeed', () => {
+  it('combines future candidate spots with editorial articles and opens canonical details', () => {
+    const candidate = { ...MOCK_SPOTS[0], name: 'Hoa mùa tới', regionId: 'hanoi', seasonalTrend: { ...MOCK_SPOTS[0].seasonalTrend, status: 'ACTIVE' as const, upcoming: true, expectedMonths: [11] } };
+    const onOpenSpot = vi.fn();
+    render(<TrendArticleFeed articles={[{ ...articles[1], regionId: 'hanoi' }]} spots={[candidate]} regionId="hanoi" activeSection="upcomingSpot" anchorMonth={10} onOpenSpot={onOpenSpot} />);
+    expect(screen.getByRole('tab', { name: /sắp tới \(2\)/i })).toBeTruthy();
+    expect(screen.getByText('Hoa mùa tới')).toBeTruthy();
+    expect(screen.getByText('Điểm có thể nổi mùa tới')).toBeTruthy();
+    expect(screen.getByText(/chưa xác nhận đang rộ/i)).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /xem địa điểm/i }));
+    expect(onOpenSpot).toHaveBeenCalledWith(candidate);
+  });
   afterEach(cleanup);
+  it('offers an explicit seasonal-window control instead of requiring a hidden map month filter', () => {
+    const onAnchorMonthChange = vi.fn();
+    render(<TrendArticleFeed articles={[]} regionId="hanoi" activeSection="upcomingSpot" anchorMonth={10} onAnchorMonthChange={onAnchorMonthChange} />);
+    const month = screen.getByLabelText('Xem mùa sau tháng');
+    expect(Reflect.get(month, 'value')).toBe('10');
+    fireEvent.change(month, { target: { value: '12' } });
+    expect(onAnchorMonthChange).toHaveBeenCalledWith(12);
+  });
   it('shows exactly two editorial tabs and switches the article list', () => {
     render(<TrendArticleFeed articles={articles} regionId="all" />);
 

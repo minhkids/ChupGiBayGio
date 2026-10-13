@@ -28,6 +28,8 @@ export interface SeasonalTrend {
   peakEndWeek?: number;   // 1 - 52
   status: SpotStatus;
   statusValidUntil?: string;
+  upcoming?: boolean; // Editorial seasonal forecast, independent of verified status.
+  expectedMonths?: number[]; // Exact expected months, including non-contiguous/wrapped seasons.
   bloomPercentage?: number; // 0 - 100%
   daysLeftInPeak?: number;
   peakMonths?: number[];

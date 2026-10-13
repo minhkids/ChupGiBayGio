@@ -6,6 +6,10 @@ import { LeafletCoordinatePicker } from './LeafletCoordinatePicker';
 import { BulkImportPanel } from './BulkImportPanel';
 import type { BulkRecord } from './bulkImport';
 import { TrendArticlesAdminView } from './TrendArticlesAdminView';
+import { CONCEPT_METADATA } from '../../utils/season';
+import type { ConceptTag } from '../../types';
+
+const conceptTags = Object.keys(CONCEPT_METADATA) as ConceptTag[];
 
 const categories: { id: ServiceCategory; label: string }[] = [
   { id: 'spot', label: 'Điểm chụp ảnh' },
@@ -16,7 +20,10 @@ const categories: { id: ServiceCategory; label: string }[] = [
   { id: 'filmShop', label: 'Mua film' },
   { id: 'filmColor', label: 'Màu Film' }
 ];
-const blank = (category: ServiceCategory): ServiceListing => ({ id: '', category, name: '', tags: [], filmStocks: [], services: [] });
+const blank = (category: ServiceCategory): ServiceListing => ({
+  id: '', category, name: '', tags: [], filmStocks: [], services: [],
+  ...(category === 'spot' ? { bloomPercentage: 85, conceptTags: [], recommendedLenses: [] } : {}),
+});
 const inputClass = 'w-full rounded-xl border border-[#D8CFBD] bg-white px-3 py-2.5 text-sm text-[#2C2621] outline-none focus:border-[#C76B3C]';
 const initialCategory = (): ServiceCategory => {
   const path = window.location.pathname;
@@ -131,15 +138,40 @@ export const ServicesHubAdminView: React.FC<Props> = ({ onBack }) => {
   const textField = (label: string, field: keyof ServiceListing, placeholder = '', required = false) => (
     <label className="block space-y-1.5 text-xs font-semibold text-[#554D43]">{label}<input className={inputClass} value={String(draft[field] ?? '')} placeholder={placeholder} required={required} onChange={(event) => setField(field, event.target.value)} /></label>
   );
+  const textareaField = (label: string, field: 'description' | 'bestTimeDescription', required = false) => (
+    <label className="block space-y-1.5 text-xs font-semibold text-[#554D43]">{label}<textarea className={`${inputClass} min-h-24`} value={String(draft[field] ?? '')} required={required} onChange={(event) => setField(field, event.target.value)} /></label>
+  );
+  const percentageField = (
+    <label className="block space-y-1.5 text-xs font-semibold text-[#554D43]">Mức độ nở / hiện trạng (%)<input aria-label="Mức độ nở / hiện trạng (%)" className={inputClass} type="number" min="0" max="100" step="1" required value={draft.bloomPercentage ?? 85} onChange={(event) => setDraft((current) => ({ ...current, bloomPercentage: event.target.value === '' ? undefined : Number(event.target.value) }))} /></label>
+  );
   const numberField = (label: string, field: 'minRollPrice' | 'maxRollPrice', required = false) => (
     <label className="block space-y-1.5 text-xs font-semibold text-[#554D43]">{label}<input className={inputClass} type="number" min={field === 'minRollPrice' ? 1 : Number(draft.minRollPrice) || 1} max="50000000" step="1" value={draft[field] ?? ''} required={required} onChange={(event) => setDraft((current) => ({ ...current, [field]: event.target.value === '' ? undefined : Number(event.target.value) }))} /></label>
   );
-  const listField = (label: string, field: 'tags' | 'filmStocks' | 'services' | 'paletteHex' | 'portfolioPhotos' | 'suitableSeasons') => (
+  const listField = (label: string, field: 'tags' | 'filmStocks' | 'services' | 'paletteHex' | 'portfolioPhotos' | 'suitableSeasons' | 'recommendedLenses') => (
     <label className="block space-y-1.5 text-xs font-semibold text-[#554D43]">{label}<textarea className={`${inputClass} min-h-20`} value={listText[field] ?? (draft[field] || []).join(', ')} placeholder="Phân tách từng mục bằng dấu phẩy" onChange={(event) => {
       const value = event.target.value;
       setListText((current) => ({ ...current, [field]: value }));
       setDraft((current) => ({ ...current, [field]: value.split(',').map((item) => item.trim()).filter(Boolean) }));
     }} /></label>
+  );
+  const conceptTagPicker = (
+    <fieldset className="space-y-2">
+      <legend className="text-xs font-semibold text-[#554D43]">Concept & trang phục gợi ý</legend>
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        {conceptTags.map((tag) => {
+          const selected = (draft.conceptTags || []).includes(tag);
+          return <label key={tag} className="flex items-center gap-2 rounded-lg border border-[#D8CFBD] bg-white px-3 py-2 text-xs font-medium text-[#554D43]">
+            <input type="checkbox" aria-label={`Concept: ${CONCEPT_METADATA[tag].label}`} checked={selected} onChange={(event) => setDraft((current) => ({
+              ...current,
+              conceptTags: event.target.checked
+                ? [...(current.conceptTags || []), tag]
+                : (current.conceptTags || []).filter((item) => item !== tag),
+            }))} />
+            {CONCEPT_METADATA[tag].label}
+          </label>;
+        })}
+      </div>
+    </fieldset>
   );
   const mapLat = draft.lat === undefined || String(draft.lat).trim() === '' ? undefined : Number(draft.lat);
   const mapLng = draft.lng === undefined || String(draft.lng).trim() === '' ? undefined : Number(draft.lng);
@@ -182,10 +214,18 @@ export const ServicesHubAdminView: React.FC<Props> = ({ onBack }) => {
             <form onSubmit={save} className="space-y-3 rounded-2xl border border-[#D8CFBD] bg-[#FAF8F4] p-4 sm:p-6">
               <div className="flex items-center justify-between"><h2 className="font-bold">{draft.id ? 'Chỉnh sửa thông tin' : 'Thêm thông tin mới'}</h2>{draft.id && <button type="button" onClick={() => setDraft(blank(category))} className="text-xs text-[#8A4A2C]">Tạo mới</button>}</div>
               {textField('Tên hiển thị *', 'name', 'Tên tiệm / nhiếp ảnh gia / sản phẩm')}
-              {category === 'spot' ? <>{textField('Slug *', 'slug')}{textField('Khu vực / tỉnh thành', 'regionId', 'hanoi')}{textField('Quận / huyện', 'district')}{textField('Địa chỉ *', 'address')}{textField('Vĩ độ', 'lat')}{textField('Kinh độ', 'lng')}<div className="space-y-2"><p className="text-xs font-semibold text-[#554D43]">Chọn vị trí trên bản đồ</p><LeafletCoordinatePicker value={mapLat !== undefined && mapLng !== undefined && Number.isFinite(mapLat) && Number.isFinite(mapLng) ? { lat: mapLat, lng: mapLng } : undefined} onChange={({ lat, lng }) => setDraft((current) => ({ ...current, lat, lng }))} /><p className="text-[11px] text-[#6E655B]">Bấm vào bản đồ để ghim tọa độ; bạn cũng có thể sửa số ở hai ô phía trên.</p></div>{textField('Giờ vàng', 'goldenHour')}{textField('Khung giờ chụp đẹp', 'bestTimeOfDay', 'morning / afternoon / evening')}<label className="block space-y-1.5 text-xs font-semibold text-[#554D43]">Trạng thái mùa<select className={inputClass} value={draft.spotStatus || 'ACTIVE'} onChange={(event) => setField('spotStatus', event.target.value as 'PEAK' | 'ACTIVE' | 'ENDING_SOON')}><option value="ACTIVE">Quanh năm (ACTIVE)</option><option value="PEAK">Đang rộ nhất (PEAK)</option><option value="ENDING_SOON">Sắp hết mùa (ENDING_SOON)</option></select></label>{draft.spotStatus && draft.spotStatus !== 'ACTIVE' && textField('Hạn kiểm chứng (YYYY-MM-DD) *', 'statusValidUntil', '2026-10-19')}{textField('Phí vé', 'entryFee')}{textField('Phí gửi xe', 'parkingFee')}{textField('Mô tả', 'description')}{textField('Link nguồn Facebook / TikTok', 'sourceUrl')}<div><p className="mb-2 text-xs font-semibold text-[#554D43]">Tháng đẹp nhất</p><div className="grid grid-cols-6 gap-1.5">{Array.from({ length: 12 }, (_, index) => index + 1).map((month) => { const selected = (draft.bestMonths || []).includes(month); return <button key={month} type="button" aria-pressed={selected} onClick={() => setDraft((current) => ({ ...current, bestMonths: selected ? (current.bestMonths || []).filter((item) => item !== month) : [...(current.bestMonths || []), month] }))} className={`rounded-lg border px-2 py-2 text-xs ${selected ? 'border-[#C76B3C] bg-[#C76B3C] text-white' : 'border-[#D8CFBD] bg-white'}`}>T{month}</button>; })}</div></div></> : category === 'filmLab' || category === 'filmShop' ? <>{textField('Mô tả', 'description')}{textField('Địa chỉ khu vực', 'address')}{textField('Phường / xã', 'ward')}{textField('Quận / huyện', 'district')}</> : <>{textField('Mô tả', 'description')}{textField('Địa chỉ', 'address')}{textField('Giá tham khảo', 'price')}</>}
+              {category === 'spot' ? <>{textField('Slug *', 'slug')}{textField('Khu vực / tỉnh thành', 'regionId', 'hanoi')}{textField('Quận / huyện', 'district')}{textField('Địa chỉ *', 'address')}{textField('Vĩ độ', 'lat')}{textField('Kinh độ', 'lng')}<div className="space-y-2"><p className="text-xs font-semibold text-[#554D43]">Chọn vị trí trên bản đồ</p><LeafletCoordinatePicker value={mapLat !== undefined && mapLng !== undefined && Number.isFinite(mapLat) && Number.isFinite(mapLng) ? { lat: mapLat, lng: mapLng } : undefined} onChange={({ lat, lng }) => setDraft((current) => ({ ...current, lat, lng }))} /><p className="text-[11px] text-[#6E655B]">Bấm vào bản đồ để ghim tọa độ; bạn cũng có thể sửa số ở hai ô phía trên.</p></div>{percentageField}{textField('Giờ vàng', 'goldenHour')}{textField('Thời điểm chụp (mã)', 'bestTimeOfDay', 'morning / afternoon / evening')}{textareaField('Khung giờ đẹp (mô tả)', 'bestTimeDescription')}{listField('Ống kính khuyên dùng', 'recommendedLenses')}<label className="block space-y-1.5 text-xs font-semibold text-[#554D43]">Trạng thái mùa<select className={inputClass} value={draft.spotStatus || 'ACTIVE'} onChange={(event) => setField('spotStatus', event.target.value as 'PEAK' | 'ACTIVE' | 'ENDING_SOON')}><option value="ACTIVE">Quanh năm (ACTIVE)</option><option value="PEAK">Đang rộ nhất (PEAK)</option><option value="ENDING_SOON">Sắp hết mùa (ENDING_SOON)</option></select></label>{draft.spotStatus && draft.spotStatus !== 'ACTIVE' && textField('Hạn kiểm chứng (YYYY-MM-DD) *', 'statusValidUntil', '2026-10-19')}{textField('Phí vé', 'entryFee')}{textField('Phí gửi xe', 'parkingFee')}{textareaField('Mô tả tình trạng hoa / phong cảnh', 'description')}{conceptTagPicker}{textField('Link nguồn Facebook / TikTok', 'sourceUrl')}<div><p className="mb-2 text-xs font-semibold text-[#554D43]">Tháng đẹp nhất</p><div className="grid grid-cols-6 gap-1.5">{Array.from({ length: 12 }, (_, index) => index + 1).map((month) => { const selected = (draft.bestMonths || []).includes(month); return <button key={month} type="button" aria-pressed={selected} onClick={() => setDraft((current) => ({ ...current, bestMonths: selected ? (current.bestMonths || []).filter((item) => item !== month) : [...(current.bestMonths || []), month] }))} className={`rounded-lg border px-2 py-2 text-xs ${selected ? 'border-[#C76B3C] bg-[#C76B3C] text-white' : 'border-[#D8CFBD] bg-white'}`}>T{month}</button>; })}</div></div></> : category === 'filmLab' || category === 'filmShop' ? <>{textField('Mô tả', 'description')}{textField('Địa chỉ khu vực', 'address')}{textField('Phường / xã', 'ward')}{textField('Quận / huyện', 'district')}</> : <>{textField('Mô tả', 'description')}{textField('Địa chỉ', 'address')}{textField('Giá tham khảo', 'price')}</>}
               {category === 'outfit' && <>{textField('ID địa điểm liên kết (tùy chọn)', 'spotId')}{textField('Chất liệu', 'material')}</>}
               {category === 'photographer' && <>{textField('Thiết bị — Body', 'gearBody')}{textField('Thiết bị — Lens', 'gearLens')}{textField('Đánh giá', 'rating', 'Ví dụ: 4.9 / 5')}{textField('Số lượt đánh giá', 'reviewCount')}{listField('URL ảnh portfolio', 'portfolioPhotos')}<label className="block space-y-1.5 text-xs font-semibold text-[#554D43]">Gói chụp (JSON)<textarea className={`${inputClass} min-h-24`} placeholder='[{"name":"Gói cơ bản","price":1500000,"duration":"2 giờ","deliveredPhotos":20}]' value={JSON.stringify(draft.packages || [])} onChange={(event) => { try { const parsed: unknown = JSON.parse(event.target.value); if (Array.isArray(parsed)) setDraft((current) => ({ ...current, packages: parsed })); } catch { /* Keep last valid package list until JSON is valid. */ } }} /></label></>}
-              {category === 'spot' && <AdminImageField label="Ảnh bìa địa điểm" value={draft.coverImageUrl || ''} entity="spots" onChange={(url) => setField('coverImageUrl', url)} />}
+              {category === 'spot' && <>
+                <fieldset className="space-y-3 rounded-xl border border-[#D8CFBD] p-3">
+                  <legend className="text-xs font-bold">Dự kiến mùa tới</legend>
+                  <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={draft.upcoming === true} onChange={event => setField('upcoming', event.target.checked)} />Có thể hot mùa tới (? pin)</label>
+                  <p className="text-xs text-[#6E655B]">Dự báo, không phải xác nhận đang rộ. Chọn ít nhất một tháng khi bật; PEAK đã kiểm chứng vẫn ưu tiên nhãn đang rộ.</p>
+                  <div className="grid grid-cols-6 gap-2">{Array.from({ length: 12 }, (_, index) => index + 1).map(month => <label key={month} className="flex items-center gap-1 text-xs"><input type="checkbox" aria-label={`Tháng dự kiến: ${month}`} checked={draft.expectedMonths?.includes(month) ?? false} onChange={event => setDraft(current => ({ ...current, expectedMonths: event.target.checked ? [...(current.expectedMonths || []), month] : (current.expectedMonths || []).filter(value => value !== month) }))} />T.{month}</label>)}</div>
+                </fieldset>
+                <AdminImageField label="Ảnh bìa địa điểm" value={draft.coverImageUrl || ''} entity="spots" onChange={(url) => setField('coverImageUrl', url)} />
+              </>}
               {category === 'outfit' && <AdminImageField label="Ảnh mẫu outfit" value={draft.imageUrl || ''} entity="outfits" hotspots={Array.isArray(draft.hotspots) ? draft.hotspots as AdminHotspot[] : []} onChange={(url) => setField('imageUrl', url)} onHotspotsChange={(hotspots) => setDraft((current) => ({ ...current, hotspots }))} />}
               {category === 'photographer' && <AdminImageField label="Avatar / ảnh portfolio đại diện" value={draft.imageUrl || ''} entity="photographers" onChange={(url) => setField('imageUrl', url)} />}
               {textField('Số điện thoại', 'phone')}

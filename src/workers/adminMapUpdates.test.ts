@@ -44,6 +44,26 @@ async function publicSpot(env: ReturnType<typeof makeEnv>, id: string) {
 }
 
 describe('admin spot edits read back by the map', () => {
+  it('persists candidate metadata and preserves it for older clients', async () => {
+    const { env, headers, body } = await fixture();
+    const created = await worker.request('/api/admin/spots', { method: 'POST', headers, body: JSON.stringify({ ...body, slug: 'candidate', upcoming: true, expectedMonths: [12, 1] }) }, env);
+    expect(created.status).toBe(201);
+    const { id } = await created.json() as { id: string };
+    expect(JSON.parse(String((await publicSpot(env, id)).seasonal_trend))).toMatchObject({ upcoming: true, expectedMonths: [12, 1], status: 'ACTIVE' });
+    await worker.request(`/api/admin/cms/spots/${id}`, { method: 'PUT', headers, body: JSON.stringify({ ...body, slug: 'candidate' }) }, env);
+    expect(JSON.parse(String((await publicSpot(env, id)).seasonal_trend))).toMatchObject({ upcoming: true, expectedMonths: [12, 1] });
+    await worker.request(`/api/admin/cms/spots/${id}`, { method: 'PUT', headers, body: JSON.stringify({ ...body, slug: 'candidate', upcoming: true, expectedMonths: [11] }) }, env);
+    expect(JSON.parse(String((await publicSpot(env, id)).seasonal_trend))).toMatchObject({ upcoming: true, expectedMonths: [11] });
+    await worker.request(`/api/admin/cms/spots/${id}`, { method: 'PUT', headers, body: JSON.stringify({ ...body, slug: 'candidate', upcoming: false, expectedMonths: [] }) }, env);
+    expect(JSON.parse(String((await publicSpot(env, id)).seasonal_trend))).toMatchObject({ upcoming: false, expectedMonths: [] });
+  });
+  it.each([{ upcoming: 'yes', expectedMonths: [11] }, { upcoming: true, expectedMonths: [] }, { upcoming: true, expectedMonths: [13] }, { expectedMonths: ['11'] }])('rejects invalid candidate metadata on both write routes: %j', async (invalid) => {
+    const { env, headers, body, id } = await fixture();
+    for (const [path, method] of [['/api/admin/spots', 'POST'], [`/api/admin/cms/spots/${id}`, 'PUT']]) {
+      const response = await worker.request(path, { method, headers, body: JSON.stringify({ ...body, slug: 'invalid-candidate', ...invalid }) }, env);
+      expect(response.status).toBe(400);
+    }
+  });
   it.each([
     { spotStatus: 'INVALID', statusValidUntil: '2026-11-30' },
     { spotStatus: 'PEAK' },
@@ -84,5 +104,42 @@ describe('admin spot edits read back by the map', () => {
     expect(row).toMatchObject({ name: 'Updated spot', lat: 22, lng: 106, best_months: '[10,11]' });
     expect(JSON.parse(String(row.seasonal_trend))).toMatchObject({ status: 'PEAK', statusValidUntil: '2026-11-30', startMonth: 10, endMonth: 11, trendTitle: 'New light', conceptTags: ['SUNSET'], trendScore: 88 });
     expect(row.best_time_description).toBe('New light');
+  });
+
+  it('saves flower status and photography guide fields to the public spot record', async () => {
+    const { env, headers, body, id } = await fixture();
+    const response = await worker.request(`/api/admin/cms/spots/${id}`, {
+      method: 'PUT', headers, body: JSON.stringify({
+        ...body,
+        description: 'Mùa hoa bắt đầu nở, dự kiến kéo dài đến cuối tháng.',
+        bestTimeDescription: 'Chiều muộn; kiểm tra giờ mở cửa trước khi tới.',
+        recommendedLenses: ['35mm f/1.8', '85mm f/1.8'],
+        conceptTags: ['HOA_CO', 'NANG_THO'],
+        bloomPercentage: 73,
+      }),
+    }, env);
+    expect(response.status).toBe(200);
+    const row = await publicSpot(env, id);
+    expect(row).toMatchObject({
+      description: 'Mùa hoa bắt đầu nở, dự kiến kéo dài đến cuối tháng.',
+      best_time_description: 'Chiều muộn; kiểm tra giờ mở cửa trước khi tới.',
+      recommended_lenses: '["35mm f/1.8","85mm f/1.8"]',
+    });
+    expect(JSON.parse(String(row.seasonal_trend))).toMatchObject({
+      conceptTags: ['HOA_CO', 'NANG_THO'], bloomPercentage: 73, trendScore: 88,
+    });
+  });
+
+  it.each([
+    { bloomPercentage: 101 },
+    { conceptTags: ['NOT_A_CONCEPT'] },
+  ])('rejects invalid detail metadata without modifying the public record: %j', async (invalid) => {
+    const { env, headers, body, id } = await fixture();
+    const before = await publicSpot(env, id);
+    const response = await worker.request(`/api/admin/cms/spots/${id}`, {
+      method: 'PUT', headers, body: JSON.stringify({ ...body, ...invalid }),
+    }, env);
+    expect(response.status).toBe(400);
+    expect(await publicSpot(env, id)).toEqual(before);
   });
 });

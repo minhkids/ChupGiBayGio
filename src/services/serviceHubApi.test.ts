@@ -4,6 +4,17 @@ import { request, serviceHubApi } from './serviceHubApi';
 afterEach(() => vi.unstubAllGlobals());
 
 describe('serviceHubApi.request', () => {
+  it('hydrates forecast metadata and includes it in both spot write payloads', async () => {
+    const row = { id: 'forecast', name: 'Mùa hoa', seasonal_trend: JSON.stringify({ status: 'ACTIVE', upcoming: true, expectedMonths: [12, 1] }) };
+    vi.stubGlobal('fetch', vi.fn((url: string) => Promise.resolve(Response.json(url === '/api/admin/cms/spots' ? [row] : []))));
+    const [spot] = await serviceHubApi.adminList();
+    expect(spot).toMatchObject({ upcoming: true, expectedMonths: [12, 1], spotStatus: 'ACTIVE' });
+    const fetchMock = vi.fn().mockImplementation(() => Promise.resolve(Response.json({ id: spot.id })));
+    vi.stubGlobal('fetch', fetchMock);
+    await serviceHubApi.create(spot);
+    await serviceHubApi.update(spot);
+    for (const call of fetchMock.mock.calls) expect(JSON.parse(call[1].body)).toMatchObject({ upcoming: true, expectedMonths: [12, 1], spotStatus: 'ACTIVE' });
+  });
   it('reports an actionable error when the dev server serves its HTML fallback for an API request', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('<!doctype html><html></html>', {
       status: 200,
@@ -39,6 +50,36 @@ describe('serviceHubApi.request', () => {
     expect(listings.find((item) => item.id === 'lab-1')?.category).toBe('filmLab');
     expect(listings.find((item) => item.id === 'lab-1')).toMatchObject({ fastService: true, expressDelivery2h: false });
     expect(listings.find((item) => item.id === 'shop-1')).toMatchObject({ category: 'filmShop', cheapestRollName: 'Kodak Gold 200', minRollPrice: 50000, maxRollPrice: 150000, expressDelivery2h: true });
+  });
+
+  it('maps spot flower and photography data from D1 rows into admin form fields', async () => {
+    const row = {
+      id: 'spot-1', name: 'Hồ Tây', slug: 'ho-tay', region_id: 'hanoi', address: 'Hà Nội', lat: 21, lng: 105,
+      best_time_of_day: 'afternoon', best_time_description: 'Chiều muộn.', golden_hour: 'Giờ vàng.',
+      recommended_lenses: '["35mm"]', description: 'Hoa đang nở.', best_months: '[10,11]',
+      seasonal_trend: JSON.stringify({ status: 'PEAK', statusValidUntil: '2026-12-31', bloomPercentage: 73, conceptTags: ['HOA_CO'] }),
+    };
+    vi.stubGlobal('fetch', vi.fn((url: string) => Promise.resolve(Response.json(url === '/api/admin/cms/spots' ? [row] : []))));
+
+    const spot = (await serviceHubApi.adminList()).find((record) => record.category === 'spot');
+
+    expect(spot).toMatchObject({
+      bestTimeDescription: 'Chiều muộn.', recommendedLenses: ['35mm'], conceptTags: ['HOA_CO'],
+      bloomPercentage: 73, description: 'Hoa đang nở.',
+    });
+  });
+
+  it('sends spot detail edits in the authenticated update payload', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(Response.json({ id: 'spot-1' }));
+    vi.stubGlobal('fetch', fetchMock);
+    await serviceHubApi.update({
+      id: 'spot-1', category: 'spot', name: 'Hồ Tây', slug: 'ho-tay', address: 'Hà Nội', lat: 21, lng: 105,
+      bestTimeDescription: 'Sáng sớm.', recommendedLenses: ['50mm', '85mm'], conceptTags: ['STREET'], bloomPercentage: 61,
+    });
+
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body as string)).toMatchObject({
+      bestTimeDescription: 'Sáng sớm.', recommendedLenses: ['50mm', '85mm'], conceptTags: ['STREET'], bloomPercentage: 61,
+    });
   });
 
   it('sends film-shop admin records to the shared labs endpoint with their category and prices', async () => {

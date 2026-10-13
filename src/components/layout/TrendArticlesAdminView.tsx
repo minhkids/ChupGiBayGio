@@ -16,6 +16,7 @@ interface Props { onBack: () => void; onEditSpot?: (spot: ServiceListing) => voi
 export const TrendArticlesAdminView = ({ onBack, onEditSpot }: Props) => {
   const [articles, setArticles] = useState<TrendArticle[]>([]);
   const [hotSpots, setHotSpots] = useState<ServiceListing[]>([]);
+  const [upcomingSpots, setUpcomingSpots] = useState<ServiceListing[]>([]);
   const [spotsError, setSpotsError] = useState('');
   const [section, setSection] = useState<TrendArticleSection>('hotTrend');
   const [draft, setDraft] = useState<TrendArticleDraft>(emptyDraft);
@@ -34,6 +35,7 @@ export const TrendArticlesAdminView = ({ onBack, onEditSpot }: Props) => {
       .catch((reason: unknown) => { if (active) setError(reason instanceof Error ? reason.message : 'Không tải được bài viết.'); })
       .finally(() => { if (active) setLoading(false); });
     serviceHubApi.adminList().then((items) => {
+      if (active) setUpcomingSpots(items.filter(item => item.category === 'spot' && item.upcoming === true));
       if (active) setHotSpots(items.filter((item) => item.category === 'spot'
         && getEffectiveSeasonalStatus({ status: item.spotStatus || 'ACTIVE', statusValidUntil: item.statusValidUntil }) === 'PEAK'));
     }).catch((reason: unknown) => {
@@ -100,6 +102,16 @@ export const TrendArticlesAdminView = ({ onBack, onEditSpot }: Props) => {
               {!spotsError && !hotSpots.length && <p className="rounded-lg bg-white p-3 text-xs text-[#6E655B]">Chưa có địa điểm nào đang ở trạng thái PEAK.</p>}
             </div>}
             {!loading && filtered.length === 0 && <p className="rounded-xl bg-white p-5 text-sm text-[#6E655B]">Chưa có bài viết biên tập. Thêm bài mới bằng biểu mẫu.</p>}
+            {section === 'upcomingSpot' && <div className="space-y-2 rounded-xl border border-[#E6C3A8] bg-[#FFF8F2] p-3">
+              <h3 className="text-sm font-bold">Địa điểm dự kiến trên bản đồ ({upcomingSpots.length})</h3>
+              <p className="text-xs text-[#6E655B]">Địa điểm gốc trong danh mục Điểm chụp ảnh, không phải bài viết. Hiển thị mọi mùa để quản lý; bản đồ chỉ hiện cửa sổ 3 tháng tới. Nhãn PEAK / Sắp hết đã kiểm chứng được ưu tiên hơn dự báo.</p>
+              {spotsError && <p role="alert" className="text-xs text-red-700">{spotsError}</p>}
+              {upcomingSpots.map(spot => <article key={spot.id} className="flex items-center justify-between gap-3 rounded-lg border border-[#E2DAD0] bg-white p-3">
+                <div className="min-w-0"><h4 className="truncate text-sm font-semibold">{spot.name}</h4><p className="text-xs text-[#6E655B]">? Dự kiến tháng {spot.expectedMonths?.join(', ') || 'chưa nhập'}</p></div>
+                <button type="button" onClick={() => onEditSpot?.(spot)} className="shrink-0 rounded-lg bg-[#ECE4D0] px-3 py-2 text-xs font-semibold">Sửa địa điểm <span className="sr-only">{spot.name}</span></button>
+              </article>)}
+              {!spotsError && !upcomingSpots.length && <p className="text-xs text-[#6E655B]">Thêm hoặc sửa Điểm chụp ảnh, bật “Có thể hot mùa tới” và chọn tháng dự kiến.</p>}
+            </div>}
             {filtered.map((article) => <article key={article.id} className="flex items-center gap-3 rounded-xl border border-[#E2DAD0] bg-white p-3">
               {article.imageUrl && <img src={article.imageUrl} alt="" className="h-16 w-20 rounded-lg object-cover" />}
               <div className="min-w-0 flex-1"><h3 className="truncate text-sm font-bold">{article.title}</h3><p className="truncate text-xs text-[#6E655B]">{article.location || REGIONS.find((region) => region.id === article.regionId)?.name || 'Toàn quốc'} · {article.isPublished ? 'Đã đăng' : 'Bản nháp'}</p></div>

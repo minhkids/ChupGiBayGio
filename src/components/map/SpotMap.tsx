@@ -5,6 +5,7 @@ import L from 'leaflet';
 import type { Spot, SpotStatus } from '../../types';
 import { REGIONS } from '../../data/regions';
 import { getStatusBadgeInfo, getEffectiveSeasonalStatus } from '../../utils/season';
+import { getSpotMarkerSymbol, isUpcomingCandidate } from '../../utils/upcomingSpots';
 import { Compass, Layers, Key, Check, ExternalLink } from 'lucide-react';
 import { type FilmLab } from '../../data/filmLabsData';
 import { MapSpotLegend } from './MapSpotLegend';
@@ -246,7 +247,7 @@ export const SpotMap: React.FC<SpotMapProps> = ({
       const isSelected = selectedSpot?.id === spot.id;
       if (editorial) {
         const safeName = spot.name.replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character] || character);
-        const pinHtml = `<span class="editorial-map-pin${isSelected ? ' is-selected' : ''}"><span class="editorial-map-dot"></span><span class="editorial-map-label">${safeName}</span></span>`;
+        const pinHtml = `<span class="editorial-map-pin${isSelected ? ' is-selected' : ''}"><span class="editorial-map-dot">${isUpcomingCandidate(spot.seasonalTrend) ? '?' : ''}</span><span class="editorial-map-label">${safeName}</span></span>`;
         const icon = L.divIcon({ className: 'editorial-marker', html: pinHtml, iconSize: [20, 20], iconAnchor: [10, 10] });
         L.marker([spot.lat, spot.lng], { icon, title: spot.name, alt: spot.name, zIndexOffset: isSelected ? 1000 : 0 })
           .on('click', () => { if (!isPickingLocation) onSelectSpot(spot); })
@@ -255,11 +256,14 @@ export const SpotMap: React.FC<SpotMapProps> = ({
       }
       const status = getEffectiveSeasonalStatus(spot.seasonalTrend);
       const statusInfo = getStatusBadgeInfo(status, spot.seasonalTrend.daysLeftInPeak);
+      const upcoming = isUpcomingCandidate(spot.seasonalTrend);
 
       let markerBg = '#1C1D1F';
       let pulseRing = '';
 
-      if (status === 'PEAK') {
+      if (upcoming) {
+        markerBg = '#8A633C'; // Forecast, no verified-peak pulse.
+      } else if (status === 'PEAK') {
         markerBg = '#C85A32'; // Terracotta
         pulseRing = '<div class="absolute -inset-1.5 border-2 border-terracotta rounded-none animate-ping opacity-60 pointer-events-none"></div>';
       } else if (status === 'ENDING_SOON') {
@@ -273,7 +277,7 @@ export const SpotMap: React.FC<SpotMapProps> = ({
           ${pulseRing}
           <div style="background-color: ${markerBg}; border: 1.5px solid #1C1D1F; box-shadow: 2px 2px 0px #1C1D1F;" 
                class="w-7 h-7 flex items-center justify-center text-white font-mono text-[11px] font-bold">
-            ${status === 'PEAK' ? '★' : status === 'ENDING_SOON' ? '!' : '+'}
+            ${getSpotMarkerSymbol(spot.seasonalTrend)}
           </div>
           <div class="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[5px] border-t-slateInk mx-auto"></div>
         </div>
@@ -287,7 +291,7 @@ export const SpotMap: React.FC<SpotMapProps> = ({
         popupAnchor: [0, -32]
       });
 
-      const marker = L.marker([spot.lat, spot.lng], { icon: customIcon });
+      const marker = L.marker([spot.lat, spot.lng], { icon: customIcon, title: upcoming ? `${spot.name} — Có thể hot (dự kiến)` : spot.name, alt: upcoming ? `${spot.name} — Có thể hot (dự kiến)` : spot.name });
 
       // Editorial Viewfinder Popup
       const popupContent = `
@@ -296,7 +300,7 @@ export const SpotMap: React.FC<SpotMapProps> = ({
             <img src="${spot.coverImageUrl}" style="width: 100%; height: 100%; object-fit: cover;" alt="${spot.name}" />
             <div data-reference-pin></div>
             <span style="position: absolute; top: 6px; left: 6px; font-family: 'IBM Plex Mono', monospace; font-size: 9px; font-weight: 700; background: ${markerBg}; color: #fff; padding: 2px 5px; border: 1px solid #1C1D1F;">
-              ${statusInfo.label}
+              ${upcoming ? '? Có thể hot — chưa xác nhận đang rộ' : statusInfo.label}
             </span>
           </div>
           <div style="padding: 10px; background-color: #FBF9F5;">

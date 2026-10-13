@@ -51,11 +51,35 @@ cms.post('/api/admin/upload', async (c) => {
 const text = (value: unknown, max = 5000): string => typeof value === 'string' ? value.trim().slice(0, max) : '';
 const named = (body: Record<string, unknown> | null): body is Record<string, unknown> => Boolean(body && text(body.name, 160));
 const trendSection = (value: unknown): value is 'hotTrend' | 'upcomingSpot' => value === 'hotTrend' || value === 'upcomingSpot';
+const conceptTagValues = new Set(['HOA_CO', 'VINTAGE', 'NANG_THO', 'AO_DAI', 'FILM', 'STREET', 'CYBERPUNK', 'MINIMAL', 'KIEN_TRUC', 'MAT_TROI', 'CHRISTMAS', 'SUNSET']);
 function array(value: unknown): unknown[] {
   if (Array.isArray(value)) return value;
   if (typeof value !== 'string') return [];
   try { const parsed: unknown = JSON.parse(value); return Array.isArray(parsed) ? parsed : []; }
   catch { return []; }
+}
+
+function boundedStringArray(value: unknown, maxItems: number, maxLength: number): string[] | null {
+  const values = array(value);
+  if (values.length > maxItems || values.some((item) => typeof item !== 'string' || !item.trim() || item.length > maxLength)) return null;
+  return values.map((item) => (item as string).trim());
+}
+
+function validatedConceptTags(value: unknown): string[] | null {
+  const tags = boundedStringArray(value, 20, 40);
+  if (!tags || tags.some((tag) => !conceptTagValues.has(tag))) return null;
+  return [...new Set(tags)];
+}
+
+function candidateFields(body: Record<string, unknown>) {
+  if (body.upcoming !== undefined && typeof body.upcoming !== 'boolean') return null;
+  if (body.expectedMonths !== undefined && (!Array.isArray(body.expectedMonths) || body.expectedMonths.length > 12
+    || body.expectedMonths.some(month => !Number.isInteger(month) || Number(month) < 1 || Number(month) > 12))) return null;
+  if (body.upcoming === true && (!Array.isArray(body.expectedMonths) || !body.expectedMonths.length)) return null;
+  return {
+    ...(body.upcoming !== undefined ? { upcoming: body.upcoming } : {}),
+    ...(body.expectedMonths !== undefined ? { expectedMonths: [...new Set(body.expectedMonths as number[])] } : {}),
+  };
 }
 
 function rollPriceFields(body: Record<string, unknown>, films: unknown[]) {
@@ -90,6 +114,10 @@ cms.post('/api/admin/spots', async (c) => {
   if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) return c.json({ error: 'Tọa độ không hợp lệ.' }, 400);
   const bestMonths = array(body.bestMonths);
   if (bestMonths.some((month) => !Number.isInteger(month) || Number(month) < 1 || Number(month) > 12)) return c.json({ error: 'Tháng đẹp phải nằm trong khoảng 1–12.' }, 400);
+  const recommendedLenses = boundedStringArray(body.recommendedLenses ?? [], 12, 120);
+  const conceptTags = validatedConceptTags(body.conceptTags ?? []);
+  const bloomPercentage = body.bloomPercentage === undefined ? 85 : Number(body.bloomPercentage);
+  if (!recommendedLenses || !conceptTags || !Number.isInteger(bloomPercentage) || bloomPercentage < 0 || bloomPercentage > 100) return c.json({ error: 'Phần trăm hiện trạng, ống kính hoặc concept không hợp lệ.' }, 400);
   const spotStatus = text(body.spotStatus, 20) || 'ACTIVE';
   const statusValidUntil = text(body.statusValidUntil, 10);
   if (!['PEAK', 'ACTIVE', 'ENDING_SOON'].includes(spotStatus) || (spotStatus !== 'ACTIVE' && !/^\d{4}-\d{2}-\d{2}$/.test(statusValidUntil))) {
@@ -97,12 +125,15 @@ cms.post('/api/admin/spots', async (c) => {
   }
   const id = crypto.randomUUID();
   const monthNumbers = bestMonths.map(Number);
-  const seasonalTrend = JSON.stringify({ id, trendTitle: text(body.goldenHour, 300), startMonth: monthNumbers.length ? Math.min(...monthNumbers) : 1, endMonth: monthNumbers.length ? Math.max(...monthNumbers) : 12, status: spotStatus, ...(spotStatus !== 'ACTIVE' ? { statusValidUntil } : {}), conceptTags: [], isTrending: false, trendScore: 0 });
+  const candidate = candidateFields(body);
+  if (!candidate) return c.json({ error: 'Dự kiến mùa tới cần cờ bật/tắt và tháng dự kiến 1–12.' }, 400);
+  const seasonalTrend = JSON.stringify({ id, trendTitle: text(body.goldenHour, 300), startMonth: monthNumbers.length ? Math.min(...monthNumbers) : 1, endMonth: monthNumbers.length ? Math.max(...monthNumbers) : 12, status: spotStatus, ...(spotStatus !== 'ACTIVE' ? { statusValidUntil } : {}), bloomPercentage, conceptTags, isTrending: false, trendScore: 0, ...candidate });
+  const bestTimeDescription = body.bestTimeDescription === undefined ? text(body.goldenHour, 300) : text(body.bestTimeDescription, 1000);
   await getD1(c.env).prepare(`INSERT INTO spots (id, region_id, name, slug, address, lat, lng, best_time_of_day,
-    best_time_description, cost_type, cover_image_url, description, district, best_months, golden_hour, entry_fee, parking_fee, source_url, seasonal_trend)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+    best_time_description, recommended_lenses, cost_type, cover_image_url, description, district, best_months, golden_hour, entry_fee, parking_fee, source_url, seasonal_trend)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
     .bind(id, text(body.regionId, 80) || 'hanoi', text(body.name, 160), text(body.slug, 180), text(body.address), lat, lng,
-      text(body.bestTimeOfDay, 40) || 'afternoon', text(body.goldenHour, 300), text(body.costType, 40) || 'FREE', text(body.coverImageUrl, 2000),
+      text(body.bestTimeOfDay, 40) || 'afternoon', bestTimeDescription, jsonText(recommendedLenses), text(body.costType, 40) || 'FREE', text(body.coverImageUrl, 2000),
       text(body.description), text(body.district, 120), jsonText(bestMonths), text(body.goldenHour, 300), text(body.entryFee, 200), text(body.parkingFee, 200), text(body.sourceUrl, 2000), seasonalTrend).run();
   return c.json({ ...body, id, bestMonths }, 201);
 });
@@ -222,18 +253,32 @@ cms.put('/api/admin/cms/:table/:id', async (c) => {
     if (!text(body.slug, 180) || !text(body.address) || !Number.isFinite(lat) || !Number.isFinite(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180 || months.some((month) => !Number.isInteger(month) || Number(month) < 1 || Number(month) > 12)) return c.json({ error: 'Thông tin địa điểm hoặc tọa độ không hợp lệ.' }, 400);
     const spotStatus = text(body.spotStatus, 20);
     const statusValidUntil = text(body.statusValidUntil, 10);
+    const recommendedLenses = body.recommendedLenses === undefined ? undefined : boundedStringArray(body.recommendedLenses, 12, 120);
+    const conceptTags = body.conceptTags === undefined ? undefined : validatedConceptTags(body.conceptTags);
+    const bloomPercentage = body.bloomPercentage === undefined ? undefined : Number(body.bloomPercentage);
+    if (body.recommendedLenses !== undefined && !recommendedLenses
+      || body.conceptTags !== undefined && !conceptTags
+      || body.bloomPercentage !== undefined && (!Number.isInteger(bloomPercentage) || Number(bloomPercentage) < 0 || Number(bloomPercentage) > 100)) {
+      return c.json({ error: 'Phần trăm hiện trạng, ống kính hoặc concept không hợp lệ.' }, 400);
+    }
     if (body.spotStatus !== undefined && (!['PEAK', 'ACTIVE', 'ENDING_SOON'].includes(spotStatus) || (spotStatus !== 'ACTIVE' && !/^\d{4}-\d{2}-\d{2}$/.test(statusValidUntil)))) {
       return c.json({ error: 'Nhãn theo mùa cần trạng thái hợp lệ và hạn kiểm chứng YYYY-MM-DD.' }, 400);
     }
+    const candidate = candidateFields(body);
+    if (!candidate) return c.json({ error: 'Dự kiến mùa tới cần cờ bật/tắt và tháng dự kiến 1–12.' }, 400);
     const seasonalPatch = JSON.stringify({
+      ...candidate,
       trendTitle: text(body.goldenHour, 300),
       startMonth: months.length ? Math.min(...months.map(Number)) : 1,
       endMonth: months.length ? Math.max(...months.map(Number)) : 12,
       ...(body.spotStatus !== undefined ? { status: spotStatus, statusValidUntil: spotStatus === 'ACTIVE' ? null : statusValidUntil } : {}),
+      ...(conceptTags !== undefined ? { conceptTags } : {}),
+      ...(bloomPercentage !== undefined ? { bloomPercentage } : {}),
     });
+    const bestTimeDescription = body.bestTimeDescription === undefined ? text(body.goldenHour, 300) : text(body.bestTimeDescription, 1000);
     // Patch only admin-owned fields; retain concept tags and other map metadata.
-    result = await db.prepare(`UPDATE spots SET name = ?, slug = ?, region_id = ?, address = ?, district = ?, lat = ?, lng = ?, best_time_of_day = ?, golden_hour = ?, best_months = ?, entry_fee = ?, parking_fee = ?, source_url = ?, cover_image_url = ?, description = ?, best_time_description = ?, seasonal_trend = json_patch(CASE WHEN json_valid(seasonal_trend) THEN seasonal_trend ELSE '{}' END, ?), updated_at = CURRENT_TIMESTAMP WHERE id = ?`)
-      .bind(text(body.name, 160), text(body.slug, 180), text(body.regionId, 80) || 'hanoi', text(body.address), text(body.district, 120), lat, lng, text(body.bestTimeOfDay, 40) || 'afternoon', text(body.goldenHour, 300), jsonText(months), text(body.entryFee, 200), text(body.parkingFee, 200), text(body.sourceUrl, 2000), text(body.coverImageUrl, 2000), text(body.description), text(body.goldenHour, 300), seasonalPatch, id).run();
+    result = await db.prepare(`UPDATE spots SET name = ?, slug = ?, region_id = ?, address = ?, district = ?, lat = ?, lng = ?, best_time_of_day = ?, golden_hour = ?, best_months = ?, entry_fee = ?, parking_fee = ?, source_url = ?, cover_image_url = ?, description = ?, best_time_description = ?, recommended_lenses = COALESCE(?, recommended_lenses), seasonal_trend = json_patch(CASE WHEN json_valid(seasonal_trend) THEN seasonal_trend ELSE '{}' END, ?), updated_at = CURRENT_TIMESTAMP WHERE id = ?`)
+      .bind(text(body.name, 160), text(body.slug, 180), text(body.regionId, 80) || 'hanoi', text(body.address), text(body.district, 120), lat, lng, text(body.bestTimeOfDay, 40) || 'afternoon', text(body.goldenHour, 300), jsonText(months), text(body.entryFee, 200), text(body.parkingFee, 200), text(body.sourceUrl, 2000), text(body.coverImageUrl, 2000), text(body.description), bestTimeDescription, recommendedLenses === undefined ? null : jsonText(recommendedLenses), seasonalPatch, id).run();
   } else if (table === 'trendArticles') {
     if (!trendSection(body.section)) return c.json({ error: 'Tab bài viết không hợp lệ.' }, 400);
     result = await db.prepare('UPDATE trend_articles SET section = ?, title = ?, content = ?, image_url = ?, location = ?, region_id = ?, source_url = ?, is_published = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')

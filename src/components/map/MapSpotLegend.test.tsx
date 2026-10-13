@@ -5,6 +5,11 @@ import { MapSpotLegend } from './MapSpotLegend';
 
 describe('MapSpotLegend', () => {
   afterEach(() => cleanup());
+  it('explains forecast question-mark pins separately from verified status controls', () => {
+    render(<MapSpotLegend selectedStatus="ALL" onSelectStatus={vi.fn()} />);
+    expect(screen.getByText('Có thể hot (dự kiến)')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Có thể hot (dự kiến)' })).toBeNull();
+  });
 
   it('lets users filter spots by each map-pin category', () => {
     const onSelectStatus = vi.fn();

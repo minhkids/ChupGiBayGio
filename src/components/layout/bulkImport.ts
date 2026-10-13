@@ -10,7 +10,8 @@ const fields: Partial<Record<ServiceCategory, Record<string, string[]>>> = {
     address: ['address', 'diachi'], lat: ['lat', 'latitude', 'vido'], lng: ['lng', 'lon', 'longitude', 'kinhdo'], bestTimeOfDay: ['besttimeofday', 'khunggio', 'khunggiodep'],
  goldenHour: ['goldenhour', 'giovang'], bestMonths: ['bestmonths', 'thangdep', 'thangdepnhat'], entryFee: ['entryfee', 'phive'],
  parkingFee: ['parkingfee', 'phiguixe'], coverImageUrl: ['coverimageurl', 'anhbia', 'urlanhbia', 'anhbiaurl'], description: ['description', 'mota'], sourceUrl: ['sourceurl', 'linknguon'],
- spotStatus: ['spotstatus', 'trangthaimua'], statusValidUntil: ['statusvaliduntil', 'hankiemchung']
+ spotStatus: ['spotstatus', 'trangthaimua'], statusValidUntil: ['statusvaliduntil', 'hankiemchung'],
+ upcoming: ['upcoming', 'cothehotsaptoi'], expectedMonths: ['expectedmonths', 'thangdukien']
   },
   rental: {
     name: ['name', 'ten', 'tentiem', 'tentiemthue'], address: ['address', 'diachi'], phone: ['phone', 'hotline', 'sodienthoai'],
@@ -44,7 +45,7 @@ const fields: Partial<Record<ServiceCategory, Record<string, string[]>>> = {
   }
 };
 
-const arrays = new Set(['bestMonths', 'hotspots', 'tags', 'portfolioPhotos', 'packages', 'filmStocks', 'services', 'suitableSeasons', 'paletteHex']);
+const arrays = new Set(['bestMonths', 'expectedMonths', 'hotspots', 'tags', 'portfolioPhotos', 'packages', 'filmStocks', 'services', 'suitableSeasons', 'paletteHex']);
 const strings = new Set(['name', 'slug', 'regionId', 'district', 'ward', 'slogan', 'cheapestRollName', 'address', 'bestTimeOfDay', 'goldenHour', 'entryFee', 'parkingFee', 'coverImageUrl', 'description', 'sourceUrl', 'spotStatus', 'statusValidUntil', 'price', 'spotId', 'material', 'imageUrl', 'link', 'secondaryLink', 'phone', 'gearBody', 'gearLens', 'openingHours', 'filmImageUrl', 'format', 'recommendedTime']);
 
 function normalizeHeader(value: unknown): string {
@@ -57,7 +58,7 @@ function parseArray(value: unknown, field: string): unknown[] {
   const text = String(value).trim();
   try { const parsed: unknown = JSON.parse(text); if (Array.isArray(parsed)) return parsed; } catch { /* Allow Excel comma-separated values. */ }
   if (field === 'hotspots' || field === 'packages') return [];
-  return text.split(/[;,]/).map((item) => item.trim()).filter(Boolean).map((item) => field === 'bestMonths' ? Number(item) : item);
+  return text.split(/[;,]/).map((item) => item.trim()).filter(Boolean).map((item) => field === 'bestMonths' || field === 'expectedMonths' ? Number(item) : item);
 }
 
 function parseBoolean(value: unknown): boolean {
@@ -79,7 +80,7 @@ export function parseBulkRows(category: ServiceCategory, rows: unknown[][]): Bul
       if (columnIndex < 0) continue;
       const value = values[columnIndex];
       if (arrays.has(field)) record[field] = parseArray(value, field);
-      else if (field === 'fastService') record[field] = parseBoolean(value);
+      else if (field === 'fastService' || field === 'upcoming') record[field] = parseBoolean(value);
       else if (field === 'lat' || field === 'lng') record[field] = value === '' || value == null ? undefined : Number(value);
       else if (field === 'minRollPrice' || field === 'maxRollPrice') record[field] = value === '' || value == null ? undefined : Number(value);
       else if (field === 'iso') record[field] = value === '' || value == null ? '' : String(Number(value) || value);
@@ -98,6 +99,10 @@ export function parseBulkRows(category: ServiceCategory, rows: unknown[][]): Bul
         errors.push({ row: line, message: 'Nhãn theo mùa cần hạn kiểm chứng dạng YYYY-MM-DD.' }); continue;
       }
       const months = record.bestMonths as number[] | undefined;
+      const expected = record.expectedMonths as number[] | undefined;
+      if (record.upcoming === true && !expected?.length || expected && (expected.length > 12 || expected.some(month => !Number.isInteger(month) || month < 1 || month > 12))) {
+        errors.push({ row: line, message: 'Dự kiến mùa tới cần tháng dự kiến là số 1–12.' }); continue;
+      }
       if (months?.some((month) => !Number.isInteger(month) || month < 1 || month > 12)) {
         errors.push({ row: line, message: 'Tháng đẹp phải là số từ 1 đến 12.' }); continue;
       }
@@ -117,7 +122,7 @@ export function parseBulkRows(category: ServiceCategory, rows: unknown[][]): Bul
 
 export function bulkTemplateHeaders(category: ServiceCategory): string[] {
   const labels: Partial<Record<ServiceCategory, Record<string, string>>> = {
-    spot: { name: 'Tên địa điểm', slug: 'Slug', regionId: 'Khu vực', district: 'Quận huyện', address: 'Địa chỉ', lat: 'Vĩ độ', lng: 'Kinh độ', bestTimeOfDay: 'Khung giờ đẹp', goldenHour: 'Giờ vàng', bestMonths: 'Tháng đẹp', entryFee: 'Phí vé', parkingFee: 'Phí gửi xe', coverImageUrl: 'Ảnh bìa URL', description: 'Mô tả', sourceUrl: 'Link nguồn', spotStatus: 'Trạng thái mùa', statusValidUntil: 'Hạn kiểm chứng' },
+    spot: { name: 'Tên địa điểm', slug: 'Slug', regionId: 'Khu vực', district: 'Quận huyện', address: 'Địa chỉ', lat: 'Vĩ độ', lng: 'Kinh độ', bestTimeOfDay: 'Khung giờ đẹp', goldenHour: 'Giờ vàng', bestMonths: 'Tháng đẹp', entryFee: 'Phí vé', parkingFee: 'Phí gửi xe', coverImageUrl: 'Ảnh bìa URL', description: 'Mô tả', sourceUrl: 'Link nguồn', spotStatus: 'Trạng thái mùa', statusValidUntil: 'Hạn kiểm chứng', upcoming: 'Có thể hot sắp tới', expectedMonths: 'Tháng dự kiến' },
     rental: { name: 'Tên tiệm thuê', address: 'Địa chỉ', phone: 'Hotline', link: 'Fanpage URL', price: 'Giá/ngày' },
     outfit: { name: 'Tên set đồ', spotId: 'ID địa điểm', description: 'Mô tả', material: 'Chất liệu', price: 'Giá ước tính', imageUrl: 'Ảnh mẫu URL', hotspots: 'Hotspots JSON', link: 'Shopee URL', secondaryLink: 'TikTok URL' },
     photographer: { name: 'Tên nhiếp ảnh gia', imageUrl: 'Avatar URL', description: 'Bio', phone: 'Hotline/Zalo', link: 'Instagram URL', gearBody: 'Body', gearLens: 'Lens', tags: 'Hashtag', portfolioPhotos: 'Ảnh portfolio URL', packages: 'Gói chụp JSON' },

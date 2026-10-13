@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { PinReferenceButton } from '../planner/PinReferenceButton';
+import { isUpcomingCandidate } from '../../utils/upcomingSpots';
 import { 
   X, 
   MapPin, 
@@ -83,6 +84,7 @@ export const SpotDetailModal: React.FC<SpotDetailModalProps> = ({
 
   const allImages = [spot.coverImageUrl, ...(spot.galleryUrls || [])];
   const effectiveStatus = getEffectiveSeasonalStatus(spot.seasonalTrend);
+  const upcoming = isUpcomingCandidate(spot.seasonalTrend);
   const statusInfo = getStatusBadgeInfo(effectiveStatus, spot.seasonalTrend.daysLeftInPeak);
   const coordsFormatted = formatCoordinates(spot.lat, spot.lng);
 
@@ -189,10 +191,10 @@ export const SpotDetailModal: React.FC<SpotDetailModalProps> = ({
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-2">
               <span className={`px-2.5 py-0.5 text-xs font-mono-spec font-bold uppercase tracking-wider border shadow-hard ${statusInfo.classNames}`}>
-                {statusInfo.label}
+                {upcoming ? `? Có thể hot — dự kiến tháng ${spot.seasonalTrend.expectedMonths?.join(', ')}` : statusInfo.label}
               </span>
 
-              {spot.seasonalTrend.bloomPercentage && (
+              {!upcoming && spot.seasonalTrend.bloomPercentage && (
                 <span className="px-2.5 py-0.5 text-xs font-mono-spec font-bold bg-slateInk text-white border border-slateInk">
                   Tình trạng hoa nở: {spot.seasonalTrend.bloomPercentage}%
                 </span>

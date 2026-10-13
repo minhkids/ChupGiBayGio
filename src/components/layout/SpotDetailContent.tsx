@@ -51,7 +51,7 @@ interface BloomConditionProps {
 }
 
 const BloomCondition: React.FC<BloomConditionProps> = ({ spot }) => {
-  const percentage = spot.seasonalTrend?.bloomPercentage || 85;
+  const percentage = spot.seasonalTrend?.bloomPercentage ?? 85;
 
   return (
     <div className="bg-amber-50/70 dark:bg-neutral-800/70 border border-amber-200/60 dark:border-neutral-700/60 rounded-xl p-3 space-y-1.5">

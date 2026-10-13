@@ -29,5 +29,9 @@ export const MapSpotLegend = ({ selectedStatus, onSelectStatus }: MapSpotLegendP
         </button>
       );
     })}
+    <div className="flex items-center gap-2 px-1.5 py-1 text-[#6E655B]" title="Dự báo theo mùa, chưa xác nhận đang rộ. Xem tab Các điểm có thể hot sắp tới.">
+      <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center bg-[#8A633C] text-[9px] font-bold text-white">?</span>
+      <span>Có thể hot (dự kiến)</span>
+    </div>
   </div>
 );

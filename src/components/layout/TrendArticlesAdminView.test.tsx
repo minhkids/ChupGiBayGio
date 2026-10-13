@@ -25,6 +25,17 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe('TrendArticlesAdminView', () => {
+  it('shows upcoming canonical spots separately from articles and routes edits to the spot editor', async () => {
+    const candidate: ServiceListing = { id: 'future-1', category: 'spot', name: 'Mùa hoa mới', upcoming: true, expectedMonths: [11], spotStatus: 'ACTIVE' };
+    vi.mocked(serviceHubApi.adminList).mockResolvedValueOnce([candidate]);
+    const onEditSpot = vi.fn();
+    render(<TrendArticlesAdminView onBack={() => undefined} onEditSpot={onEditSpot} />);
+    fireEvent.click(screen.getByRole('tab', { name: /điểm có thể hot sắp tới/i }));
+    expect(await screen.findByRole('heading', { name: 'Mùa hoa mới' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Sửa địa điểm Mùa hoa mới' }));
+    expect(onEditSpot).toHaveBeenCalledWith(candidate);
+    expect(trendArticleApi.create).not.toHaveBeenCalled();
+  });
   it('lists map hot spots separately from editorial articles and opens a spot for editing', async () => {
     const onEditSpot = vi.fn();
     render(<TrendArticlesAdminView onBack={() => undefined} onEditSpot={onEditSpot} />);

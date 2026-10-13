@@ -1,4 +1,5 @@
 import { CATALOG_UPDATED_EVENT } from '../hooks/useCatalogRevision';
+import type { ConceptTag } from '../types';
 
 export type ServiceCategory = 'spot' | 'rental' | 'outfit' | 'photographer' | 'filmLab' | 'filmShop' | 'filmColor';
 
@@ -57,9 +58,15 @@ export interface ServiceListing {
   regionId?: string;
   district?: string;
   bestMonths?: number[];
+  upcoming?: boolean;
+  expectedMonths?: number[];
+  bloomPercentage?: number;
+  conceptTags?: ConceptTag[];
+  recommendedLenses?: string[];
   spotStatus?: 'PEAK' | 'ACTIVE' | 'ENDING_SOON';
   statusValidUntil?: string;
   bestTimeOfDay?: string;
+  bestTimeDescription?: string;
   goldenHour?: string;
   entryFee?: string;
   parkingFee?: string;
@@ -108,7 +115,7 @@ const tableFor: Record<ServiceCategory, string> = {
 };
 
 function adminPayload(listing: ServiceListing) {
-  if (listing.category === 'spot') return { name: listing.name, slug: listing.slug, regionId: listing.regionId, address: listing.address, district: listing.district, lat: listing.lat, lng: listing.lng, bestTimeOfDay: listing.bestTimeOfDay, goldenHour: listing.goldenHour, bestMonths: listing.bestMonths, entryFee: listing.entryFee, parkingFee: listing.parkingFee, sourceUrl: listing.sourceUrl, coverImageUrl: listing.coverImageUrl, description: listing.description, spotStatus: listing.spotStatus, statusValidUntil: listing.statusValidUntil };
+  if (listing.category === 'spot') return { name: listing.name, slug: listing.slug, regionId: listing.regionId, address: listing.address, district: listing.district, lat: listing.lat, lng: listing.lng, bestTimeOfDay: listing.bestTimeOfDay, bestTimeDescription: listing.bestTimeDescription, recommendedLenses: listing.recommendedLenses, conceptTags: listing.conceptTags, bloomPercentage: listing.bloomPercentage, goldenHour: listing.goldenHour, bestMonths: listing.bestMonths, entryFee: listing.entryFee, parkingFee: listing.parkingFee, sourceUrl: listing.sourceUrl, coverImageUrl: listing.coverImageUrl, description: listing.description, spotStatus: listing.spotStatus, statusValidUntil: listing.statusValidUntil, upcoming: listing.upcoming, expectedMonths: listing.expectedMonths };
   if (listing.category === 'rental') return { name: listing.name, address: listing.address, hotline: listing.phone, fanpageUrl: listing.link, dailyPrice: listing.price };
   if (listing.category === 'outfit') return { spotId: listing.spotId, name: listing.name, description: listing.description, material: listing.material, estimatedPrice: listing.price, imageUrl: listing.imageUrl, hotspots: listing.hotspots, shopeeUrl: listing.link, tiktokUrl: listing.secondaryLink };
   if (listing.category === 'photographer') return { name: listing.name, avatarUrl: listing.imageUrl, bio: listing.description, phone: listing.phone, instagram: listing.link, gearBody: listing.gearBody, gearLens: listing.gearLens, styles: listing.tags, portfolioPhotos: listing.portfolioPhotos, packages: listing.packages };
@@ -147,7 +154,7 @@ export const serviceHubApi = {
     ]);
     return [
       ...spots.map((row) => {
-        const trend = parseJsonObject(row.seasonal_trend, { status: 'ACTIVE' as const, statusValidUntil: undefined as string | undefined });
+        const trend = parseJsonObject(row.seasonal_trend, { status: 'ACTIVE' as const, statusValidUntil: undefined as string | undefined, conceptTags: [] as ConceptTag[], bloomPercentage: undefined as number | undefined, upcoming: false, expectedMonths: [] as number[] });
         return {
           ...row,
           id: String(row.id),
@@ -161,7 +168,13 @@ export const serviceHubApi = {
           lng: Number(row.lng),
           bestTimeOfDay: String(row.best_time_of_day || ''),
           goldenHour: String(row.golden_hour || ''),
+          bestTimeDescription: String(row.best_time_description || row.golden_hour || ''),
+          recommendedLenses: parseList(row.recommended_lenses),
+          conceptTags: parseList(trend.conceptTags) as ConceptTag[],
+          bloomPercentage: typeof trend.bloomPercentage === 'number' ? trend.bloomPercentage : 85,
           bestMonths: parseList(row.best_months).map(Number),
+          upcoming: trend.upcoming === true,
+          expectedMonths: parseList(trend.expectedMonths).map(Number),
           entryFee: String(row.entry_fee || ''),
           parkingFee: String(row.parking_fee || ''),
           sourceUrl: String(row.source_url || ''),

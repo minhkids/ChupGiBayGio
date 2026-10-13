@@ -55,7 +55,7 @@ function mapSpotFromAPI(row: any): Spot {
     description: row.description,
     photographyTips: parseJsonField<string[]>(row.photography_tips, []),
     poseTip: row.pose_tip,
-    seasonalTrend: parseJsonField(row.seasonal_trend, {
+    seasonalTrend: {
       id: '',
       trendTitle: '',
       startMonth: 1,
@@ -63,8 +63,10 @@ function mapSpotFromAPI(row: any): Spot {
       status: 'ACTIVE',
       conceptTags: [],
       isTrending: false,
-      trendScore: 0
-    }),
+      trendScore: 0,
+      // Forecast/legacy rows may provide only part of the nested JSON object.
+      ...parseJsonField<Partial<Spot['seasonalTrend']>>(row.seasonal_trend, {}),
+    },
     inspirationPosts: parseJsonField(row.inspiration_posts, []),
     recentReports: [], // Typically fetched separately or not stored directly in spots table
     savesCount: row.saves_count || 0,

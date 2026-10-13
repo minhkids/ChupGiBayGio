@@ -52,3 +52,55 @@ it('manages film shops separately from processing labs with category-specific fi
   expect(screen.getByLabelText('Dịch vụ')).toBeTruthy();
   expect(screen.queryByLabelText('Giá cuộn rẻ nhất (VNĐ)')).toBeNull();
 });
+
+it('loads, edits, and saves spot flower condition and photography guide details', async () => {
+  // Existing detail fields remain independent of seasonal forecasts.
+  sessionStorage.setItem('service_admin_token', 'test-only');
+  window.history.replaceState({}, '', '/admin/spots');
+  const spot = {
+    id: 'spot-1', category: 'spot', name: 'Hồ Tây', slug: 'ho-tay', address: 'Hà Nội', lat: 21, lng: 105,
+    regionId: 'hanoi', bestMonths: [10, 11], spotStatus: 'PEAK', statusValidUntil: '2026-12-31',
+    description: 'Hoa đang nở.', bestTimeDescription: 'Chiều muộn.', recommendedLenses: ['35mm'],
+    conceptTags: ['HOA_CO'], bloomPercentage: 73,
+  };
+  vi.mocked(serviceHubApi.adminList).mockResolvedValueOnce([spot] as never);
+  vi.mocked(serviceHubApi.update).mockResolvedValueOnce(spot as never);
+  render(<ServicesHubAdminView onBack={vi.fn()} />);
+  await waitFor(() => expect(serviceHubApi.adminList).toHaveBeenCalled());
+
+  fireEvent.click(screen.getByRole('button', { name: 'Sửa Hồ Tây' }));
+  expect((screen.getByLabelText('Mức độ nở / hiện trạng (%)') as HTMLInputElement).value).toBe('73');
+  expect((screen.getByLabelText('Mô tả tình trạng hoa / phong cảnh') as HTMLTextAreaElement).value).toBe('Hoa đang nở.');
+  expect((screen.getByLabelText('Khung giờ đẹp (mô tả)') as HTMLTextAreaElement).value).toBe('Chiều muộn.');
+  expect((screen.getByLabelText('Ống kính khuyên dùng') as HTMLTextAreaElement).value).toBe('35mm');
+  expect((screen.getByLabelText('Concept: Hoa Cỏ & Mùa Nở') as HTMLInputElement).checked).toBe(true);
+
+  fireEvent.change(screen.getByLabelText('Phí gửi xe'), { target: { value: '10.000đ' } });
+  fireEvent.change(screen.getByLabelText('Mức độ nở / hiện trạng (%)'), { target: { value: '61' } });
+  fireEvent.change(screen.getByLabelText('Mô tả tình trạng hoa / phong cảnh'), { target: { value: 'Nở rộ trong tháng này.' } });
+  fireEvent.change(screen.getByLabelText('Khung giờ đẹp (mô tả)'), { target: { value: 'Sáng sớm.' } });
+  fireEvent.change(screen.getByLabelText('Ống kính khuyên dùng'), { target: { value: '50mm, 85mm' } });
+  fireEvent.click(screen.getByLabelText('Concept: Hoa Cỏ & Mùa Nở'));
+  fireEvent.click(screen.getByLabelText('Concept: Đường Phố Sống Động'));
+  fireEvent.click(screen.getByRole('button', { name: 'Lưu thay đổi' }));
+
+  await waitFor(() => expect(serviceHubApi.update).toHaveBeenCalledWith(expect.objectContaining({
+    id: 'spot-1', bloomPercentage: 61, parkingFee: '10.000đ', description: 'Nở rộ trong tháng này.',
+    bestTimeDescription: 'Sáng sớm.', recommendedLenses: ['50mm', '85mm'], conceptTags: ['STREET'],
+  })));
+});
+
+it('hydrates and edits a seasonal candidate without turning it into a verified peak', async () => {
+  sessionStorage.setItem('service_admin_token', 'test-only');
+  window.history.replaceState({}, '', '/admin/spots');
+  const spot = { id: 'candidate', category: 'spot' as const, name: 'Mùa tương lai', slug: 'mua-tuong-lai', address: 'Hà Nội', lat: 21, lng: 105, spotStatus: 'ACTIVE' as const, upcoming: true, expectedMonths: [11, 12] };
+  vi.mocked(serviceHubApi.adminList).mockResolvedValueOnce([spot]);
+  vi.mocked(serviceHubApi.update).mockResolvedValueOnce(spot);
+  render(<ServicesHubAdminView onBack={vi.fn()} />);
+  fireEvent.click(await screen.findByRole('button', { name: 'Sửa Mùa tương lai' }));
+  expect((screen.getByLabelText('Có thể hot mùa tới (? pin)') as HTMLInputElement).checked).toBe(true);
+  expect((screen.getByLabelText('Tháng dự kiến: 11') as HTMLInputElement).checked).toBe(true);
+  fireEvent.click(screen.getByLabelText('Tháng dự kiến: 1'));
+  fireEvent.click(screen.getByRole('button', { name: 'Lưu thay đổi' }));
+  await waitFor(() => expect(serviceHubApi.update).toHaveBeenCalledWith(expect.objectContaining({ upcoming: true, expectedMonths: [11, 12, 1], spotStatus: 'ACTIVE' })));
+});

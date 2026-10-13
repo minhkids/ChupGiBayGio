@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { Flame, MapPin, Sparkles, ExternalLink } from 'lucide-react';
 import type { TrendArticle, TrendArticleSection } from '../../services/trendArticleApi';
 import type { Spot } from '../../types';
-import { getEffectiveSeasonalStatus } from '../../utils/season';
+import { getCurrentMonthInVietnam, getEffectiveSeasonalStatus } from '../../utils/season';
+import { getUpcomingMonths, selectUpcomingSpots } from '../../utils/upcomingSpots';
 
 interface Props {
   articles: TrendArticle[];
@@ -15,6 +16,8 @@ interface Props {
   tabsOnly?: boolean;
   showTabs?: boolean;
   onOpenSpot?: (spot: Spot) => void;
+  anchorMonth?: number;
+  onAnchorMonthChange?: (month: number) => void;
 }
 
 const TABS: { id: TrendArticleSection; label: string; icon: typeof Flame }[] = [
@@ -23,7 +26,7 @@ const TABS: { id: TrendArticleSection; label: string; icon: typeof Flame }[] = [
 ];
 const card = 'rounded-2xl border border-[#D8CFBD] bg-[#FAF8F4] text-[#2C2621]';
 
-export const TrendArticleFeed = ({ articles, spots = [], regionId, searchQuery = '', loading = false, activeSection, onSectionChange, tabsOnly = false, showTabs = true, onOpenSpot }: Props) => {
+export const TrendArticleFeed = ({ articles, spots = [], regionId, searchQuery = '', loading = false, activeSection, onSectionChange, tabsOnly = false, showTabs = true, onOpenSpot, anchorMonth, onAnchorMonthChange }: Props) => {
   const [localSection, setLocalSection] = useState<TrendArticleSection>('hotTrend');
   const currentSection = activeSection ?? localSection;
   const changeSection = onSectionChange ?? setLocalSection;
@@ -34,10 +37,11 @@ export const TrendArticleFeed = ({ articles, spots = [], regionId, searchQuery =
     && (regionId === 'all' || spot.regionId === regionId)
     && (!query || `${spot.name} ${spot.address} ${spot.description} ${spot.seasonalTrend.trendTitle}`.toLowerCase().includes(query)));
   const selected = visible.filter((article) => article.section === currentSection);
-  const selectedHotSpots = currentSection === 'hotTrend' ? hotSpots : [];
+  const upcomingSpots = selectUpcomingSpots(spots, regionId, searchQuery, anchorMonth);
+  const selectedHotSpots = currentSection === 'hotTrend' ? hotSpots : upcomingSpots;
   const counts: Record<TrendArticleSection, number> = {
     hotTrend: visible.filter((article) => article.section === 'hotTrend').length + hotSpots.length,
-    upcomingSpot: visible.filter((article) => article.section === 'upcomingSpot').length,
+    upcomingSpot: visible.filter((article) => article.section === 'upcomingSpot').length + upcomingSpots.length,
   };
 
   const tabs = <div role="tablist" aria-label="Bài viết xu hướng" className="grid grid-cols-2 gap-1 rounded-xl border border-[#D0C5AC] bg-[#E0D6BF] p-1">
@@ -51,16 +55,21 @@ export const TrendArticleFeed = ({ articles, spots = [], regionId, searchQuery =
   return <div className="space-y-3">
     {showTabs && tabs}
     <div role="tabpanel" aria-label={TABS.find((tab) => tab.id === currentSection)?.label} className="space-y-3">
+      {currentSection === 'upcomingSpot' && <div className={`${card} space-y-2 p-3 text-xs leading-relaxed`}>
+        {onAnchorMonthChange && <label className="flex items-center justify-between gap-2 font-semibold">Xem mùa sau tháng<select className="rounded-lg border border-[#D8CFBD] bg-white p-2" value={anchorMonth ?? getCurrentMonthInVietnam()} onChange={event => onAnchorMonthChange(Number(event.target.value))}>{Array.from({ length: 12 }, (_, index) => index + 1).map(month => <option key={month} value={month}>Tháng {month}</option>)}</select></label>}
+        <p>? Dự kiến mùa tới: tháng {getUpcomingMonths(anchorMonth).join(', ')}. Chưa xác nhận đang rộ; kiểm tra hiện trạng trước khi đi.</p>
+      </div>}
       {loading && selected.length === 0 && selectedHotSpots.length === 0 ? <p role="status" className={`${card} p-5 text-center text-sm text-[#6E655B]`}>Đang tải bài viết…</p>
         : selected.length === 0 && selectedHotSpots.length === 0 ? <div className={`${card} p-7 text-center text-sm text-[#6E655B]`}>
           <Sparkles aria-hidden="true" className="mx-auto mb-2 h-7 w-7 text-[#B9AD98]" />
-          <p>{currentSection === 'hotTrend' ? 'Chưa có địa điểm đang rộ' : 'Chưa có bài viết trong mục này'}</p>
+          <p>{currentSection === 'hotTrend' ? 'Chưa có địa điểm đang rộ' : 'Chưa có địa điểm dự kiến hoặc bài viết trong mùa tới'}</p>
         </div>
           : <>
             {selectedHotSpots.map((spot) => <article key={`spot-${spot.id}`} className={`${card} overflow-hidden shadow-sm`}>
               {spot.coverImageUrl && <img src={spot.coverImageUrl} alt={spot.name} className="aspect-[16/9] w-full object-cover" loading="lazy" />}
               <div className="space-y-2 p-4">
-                <p className="inline-flex rounded-full bg-[#C76B3C] px-2.5 py-1 text-[10px] font-bold text-white">Đang rộ</p>
+                <p className="inline-flex rounded-full bg-[#C76B3C] px-2.5 py-1 text-[10px] font-bold text-white">{currentSection === 'hotTrend' ? 'Đang rộ' : '? Có thể hot — dự kiến'}</p>
+                {currentSection === 'upcomingSpot' && <p className="text-xs text-[#6E655B]">Tháng dự kiến: {spot.seasonalTrend.expectedMonths?.join(', ')}</p>}
                 <h3 className="text-sm font-bold leading-snug">{spot.name}</h3>
                 {spot.seasonalTrend.trendTitle && <p className="text-xs leading-relaxed text-[#6E655B]">{spot.seasonalTrend.trendTitle}</p>}
                 <p className="flex items-center gap-1 text-[11px] text-[#6E655B]"><MapPin aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />{spot.address}</p>
