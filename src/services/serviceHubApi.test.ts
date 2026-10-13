@@ -28,8 +28,8 @@ describe('serviceHubApi.request', () => {
       '/api/admin/cms/photographers': [],
       '/api/admin/cms/films': [],
       '/api/admin/cms/labs': [
-        { id: 'lab-1', name: 'Crolab', min_roll_price: 0, max_roll_price: 0, in_stock_films: '[]' },
-        { id: 'shop-1', name: 'Tiệm Film', min_roll_price: 50000, max_roll_price: 150000, cheapest_roll_name: 'Kodak Gold 200', in_stock_films: '["Kodak Gold 200"]' },
+        { id: 'lab-1', name: 'Crolab', min_roll_price: 0, max_roll_price: 0, fast_2h: 1, in_stock_films: '[]' },
+        { id: 'shop-1', name: 'Tiệm Film', min_roll_price: 50000, max_roll_price: 150000, cheapest_roll_name: 'Kodak Gold 200', in_stock_films: '["Kodak Gold 200"]', express_delivery_2h: 1 },
       ],
     };
     vi.stubGlobal('fetch', vi.fn((url: string) => Promise.resolve(Response.json(responses[url] || []))));
@@ -37,17 +37,18 @@ describe('serviceHubApi.request', () => {
     const listings = await serviceHubApi.adminList();
 
     expect(listings.find((item) => item.id === 'lab-1')?.category).toBe('filmLab');
-    expect(listings.find((item) => item.id === 'shop-1')).toMatchObject({ category: 'filmShop', cheapestRollName: 'Kodak Gold 200', minRollPrice: 50000, maxRollPrice: 150000 });
+    expect(listings.find((item) => item.id === 'lab-1')).toMatchObject({ fastService: true, expressDelivery2h: false });
+    expect(listings.find((item) => item.id === 'shop-1')).toMatchObject({ category: 'filmShop', cheapestRollName: 'Kodak Gold 200', minRollPrice: 50000, maxRollPrice: 150000, expressDelivery2h: true });
   });
 
   it('sends film-shop admin records to the shared labs endpoint with their category and prices', async () => {
     const fetchMock = vi.fn().mockResolvedValue(Response.json({ id: 'shop-2' }));
     vi.stubGlobal('fetch', fetchMock);
-    await serviceHubApi.create({ category: 'filmShop', name: 'Shop mới', filmStocks: ['Kodak Gold 200'], cheapestRollName: 'Kodak Gold 200', minRollPrice: 45000, maxRollPrice: 120000 });
+    await serviceHubApi.create({ category: 'filmShop', name: 'Shop mới', filmStocks: ['Kodak Gold 200'], cheapestRollName: 'Kodak Gold 200', minRollPrice: 45000, maxRollPrice: 120000, expressDelivery2h: true });
 
     expect(fetchMock).toHaveBeenCalledWith('/api/admin/labs', expect.objectContaining({ method: 'POST' }));
     const payload = JSON.parse(fetchMock.mock.calls[0][1].body as string);
-    expect(payload).toMatchObject({ adminCategory: 'filmShop', minRollPrice: 45000, maxRollPrice: 120000, cheapestRollName: 'Kodak Gold 200', inStockFilms: ['Kodak Gold 200'] });
+    expect(payload).toMatchObject({ adminCategory: 'filmShop', minRollPrice: 45000, maxRollPrice: 120000, cheapestRollName: 'Kodak Gold 200', inStockFilms: ['Kodak Gold 200'], expressDelivery2h: true });
   });
 
   it('preserves multiple shop locations in admin mapping and write payloads', async () => {

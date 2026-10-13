@@ -30,3 +30,9 @@ it('shows every branch address in the public shop card', () => {
   expect(card.textContent).toContain('Cửa Nam, Sóc Sơn, Hà Nội');
   expect(card.textContent).toContain('2 cơ sở');
 });
+
+it('prominently labels shops that offer delivery within two hours', () => {
+  const shop = { id: 'express', category: 'filmShop' as const, name: 'Giao nhanh', expressDelivery2h: true };
+  render(<FilmShopCard shop={shop} onOpen={vi.fn()} />);
+  expect(screen.getByTestId('film-shop-card').textContent).toContain('Giao hỏa tốc trong 2 giờ');
+});

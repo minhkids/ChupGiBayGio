@@ -28,6 +28,11 @@ describe('partner onboarding pages', () => {
     expect(screen.queryByLabelText(/Giá cuộn film đắt nhất/)).toBeNull();
     expect(screen.getByTestId('partner-preview').textContent).toContain('Từ 120.000đ/cuộn');
     expect(screen.getByTestId('partner-preview').textContent).toContain('Rẻ nhất: Kodak Gold 200 · 120.000đ/cuộn');
+    const expressDelivery = screen.getByRole('button', { name: /Có ship hỏa tốc trong 2 giờ/ });
+    expect(expressDelivery.getAttribute('aria-pressed')).toBe('false');
+    fireEvent.click(expressDelivery);
+    expect(expressDelivery.getAttribute('aria-pressed')).toBe('true');
+    expect(screen.getByTestId('partner-preview').textContent).toContain('Giao hỏa tốc trong 2 giờ');
     fireEvent.submit(screen.getByRole('button', { name: 'Hoàn tất đăng ký' }).closest('form')!);
     await waitFor(() => expect(fetchMock).toHaveBeenCalled());
     const form = fetchMock.mock.calls[0][1].body as FormData;
@@ -35,6 +40,7 @@ describe('partner onboarding pages', () => {
     expect(payload).toMatchObject({ slogan: 'Film đẹp cho mọi khoảnh khắc', district: 'Hoàn Kiếm', ward: 'Cửa Nam', filmStocks: ['Kodak Gold 200'], cheapestRollName: 'Kodak Gold 200', minRollPrice: 120000 });
     expect(payload).not.toHaveProperty('maxRollPrice');
     expect(payload).not.toHaveProperty('address');
+    expect(payload.expressDelivery2h).toBe(true);
   });
 
   it('requires only the cheapest roll price on the film-shop registration form', () => {

@@ -358,6 +358,7 @@ app.get('/api/services', async (c) => {
       const locations = parseJsonField(String(row.locations || '[]'), []);
       return {
         ...mapFields(row, { slogan: 'slogan', phone: 'hotline', openingHours: 'opening_hours', fastService: 'fast_2h', link: 'fanpage_url', imageUrl: 'image_url', productImageUrl: 'product_image_url', cheapestRollName: 'cheapest_roll_name', minRollPrice: 'min_roll_price', maxRollPrice: 'max_roll_price', lat: 'lat', lng: 'lng' }),
+        expressDelivery2h: Boolean(row.express_delivery_2h),
         address: area, ward, district,
         locations: locations.length ? locations : [{ ward, district, openingHours: String(row.opening_hours || '') }],
         id: row.id, name: row.name, category: 'filmLab', price, filmStocks: parseJsonField(String(row.in_stock_films || '[]'), [])
@@ -379,7 +380,7 @@ app.get('/api/labs', async (c) => {
     const ward = String(row.ward || '');
     const district = String(row.district || '');
     const locations = parseJsonField(String(row.locations || '[]'), []);
-    return { ...row, ward, address: [ward, district, 'Hà Nội'].filter(Boolean).join(', '), locations: locations.length ? locations : [{ ward, district, openingHours: String(row.opening_hours || '') }] };
+    return { ...row, expressDelivery2h: Boolean(row.express_delivery_2h), ward, address: [ward, district, 'Hà Nội'].filter(Boolean).join(', '), locations: locations.length ? locations : [{ ward, district, openingHours: String(row.opening_hours || '') }] };
   }));
 });
 

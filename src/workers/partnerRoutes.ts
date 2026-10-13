@@ -161,8 +161,8 @@ async function registration(c: Context<{ Bindings: Bindings }>, kind: 'lab' | 'p
         keys.push(key);
         productImageUrl = `${base}/api/partner/images/${key}`;
       }
-      await c.env.DB.prepare(`INSERT INTO film_labs (id, name, slogan, address, district, ward, lat, lng, opening_hours, hotline, fast_2h, in_stock_films, fanpage_url, image_url, product_image_url, cheapest_roll_name, min_roll_price, max_roll_price, locations, status)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(id, name, slogan, address, district, ward, null, null, locations[0].openingHours, number, 0, JSON.stringify(stocks), social || '', urls[0] || imageUrl || '', productImageUrl, cheapestRollName, minRollPrice, maxRollPrice, JSON.stringify(locations), 'published').run();
+      await c.env.DB.prepare(`INSERT INTO film_labs (id, name, slogan, address, district, ward, lat, lng, opening_hours, hotline, fast_2h, in_stock_films, fanpage_url, image_url, product_image_url, cheapest_roll_name, min_roll_price, max_roll_price, locations, express_delivery_2h, status)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(id, name, slogan, address, district, ward, null, null, locations[0].openingHours, number, 0, JSON.stringify(stocks), social || '', urls[0] || imageUrl || '', productImageUrl, cheapestRollName, minRollPrice, maxRollPrice, JSON.stringify(locations), body.expressDelivery2h === true ? 1 : 0, 'published').run();
     } else {
       await c.env.DB.batch([
         c.env.DB.prepare(`INSERT INTO photographers (id, name, avatar_url, bio, phone, instagram, gear_body, gear_lens, styles, portfolio_photos, preferred_spots, facebook_url, status, address, district)

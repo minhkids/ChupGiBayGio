@@ -165,8 +165,8 @@ cms.post('/api/admin/labs', async (c) => {
   const locations = shopLocations(body);
   if (!locations || rollPrices.minRollPrice > 0 && !locations.length) return c.json({ error: 'Shop cần khai báo 1–3 địa chỉ Hà Nội hợp lệ.' }, 400);
   const mainLocation = locations[0] || { ward: text(body.ward, 80), district: text(body.district, 80), openingHours: text(body.openingHours, 120) };
-  await getD1(c.env).prepare('INSERT INTO film_labs (id, name, slogan, address, district, ward, lat, lng, opening_hours, hotline, fast_2h, in_stock_films, fanpage_url, image_url, product_image_url, cheapest_roll_name, min_roll_price, max_roll_price, locations, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
-    .bind(id, text(body.name, 160), text(body.slogan, 50), text(body.address), mainLocation.district, mainLocation.ward, lat, lng, mainLocation.openingHours, text(body.hotline, 80), body.fast2h ? 1 : 0, jsonText(films), text(body.fanpageUrl, 2000), text(body.imageUrl, 2000), text(body.productImageUrl, 2000), rollPrices.cheapestRollName, rollPrices.minRollPrice, rollPrices.maxRollPrice, jsonText(locations), 'published').run();
+  await getD1(c.env).prepare('INSERT INTO film_labs (id, name, slogan, address, district, ward, lat, lng, opening_hours, hotline, fast_2h, in_stock_films, fanpage_url, image_url, product_image_url, cheapest_roll_name, min_roll_price, max_roll_price, locations, express_delivery_2h, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+    .bind(id, text(body.name, 160), text(body.slogan, 50), text(body.address), mainLocation.district, mainLocation.ward, lat, lng, mainLocation.openingHours, text(body.hotline, 80), body.fast2h ? 1 : 0, jsonText(films), text(body.fanpageUrl, 2000), text(body.imageUrl, 2000), text(body.productImageUrl, 2000), rollPrices.cheapestRollName, rollPrices.minRollPrice, rollPrices.maxRollPrice, jsonText(locations), body.expressDelivery2h === true ? 1 : 0, 'published').run();
   return c.json({ ...body, id, inStockFilms: films, ...rollPrices }, 201);
 });
 
@@ -266,8 +266,8 @@ cms.put('/api/admin/cms/:table/:id', async (c) => {
     const locations = shopLocations(body);
     if (!locations || rollPrices.minRollPrice > 0 && !locations.length) return c.json({ error: 'Shop cần khai báo 1–3 địa chỉ Hà Nội hợp lệ.' }, 400);
     const mainLocation = locations[0] || { ward: text(body.ward, 80), district: text(body.district, 80), openingHours: text(body.openingHours, 120) };
-    result = await db.prepare('UPDATE film_labs SET name = ?, slogan = ?, address = ?, district = ?, ward = ?, lat = ?, lng = ?, opening_hours = ?, hotline = ?, fast_2h = ?, in_stock_films = ?, fanpage_url = ?, image_url = ?, product_image_url = ?, cheapest_roll_name = ?, min_roll_price = ?, max_roll_price = ?, locations = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
-      .bind(text(body.name, 160), text(body.slogan, 50), text(body.address), mainLocation.district, mainLocation.ward, lat, lng, mainLocation.openingHours, text(body.hotline, 80), body.fast2h ? 1 : 0, jsonText(films), text(body.fanpageUrl, 2000), text(body.imageUrl, 2000), text(body.productImageUrl, 2000), rollPrices.cheapestRollName, rollPrices.minRollPrice, rollPrices.maxRollPrice, jsonText(locations), id).run();
+    result = await db.prepare('UPDATE film_labs SET name = ?, slogan = ?, address = ?, district = ?, ward = ?, lat = ?, lng = ?, opening_hours = ?, hotline = ?, fast_2h = ?, in_stock_films = ?, fanpage_url = ?, image_url = ?, product_image_url = ?, cheapest_roll_name = ?, min_roll_price = ?, max_roll_price = ?, locations = ?, express_delivery_2h = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
+      .bind(text(body.name, 160), text(body.slogan, 50), text(body.address), mainLocation.district, mainLocation.ward, lat, lng, mainLocation.openingHours, text(body.hotline, 80), body.fast2h ? 1 : 0, jsonText(films), text(body.fanpageUrl, 2000), text(body.imageUrl, 2000), text(body.productImageUrl, 2000), rollPrices.cheapestRollName, rollPrices.minRollPrice, rollPrices.maxRollPrice, jsonText(locations), body.expressDelivery2h === true ? 1 : 0, id).run();
   } else {
     return c.json({ error: 'Danh mục không hợp lệ.' }, 404);
   }

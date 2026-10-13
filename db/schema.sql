@@ -120,6 +120,7 @@ CREATE TABLE IF NOT EXISTS film_labs (
   opening_hours TEXT NOT NULL DEFAULT '',
   hotline TEXT NOT NULL DEFAULT '',
   fast_2h INTEGER NOT NULL DEFAULT 0,
+  express_delivery_2h INTEGER NOT NULL DEFAULT 0 CHECK (express_delivery_2h IN (0, 1)),
   in_stock_films TEXT NOT NULL DEFAULT '[]',
   district TEXT NOT NULL DEFAULT '',
   fanpage_url TEXT NOT NULL DEFAULT '',

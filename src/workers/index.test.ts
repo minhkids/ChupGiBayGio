@@ -144,7 +144,7 @@ describe('Services Hub admin API', () => {
     const { token } = await login.json() as { token: string };
     const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
     const locations = [{ ward: 'Cửa Nam', district: 'Hoàn Kiếm', openingHours: '09:00–18:00' }, { ward: 'Dịch Vọng', district: 'Cầu Giấy', openingHours: '10:00–20:00' }];
-    const body = { adminCategory: 'filmShop', name: 'Tiệm Film', locations, inStockFilms: ['Kodak Gold 200'], cheapestRollName: 'Kodak Gold 200', minRollPrice: 50000, maxRollPrice: 150000 };
+    const body = { adminCategory: 'filmShop', name: 'Tiệm Film', locations, inStockFilms: ['Kodak Gold 200'], cheapestRollName: 'Kodak Gold 200', minRollPrice: 50000, maxRollPrice: 150000, expressDelivery2h: true };
 
     const created = await worker.request('/api/admin/labs', { method: 'POST', headers, body: JSON.stringify(body) }, env);
     expect(created.status).toBe(201);
@@ -155,6 +155,8 @@ describe('Services Hub admin API', () => {
     expect(writes.every(({ sql }) => sql.includes('min_roll_price') && sql.includes('max_roll_price') && sql.includes('cheapest_roll_name'))).toBe(true);
     expect(writes[0].values).toEqual(expect.arrayContaining([50000, 150000, 'Kodak Gold 200']));
     expect(writes.every(({ sql }) => sql.includes('locations'))).toBe(true);
+    expect(writes.every(({ sql }) => sql.includes('express_delivery_2h'))).toBe(true);
+    expect(writes.every(({ values }) => values.includes(1))).toBe(true);
     expect(writes[0].values).toContain(JSON.stringify(locations));
     const excessive = await worker.request('/api/admin/labs', { method: 'POST', headers, body: JSON.stringify({ ...body, locations: [...locations, ...locations.slice(0, 2)] }) }, env);
     expect(excessive.status).toBe(400);

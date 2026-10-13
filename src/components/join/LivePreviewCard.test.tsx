@@ -45,3 +45,8 @@ it('shows every shop branch in the registration preview instead of only a count'
   expect(card.textContent).toContain('Cửa Nam, Sóc Sơn, Hà Nội');
   expect(card.textContent).not.toContain('2 địa chỉ');
 });
+
+it('highlights optional two-hour express delivery in the registration preview', () => {
+  render(<LivePreviewCard data={{ kind: 'lab', name: 'Tiệm Film', expressDelivery2h: true }} />);
+  expect(screen.getByTestId('partner-preview').textContent).toContain('Giao hỏa tốc trong 2 giờ');
+});

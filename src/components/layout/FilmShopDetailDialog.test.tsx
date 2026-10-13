@@ -12,6 +12,11 @@ const shop: ServiceListing = {
 };
 afterEach(cleanup);
 
+it('highlights two-hour express delivery in shop details', () => {
+  render(<FilmShopDetailDialog shop={{ ...shop, expressDelivery2h: true }} onClose={vi.fn()} />);
+  expect(screen.getByRole('dialog', { name: shop.name }).textContent).toContain('Giao hỏa tốc trong 2 giờ');
+});
+
 it('cycles gallery photos with controls and arrow keys without leaving the dialog', () => {
   render(<FilmShopDetailDialog shop={shop} onClose={vi.fn()} />);
   const dialog = screen.getByRole('dialog', { name: shop.name });

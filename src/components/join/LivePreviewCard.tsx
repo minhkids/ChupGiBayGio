@@ -17,6 +17,7 @@ export interface PartnerPreview {
   phone?: string;
   openingHours?: string;
   filmStocks?: string[];
+  expressDelivery2h?: boolean;
   styles?: string[];
   shootSpots?: string[];
   packageName?: string;
@@ -50,6 +51,7 @@ export function LivePreviewCard({ data }: { data: PartnerPreview }) {
         {!lab && data.packagePrice && <p className="mt-2 text-sm font-bold text-[#8B4828]">Từ {Number(data.packagePrice).toLocaleString('vi-VN')}đ/gói</p>}
       </div>
     </div>
+    {lab && data.expressDelivery2h && <p className="mt-3 flex items-center gap-2 rounded-xl border border-emerald-300 bg-emerald-50 px-3 py-2.5 text-sm font-bold text-emerald-900"><Clock3 aria-hidden="true" className="h-5 w-5 shrink-0" />Giao hỏa tốc trong 2 giờ</p>}
     <div className="mt-3 space-y-2.5 border-t border-[#E2DAD0] pt-3 text-xs text-[#554D43]">
       {branches.length > 0 ? <ul aria-label="Các cơ sở trong bản xem trước" className="space-y-1.5">{branches.map((branch, index) => <li key={`${branch.ward}-${branch.district}-${index}`} className="flex items-start gap-2"><MapPin aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-[#C76B3C]" /><span><span className="font-semibold">Cơ sở {index + 1}: </span>{[branch.ward, branch.district, 'Hà Nội'].filter(Boolean).join(', ')}{branch.openingHours && <span className="block pl-0 text-[11px] text-[#6E655B]">Giờ mở cửa: {branch.openingHours}</span>}</span></li>)}</ul> : location && <p className="flex items-start gap-2"><MapPin aria-hidden="true" className="h-4 w-4 shrink-0 text-[#C76B3C]" /><span>{location}</span></p>}
       {lab && !branches.length && data.openingHours && <p className="flex items-start gap-2"><Clock3 aria-hidden="true" className="h-4 w-4 shrink-0 text-[#C76B3C]" /><span>{data.openingHours}</span></p>}
