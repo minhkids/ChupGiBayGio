@@ -1,0 +1,11 @@
+import { BookOpen, Layers, Map, ShoppingBag } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+
+export type ViewId = 'map' | 'grid' | 'film' | 'services';
+
+export const NAV_ITEMS: { id: ViewId; label: string; short: string; icon: LucideIcon }[] = [
+  { id: 'map', label: 'Bản đồ', short: 'Bản đồ', icon: Map },
+  { id: 'grid', label: 'Tạp chí', short: 'Tạp chí', icon: BookOpen },
+  { id: 'film', label: 'Màu Film', short: 'Màu Film', icon: Layers },
+  { id: 'services', label: 'Dịch vụ', short: 'Dịch vụ', icon: ShoppingBag },
+];

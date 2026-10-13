@@ -27,6 +27,7 @@ import { SpotMap } from './map/SpotMap';
 import { AtmosphericFX } from './features/AtmosphericFX';
 import { FilmSpecsCard } from './cards/FilmSpecsCard';
 import { LeftNavRail } from './navigation/LeftNavRail';
+import { MobileViewMenuItems } from './navigation/MobileViewMenuItems';
 import { PoseCamera } from './features/PoseCamera';
 import { useWeather } from '../hooks/useWeather';
 import { trendArticleApi, type TrendArticle, type TrendArticleSection } from '../services/trendArticleApi';
@@ -239,7 +240,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
   };
 
   return (
-    <div className="relative w-screen h-screen overflow-hidden bg-neutral-100 dark:bg-neutral-950 font-sans select-none">
+    <div className="relative w-screen h-screen overflow-hidden bg-[#F7F5F0] font-sans select-none">
 
       {/* ========================================================================= */}
       {/* 1. LAYER 1: VERTICAL NAVIGATION RAIL (76px - LEFT MOST) */}
@@ -334,9 +335,9 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
         <div className="flex items-center gap-2 pointer-events-auto">
 
           {/* Search Box Pill */}
-          <div className="flex-1 h-12 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-md border border-neutral-200/80 dark:border-neutral-800 rounded-full shadow-lg px-4 flex items-center justify-between transition-all focus-within:ring-2 focus-within:ring-terracotta/40">
+          <div className="flex-1 h-12 bg-[#FAF8F4]/95 backdrop-blur-md border border-[#D8CFBD] rounded-full shadow-lg px-4 flex items-center justify-between transition-all focus-within:ring-2 focus-within:ring-[#C76B3C]/40">
             <div className="flex items-center space-x-2 flex-1 min-w-0">
-              <Search className="w-4 h-4 text-neutral-400 shrink-0" />
+              <Search className="w-4 h-4 text-[#8C8377] shrink-0" />
               <input
                 type="text"
                 value={filters.searchQuery}
@@ -350,7 +351,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
               <button
                 type="button"
                 onClick={() => onChangeFilters(prev => ({ ...prev, searchQuery: '' }))}
-                className="p-1 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full text-neutral-400"
+                className="p-1 hover:bg-[#ECE4D0] rounded-full text-[#6E655B]"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -358,15 +359,15 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
           </div>
 
           {/* Region Switcher Pill (Compact for Mobile) */}
-          <div className="h-12 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-md border border-neutral-200/80 dark:border-neutral-800 rounded-full shadow-lg px-3 flex items-center space-x-1.5 shrink-0">
-            <MapPin className="w-4 h-4 text-terracotta shrink-0" />
+          <div className="h-12 bg-[#FAF8F4]/95 backdrop-blur-md border border-[#D8CFBD] rounded-full shadow-lg px-3 flex items-center space-x-1.5 shrink-0">
+            <MapPin className="w-4 h-4 text-[#C76B3C] shrink-0" />
             <select
               value={activeRegionId}
               onChange={(e) => onSelectRegion(e.target.value)}
-              className="bg-transparent text-sm font-bold text-neutral-800 dark:text-neutral-200 focus:outline-none cursor-pointer max-w-[70px] truncate"
+              className="bg-transparent text-sm font-bold text-[#2C2621] focus:outline-none cursor-pointer max-w-[70px] truncate"
             >
               {REGIONS.map(reg => (
-                <option key={reg.id} value={reg.id} className="bg-white dark:bg-neutral-900 text-neutral-800 dark:text-neutral-200">
+                <option key={reg.id} value={reg.id} className="bg-[#FAF8F4] text-[#2C2621]">
                   {reg.name}
                 </option>
               ))}
@@ -378,7 +379,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
             <button
               type="button"
               onClick={() => setIsMobileMenuOpen(prev => !prev)}
-              className="h-12 w-12 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-md border border-neutral-200/80 dark:border-neutral-800 rounded-full shadow-lg flex items-center justify-center text-neutral-700 dark:text-neutral-200 hover:text-terracotta transition-colors"
+              className="h-12 w-12 bg-[#FAF8F4]/95 backdrop-blur-md border border-[#D8CFBD] rounded-full shadow-lg flex items-center justify-center text-[#554D43] hover:text-[#C76B3C] transition-colors"
               title="Menu chế độ xem"
             >
               <Layers className="w-5 h-5" />
@@ -391,55 +392,22 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                   initial={{ opacity: 0, scale: 0.9, y: 5 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.9, y: 5 }}
-                  className="absolute right-0 top-12 w-48 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl shadow-2xl p-2 space-y-1 text-xs font-medium z-50 pointer-events-auto"
+                  className="absolute right-0 top-12 w-48 bg-[#FAF8F4] text-[#2C2621] border border-[#D8CFBD] rounded-2xl shadow-2xl p-2 space-y-1 text-xs font-medium z-50 pointer-events-auto"
                 >
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onChangeView('map');
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className={`w-full px-3 py-2 rounded-xl text-left flex items-center justify-between ${activeView === 'map' ? 'bg-terracotta text-white font-bold' : 'hover:bg-neutral-100 dark:hover:bg-neutral-800'
-                      }`}
-                  >
-                    <span>🗺️ Bản Đồ Check-in</span>
-                    {activeView === 'map' && <Check className="w-3.5 h-3.5" />}
-                  </button>
+                  <MobileViewMenuItems
+                    activeView={activeView}
+                    onChangeView={onChangeView}
+                    onClose={() => setIsMobileMenuOpen(false)}
+                  />
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onChangeView('grid');
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className={`w-full px-3 py-2 rounded-xl text-left flex items-center justify-between ${activeView === 'grid' ? 'bg-terracotta text-white font-bold' : 'hover:bg-neutral-100 dark:hover:bg-neutral-800'
-                      }`}
-                  >
-                    <span>📖 Tạp Chí ẢNH</span>
-                    {activeView === 'grid' && <Check className="w-3.5 h-3.5" />}
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onChangeView('film');
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className={`w-full px-3 py-2 rounded-xl text-left flex items-center justify-between ${activeView === 'film' ? 'bg-terracotta text-white font-bold' : 'hover:bg-neutral-100 dark:hover:bg-neutral-800'
-                      }`}
-                  >
-                    <span>🎞️ Màu Film</span>
-                    {activeView === 'film' && <Check className="w-3.5 h-3.5" />}
-                  </button>
-
-                  <div className="border-t border-neutral-100 dark:border-neutral-800 pt-1">
+                  <div className="border-t border-[#D8CFBD] pt-1">
                     <button
                       type="button"
                       onClick={() => {
                         onOpenSavedModal();
                         setIsMobileMenuOpen(false);
                       }}
-                      className="w-full px-3 py-2 rounded-xl text-left flex items-center justify-between hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                      className="w-full px-3 py-2 rounded-xl text-left flex items-center justify-between text-[#554D43] hover:bg-[#ECE4D0]"
                     >
                       <span className="flex items-center">
                         <Bookmark className="w-3.5 h-3.5 mr-1.5 text-terracotta" />
@@ -458,7 +426,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                         onOpenSubmitSpotModal();
                         setIsMobileMenuOpen(false);
                       }}
-                      className="w-full px-3 py-2 rounded-xl text-left flex items-center hover:bg-neutral-100 dark:hover:bg-neutral-800 font-bold text-terracotta"
+                      className="w-full px-3 py-2 rounded-xl text-left flex items-center hover:bg-[#ECE4D0] font-bold text-[#C76B3C]"
                     >
                       <PlusCircle className="w-3.5 h-3.5 mr-1.5" />
                       <span>+ Đóng góp điểm</span>
@@ -467,7 +435,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                     <button
                       type="button"
                       onClick={() => setIsAtmosphericActive(prev => !prev)}
-                      className="w-full px-3 py-2 rounded-xl text-left flex items-center justify-between hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-500"
+                      className="w-full px-3 py-2 rounded-xl text-left flex items-center justify-between text-[#6E655B] hover:bg-[#ECE4D0]"
                     >
                       <span>Hiệu ứng thời tiết</span>
                       <span>{isAtmosphericActive ? 'Bật' : 'Tắt'}</span>
@@ -894,7 +862,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
           height: mobileSnap === 'peek' ? '110px' : mobileSnap === 'half' ? '48vh' : '86vh'
         }}
         transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-        className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-md border-t border-neutral-200/80 dark:border-neutral-800 rounded-t-3xl shadow-2xl flex flex-col will-change-transform pb-safe"
+        className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-[#FAF8F4]/95 backdrop-blur-md border-t border-[#D8CFBD] rounded-t-3xl shadow-2xl flex flex-col will-change-transform pb-safe"
       >
         {/* Grab Handle Header */}
         <div
@@ -903,9 +871,9 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
             else if (mobileSnap === 'half') setMobileSnap('full');
             else setMobileSnap('peek');
           }}
-          className="cursor-pointer py-3 px-4 flex flex-col items-center border-b border-neutral-100 dark:border-neutral-800 shrink-0 select-none"
+          className="cursor-pointer py-3 px-4 flex flex-col items-center border-b border-[#E2DAD0] shrink-0 select-none"
         >
-          <div className="w-12 h-1.5 bg-neutral-300 dark:bg-neutral-700 rounded-full mb-3" />
+          <div className="w-12 h-1.5 bg-[#D0C5AC] rounded-full mb-3" />
 
           <div className="w-full flex items-center justify-between font-mono-spec">
 
@@ -914,7 +882,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
             </div>
 
             {/* Snap Toggle Indicator */}
-            <div className="flex items-center space-x-1 text-neutral-400 pl-2 shrink-0">
+            <div className="flex items-center space-x-1 text-[#6E655B] pl-2 shrink-0">
               <span className="text-[11px] font-medium hidden sm:inline">
                 {mobileSnap === 'peek' ? 'Kéo lên' : mobileSnap === 'half' ? 'Nửa màn' : 'Thu gọn'}
               </span>

@@ -1,14 +1,10 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import {
-  BookOpen,
   Film,
   Bookmark,
   Plus,
-  Layers,
-  Map,
   Camera,
-  ShoppingBag,
   Sun,
   CloudSun,
   CloudFog,
@@ -19,6 +15,7 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { WeatherData } from '../../hooks/useWeather';
+import { NAV_ITEMS, type ViewId } from './viewItems';
 
 interface LeftNavRailProps {
   activeView: 'map' | 'grid' | 'film' | 'services';
@@ -37,15 +34,6 @@ interface LeftNavRailProps {
   onOpenNearestLabs?: () => void;
 
 }
-
-type ViewId = 'map' | 'grid' | 'film' | 'services';
-
-const NAV_ITEMS: { id: ViewId; label: string; short: string; icon: LucideIcon }[] = [
-  { id: 'map', label: 'Bản đồ', short: 'Bản đồ', icon: Map },
-  { id: 'grid', label: 'Tạp chí', short: 'Tạp chí', icon: BookOpen },
-  { id: 'film', label: 'Màu Film', short: 'Màu Film', icon: Layers },
-  { id: 'services', label: 'Dịch vụ', short: 'Dịch vụ', icon: ShoppingBag },
-];
 
 const WEATHER_ICONS: Record<string, LucideIcon> = {
   clear: Sun,
