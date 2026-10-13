@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { ArrowUpRight, Clock3, Compass, Film, MapPin, ShoppingBag } from 'lucide-react';
+import { ArrowUpRight, Compass, Film, MapPin, ShoppingBag } from 'lucide-react';
 import { filmShopLocations, type ServiceListing } from '../../services/serviceHubApi';
+import { ExpressDeliveryBadge } from './ExpressDeliveryBadge';
 
 interface FilmShopCardProps {
   shop: ServiceListing;
@@ -40,7 +41,7 @@ export const FilmShopCard: React.FC<FilmShopCardProps> = ({ shop, isFeatured = f
           <span className="min-w-0 flex-1">
             <span className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-[#9A4F29]">Shop bán film</span>
             <span className="block break-words text-base font-bold leading-snug text-[#2C2621]">{shop.name}</span>
-            {shop.expressDelivery2h && <span className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-emerald-300 bg-emerald-50 px-2.5 py-1 text-[11px] font-bold leading-tight text-emerald-900"><Clock3 aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />Giao hỏa tốc trong 2 giờ</span>}
+            {shop.expressDelivery2h && <ExpressDeliveryBadge className="mt-2" />}
             {!!locations.length && <span className="mt-2 flex min-w-0 items-start gap-1 text-xs leading-relaxed text-[#6E655B]"><MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" /><span className="min-w-0 flex-1"><span className="mb-1 block text-[11px] font-semibold text-[#8B4828]">{locations.length} cơ sở</span>{locations.map((location, index) => <span key={`${location.ward}-${location.district}-${index}`} className="block break-words"><span className="font-semibold">Cơ sở {index + 1}: </span>{[location.ward, location.district, 'Hà Nội'].filter(Boolean).join(', ')}</span>)}</span></span>}
           </span>
         </span>

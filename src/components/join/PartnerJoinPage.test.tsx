@@ -32,7 +32,7 @@ describe('partner onboarding pages', () => {
     expect(expressDelivery.getAttribute('aria-pressed')).toBe('false');
     fireEvent.click(expressDelivery);
     expect(expressDelivery.getAttribute('aria-pressed')).toBe('true');
-    expect(screen.getByTestId('partner-preview').textContent).toContain('Giao hỏa tốc trong 2 giờ');
+    expect(screen.getByRole('img', { name: 'Giao hỏa tốc trong 2 giờ' }).textContent).toBe('2h');
     fireEvent.submit(screen.getByRole('button', { name: 'Hoàn tất đăng ký' }).closest('form')!);
     await waitFor(() => expect(fetchMock).toHaveBeenCalled());
     const form = fetchMock.mock.calls[0][1].body as FormData;

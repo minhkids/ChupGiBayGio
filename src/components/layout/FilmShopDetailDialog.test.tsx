@@ -14,7 +14,9 @@ afterEach(cleanup);
 
 it('highlights two-hour express delivery in shop details', () => {
   render(<FilmShopDetailDialog shop={{ ...shop, expressDelivery2h: true }} onClose={vi.fn()} />);
-  expect(screen.getByRole('dialog', { name: shop.name }).textContent).toContain('Giao hỏa tốc trong 2 giờ');
+  const badge = screen.getByRole('img', { name: 'Giao hỏa tốc trong 2 giờ' });
+  expect(badge.textContent).toBe('2h');
+  expect(screen.getByRole('dialog', { name: shop.name }).textContent).not.toContain('Giao hỏa tốc trong 2 giờ');
 });
 
 it('cycles gallery photos with controls and arrow keys without leaving the dialog', () => {

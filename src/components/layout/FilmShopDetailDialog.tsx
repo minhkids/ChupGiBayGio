@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { ArrowUpRight, ChevronLeft, ChevronRight, Clock3, Film, MapPin, MessageCircle, Phone, ShoppingBag, X } from 'lucide-react';
 import { filmShopLocations, type ServiceListing } from '../../services/serviceHubApi';
+import { ExpressDeliveryBadge } from './ExpressDeliveryBadge';
 
 interface FilmShopDetailDialogProps {
   shop: ServiceListing;
@@ -151,7 +152,7 @@ export const FilmShopDetailDialog: React.FC<FilmShopDetailDialogProps> = ({ shop
               <p className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.16em] text-[#9A4F29]"><span className="h-px w-6 bg-[#C76B3C]" />Shop bán film</p>
               <h1 id="film-shop-detail-title" className="mt-2 break-words text-2xl font-bold leading-tight sm:text-3xl">{shop.name}</h1>
               {shop.slogan && <p className="mt-3 border-l-2 border-[#C76B3C] pl-3 text-sm italic leading-relaxed text-[#6E655B]">{shop.slogan}</p>}
-              {shop.expressDelivery2h && <p className="mt-4 flex items-center gap-3 rounded-2xl border-2 border-emerald-500 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-950"><Clock3 aria-hidden="true" className="h-6 w-6 shrink-0" /><span><span className="block">Giao hỏa tốc trong 2 giờ</span><span className="mt-0.5 block text-xs font-medium">Liên hệ shop để xác nhận khu vực và phí giao hàng.</span></span></p>}
+              {shop.expressDelivery2h && <div className="mt-4"><ExpressDeliveryBadge /></div>}
 
               {priceLabel && <section className="relative mt-5 overflow-hidden rounded-2xl border border-[#E2D3BD] bg-[#F3EBDD] p-4" aria-label="Khoảng giá">
                 <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#8B4828]">Giá film</p>

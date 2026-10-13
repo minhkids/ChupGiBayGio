@@ -48,5 +48,10 @@ it('shows every shop branch in the registration preview instead of only a count'
 
 it('highlights optional two-hour express delivery in the registration preview', () => {
   render(<LivePreviewCard data={{ kind: 'lab', name: 'Tiệm Film', expressDelivery2h: true }} />);
-  expect(screen.getByTestId('partner-preview').textContent).toContain('Giao hỏa tốc trong 2 giờ');
+  const badge = screen.getByRole('img', { name: 'Giao hỏa tốc trong 2 giờ' });
+  expect(badge.textContent).toBe('2h');
+  expect(badge.className).toContain('w-fit');
+  expect(badge.querySelector('svg.lucide-film')).toBeTruthy();
+  expect(badge.querySelector('svg.lucide-zap')).toBeTruthy();
+  expect(screen.getByTestId('partner-preview').textContent).not.toContain('Giao hỏa tốc trong 2 giờ');
 });

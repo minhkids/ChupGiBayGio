@@ -34,5 +34,7 @@ it('shows every branch address in the public shop card', () => {
 it('prominently labels shops that offer delivery within two hours', () => {
   const shop = { id: 'express', category: 'filmShop' as const, name: 'Giao nhanh', expressDelivery2h: true };
   render(<FilmShopCard shop={shop} onOpen={vi.fn()} />);
-  expect(screen.getByTestId('film-shop-card').textContent).toContain('Giao hỏa tốc trong 2 giờ');
+  const badge = screen.getByRole('img', { name: 'Giao hỏa tốc trong 2 giờ' });
+  expect(badge.textContent).toBe('2h');
+  expect(screen.getByTestId('film-shop-card').textContent).not.toContain('Giao hỏa tốc trong 2 giờ');
 });
