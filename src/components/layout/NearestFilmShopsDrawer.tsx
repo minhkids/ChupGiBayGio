@@ -14,6 +14,10 @@ import {
 } from 'lucide-react';
 import { useNearestLabs, type NearestFilmLab } from '../../hooks/useNearestLabs';
 import type { FilmLab } from '../../data/filmLabsData';
+import type { ServiceListing } from '../../services/serviceHubApi';
+import { ExpressDeliveryBadge } from './ExpressDeliveryBadge';
+import { FilmShopCard } from './FilmShopCard';
+import { FilmShopDetailDialog } from './FilmShopDetailDialog';
 
 interface NearestFilmShopsDrawerProps {
   isOpen: boolean;
@@ -32,6 +36,7 @@ export const NearestFilmShopsDrawer: React.FC<NearestFilmShopsDrawerProps> = ({
 }) => {
   const {
     labs,
+    areaOnlyShops,
     isLocating,
     isUsingFallback,
     filmFilter,
@@ -40,6 +45,7 @@ export const NearestFilmShopsDrawer: React.FC<NearestFilmShopsDrawerProps> = ({
   } = useNearestLabs(initialFilterFilm);
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedAreaOnlyShop, setSelectedAreaOnlyShop] = useState<ServiceListing | null>(null);
 
   // Handle ESC key to close
   useEffect(() => {
@@ -69,6 +75,13 @@ export const NearestFilmShopsDrawer: React.FC<NearestFilmShopsDrawerProps> = ({
       lab.district.toLowerCase().includes(q) ||
       lab.availableFilms.some((f) => f.toLowerCase().includes(q))
     );
+  });
+  const displayedAreaOnlyShops = areaOnlyShops.filter((shop) => {
+    const matchesStock = !filmFilter || (shop.filmStocks || []).some((film) => film.toLocaleLowerCase('vi').includes(filmFilter.toLocaleLowerCase('vi')));
+    const query = searchQuery.trim().toLocaleLowerCase('vi');
+    const matchesText = !query || [shop.name, shop.slogan, shop.ward, shop.district, ...(shop.filmStocks || [])]
+      .some((value) => value?.toLocaleLowerCase('vi').includes(query));
+    return matchesStock && matchesText;
   });
 
   return (
@@ -210,7 +223,7 @@ export const NearestFilmShopsDrawer: React.FC<NearestFilmShopsDrawerProps> = ({
 
             {/* List of Labs */}
             <div className="flex-1 overflow-y-auto p-4 space-y-3.5 custom-scrollbar bg-[#F7F5F0]">
-              {displayedLabs.length === 0 ? (
+              {displayedLabs.length === 0 && displayedAreaOnlyShops.length === 0 ? (
                 <div className="py-12 text-center text-[#8C8377] space-y-2">
                   <Film className="w-10 h-10 mx-auto text-[#8C8377]" />
                   <p className="text-sm font-medium text-[#554D43]">
@@ -240,16 +253,21 @@ export const NearestFilmShopsDrawer: React.FC<NearestFilmShopsDrawerProps> = ({
                   />
                 ))
               )}
+              {displayedAreaOnlyShops.length > 0 && <section aria-label="Shop theo khu vực chưa ghim bản đồ" className="space-y-3 border-t border-[#D8CFBD] pt-5">
+                <div><h3 className="text-sm font-bold text-[#2C2621]">Shop theo khu vực (chưa ghim bản đồ)</h3><p className="mt-1 text-xs leading-relaxed text-[#6E655B]">Các shop này chỉ công khai phường/quận nên không có khoảng cách hay điểm ghim.</p></div>
+                <div className="space-y-3">{displayedAreaOnlyShops.map((shop) => <FilmShopCard key={shop.id} shop={shop} onOpen={setSelectedAreaOnlyShop} />)}</div>
+              </section>}
             </div>
 
             {/* Footer advice note */}
             <div className="shrink-0 p-3.5 border-t border-[#D8CFBD] bg-[#E8DEC7] text-[11px] text-[#6E655B] flex items-center justify-between">
               <span>💡 Nên liên hệ trước qua Zalo để check date & số lượng.</span>
               <span className="font-mono text-amber-500/80">
-                {displayedLabs.length} địa điểm
+                {displayedLabs.length + displayedAreaOnlyShops.length} địa điểm
               </span>
             </div>
           </motion.aside>
+          <AnimatePresence>{selectedAreaOnlyShop && <FilmShopDetailDialog key={selectedAreaOnlyShop.id} shop={selectedAreaOnlyShop} onClose={() => setSelectedAreaOnlyShop(null)} />}</AnimatePresence>
         </>
       )}
     </AnimatePresence>
@@ -286,6 +304,7 @@ const LabCard: React.FC<LabCardProps> = ({
             <h3 className="font-bold text-base text-[#2C2621] flex items-center space-x-1.5">
               <span>{lab.name}</span>
             </h3>
+            {lab.expressDelivery2h && <ExpressDeliveryBadge className="mt-1" />}
             {lab.isNearest && (
               <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-amber-500 text-black shadow-xs">
                 GẦN NHẤT

@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Clock3, MapPin, MessageCircle, Navigation, Plus, X } from 'lucide-react';
 import type { FilmLab } from '../../data/filmLabsData';
 import { useShootPlan } from '../../context/ShootPlanContext';
+import { ExpressDeliveryBadge } from './ExpressDeliveryBadge';
 
 interface SingleFilmLabCardProps {
   lab: FilmLab;
@@ -55,6 +56,7 @@ export const SingleFilmLabCard: React.FC<SingleFilmLabCardProps> = ({ lab, userC
         <div className="min-w-0">
           <span className="text-[10px] font-mono-spec font-bold uppercase tracking-wider text-[#C76B3C]">Film Lab</span>
           <h2 className="mt-1 truncate text-base font-bold">{lab.name}</h2>
+          {lab.expressDelivery2h && <ExpressDeliveryBadge className="mt-2" />}
           {lab.slogan && <p className="mt-1 text-xs leading-snug text-[#6E655B]">{lab.slogan}</p>}
           {distanceLabel && <p className="mt-1 text-xs font-mono font-bold text-[#C76B3C]">{distanceLabel} từ vị trí của bạn</p>}
         </div>

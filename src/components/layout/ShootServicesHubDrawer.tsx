@@ -26,6 +26,9 @@ import { useShootPlan } from '../../context/ShootPlanContext';
 import type { Photographer } from '../../types';
 import { serviceHubApi, type ServiceListing } from '../../services/serviceHubApi';
 import type { RentalShop } from '../../types';
+import { ExpressDeliveryBadge } from './ExpressDeliveryBadge';
+import { FilmShopCard } from './FilmShopCard';
+import { FilmShopDetailDialog } from './FilmShopDetailDialog';
 
 export type ServicesTab = 'outfit' | 'photographers' | 'film';
 
@@ -70,12 +73,16 @@ export const ShootServicesHubDrawer: React.FC<ShootServicesHubDrawerProps> = ({
   const [budgetFilter, setBudgetFilter] = useState<'all' | 'under500' | '500to1000' | 'above1000'>('all');
   const [photographerSearch, setPhotographerSearch] = useState('');
   const [directoryItems, setDirectoryItems] = useState<ServiceListing[]>([]);
+  const [selectedAreaOnlyShop, setSelectedAreaOnlyShop] = useState<ServiceListing | null>(null);
 
   // Tab 3 (Film Labs) State
   const [filmSearch, setFilmSearch] = useState('');
-  const { labs, userCoords, isFallback, isLocating, refreshLocation } = useNearestLabs({
+  const { labs, areaOnlyShops, userCoords, isFallback, isLocating, refreshLocation } = useNearestLabs({
     filmStockQuery: filmSearch
   });
+  const filteredAreaOnlyShops = areaOnlyShops.filter((shop) => !filmSearch.trim()
+    || [shop.name, shop.slogan, ...(shop.filmStocks || []), ...(shop.locations || []).flatMap((location) => [location.ward, location.district])]
+      .some((value) => value?.toLocaleLowerCase('vi').includes(filmSearch.trim().toLocaleLowerCase('vi'))));
 
   React.useEffect(() => {
     if (!isOpen) return;
@@ -831,6 +838,7 @@ export const ShootServicesHubDrawer: React.FC<ShootServicesHubDrawerProps> = ({
                             <div className="min-w-0">
                               <div className="flex items-center space-x-2">
                                 <h4 className="text-sm font-bold text-[#2C2621] truncate">{lab.name}</h4>
+                                {lab.expressDelivery2h && <ExpressDeliveryBadge />}
                                 {lab.isNearest && (
                                   <span className="text-[9px] font-mono-spec font-bold px-1.5 py-0.2 rounded bg-amber-500 text-neutral-950">
                                     GẦN NHẤT
@@ -909,10 +917,15 @@ export const ShootServicesHubDrawer: React.FC<ShootServicesHubDrawerProps> = ({
                     })
                   )}
                 </div>
+                {filteredAreaOnlyShops.length > 0 && <section aria-label="Shop theo khu vực chưa ghim bản đồ" className="space-y-3 border-t border-[#E2DAD0] pt-5">
+                  <div><h3 className="text-sm font-bold text-[#2C2621]">Shop theo khu vực (chưa ghim bản đồ)</h3><p className="mt-1 text-xs text-[#6E655B]">Hiển thị theo phường/quận; chưa có tọa độ để tính khoảng cách hoặc ghim lên bản đồ.</p></div>
+                  <div className={standalone ? 'grid grid-cols-1 xl:grid-cols-2 gap-4' : 'space-y-3'}>{filteredAreaOnlyShops.map((shop) => <FilmShopCard key={shop.id} shop={shop} onOpen={setSelectedAreaOnlyShop} />)}</div>
+                </section>}
               </div>
             )}
           </div>
         </motion.aside>
+        <AnimatePresence>{selectedAreaOnlyShop && <FilmShopDetailDialog key={selectedAreaOnlyShop.id} shop={selectedAreaOnlyShop} onClose={() => setSelectedAreaOnlyShop(null)} />}</AnimatePresence>
       </div>
     </AnimatePresence>
   );

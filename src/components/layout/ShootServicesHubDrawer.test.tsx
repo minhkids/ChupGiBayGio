@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, it, expect, vi } from 'vitest';
-import { cleanup, render, screen, fireEvent } from '@testing-library/react';
+import { cleanup, render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ShootServicesHubDrawer } from './ShootServicesHubDrawer';
 import { ShootPlanProvider } from '../../context/ShootPlanContext';
 
@@ -49,5 +49,26 @@ describe('ShootServicesHubDrawer', () => {
     const closeBtn = screen.getByRole('button', { name: /đóng/i });
     fireEvent.click(closeBtn);
     expect(onClose).toHaveBeenCalled();
+  });
+
+  it('shows area-only shops and the same compact express badge in the mobile Mua film tab', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify([{
+      id: 'mapped-mobile-shop', name: 'Shop có ghim', ward: 'Bồ Đề', district: 'Long Biên',
+      address: 'Bồ Đề, Long Biên, Hà Nội', lat: 21.04, lng: 105.88, min_roll_price: 65000, max_roll_price: 0,
+      in_stock_films: '["Fuji 200"]', express_delivery_2h: 1,
+      locations: [{ ward: 'Bồ Đề', district: 'Long Biên' }],
+    }, {
+      id: 'area-only-mobile-shop', name: 'Shop Hà Nội', ward: 'Cửa Nam', district: 'Hoàn Kiếm',
+      address: 'Cửa Nam, Hoàn Kiếm, Hà Nội', lat: null, lng: null, min_roll_price: 50000, max_roll_price: 0,
+      cheapest_roll_name: 'Kodak Gold 200', in_stock_films: '["Kodak Gold 200"]', express_delivery_2h: 1,
+      locations: [{ ward: 'Cửa Nam', district: 'Hoàn Kiếm' }],
+    }]), { status: 200 })));
+    render(<ShootPlanProvider><ShootServicesHubDrawer isOpen onClose={() => undefined} /></ShootPlanProvider>);
+    fireEvent.click(screen.getByRole('button', { name: /mua film/i }));
+
+    await waitFor(() => expect(screen.getByText('Shop theo khu vực (chưa ghim bản đồ)')).toBeTruthy());
+    expect(screen.getAllByRole('img', { name: 'Giao hỏa tốc trong 2 giờ' })).toHaveLength(2);
+    expect(screen.getAllByRole('img', { name: 'Giao hỏa tốc trong 2 giờ' }).every((badge) => badge.textContent === '2h')).toBe(true);
+    expect(screen.getByText(/Cửa Nam, Hoàn Kiếm, Hà Nội/)).toBeTruthy();
   });
 });

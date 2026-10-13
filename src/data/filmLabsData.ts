@@ -18,6 +18,7 @@ export interface FilmLab {
   productImageUrl?: string;
   minRollPrice?: number;
   maxRollPrice?: number;
+  expressDelivery2h?: boolean;
   rating?: number;
   reviewCount?: number;
   description?: string;

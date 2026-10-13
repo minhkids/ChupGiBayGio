@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useCatalogRevision } from './useCatalogRevision';
 import { HANOI_DEFAULT_COORDS, type FilmLab } from '../data/filmLabsData';
+import type { FilmShopLocation, ServiceListing } from '../services/serviceHubApi';
 
 export interface NearestFilmLab extends FilmLab {
   distanceKm: number;
@@ -66,6 +67,7 @@ export function useNearestLabs(optionsOrFilter?: string | { filmStockQuery?: str
   const [locationError, setLocationError] = useState<string | null>(null);
   const [filmFilter, setFilmFilter] = useState<string>(initialFilmFilter || '');
   const [filmLabs, setFilmLabs] = useState<FilmLab[]>([]);
+  const [areaOnlyShops, setAreaOnlyShops] = useState<ServiceListing[]>([]);
 
   useEffect(() => {
     let active = true;
@@ -73,19 +75,44 @@ export function useNearestLabs(optionsOrFilter?: string | { filmStockQuery?: str
     fetch(`${apiBase}/api/labs`).then(async (response) => {
       if (!response.ok) throw new Error(`Lỗi tải lab (${response.status})`);
       const rows: unknown = await response.json();
-      if (!Array.isArray(rows)) return [];
-      return rows.filter((value) => {
-        const row = value as Record<string, unknown>;
+      if (!Array.isArray(rows)) return { labs: [] as FilmLab[], areaOnlyShops: [] as ServiceListing[] };
+      const records = rows as Record<string, unknown>[];
+      const hasMapCoordinates = (row: Record<string, unknown>) => {
         const lat = Number(row.lat);
         const lng = Number(row.lng);
         return row.lat !== null && row.lat !== undefined && row.lng !== null && row.lng !== undefined
           && Number.isFinite(lat) && Number.isFinite(lng) && lat >= 20.4 && lat <= 21.7 && lng >= 105.2 && lng <= 106.3;
-      }).map((value) => {
-        const row = value as Record<string, unknown>;
+      };
+      const parseFilms = (value: unknown): string[] => {
+        try { const parsed = typeof value === 'string' ? JSON.parse(value) : value; return Array.isArray(parsed) ? parsed.map(String) : []; }
+        catch { return []; }
+      };
+      const areaOnlyShops = records.filter((row) => !hasMapCoordinates(row)
+        && (Number(row.min_roll_price ?? row.minRollPrice) > 0 || Number(row.max_roll_price ?? row.maxRollPrice) > 0))
+        .map((row): ServiceListing => {
+          let locations = row.locations;
+          if (typeof locations === 'string') {
+            try { locations = JSON.parse(locations) as unknown; } catch { locations = []; }
+          }
+          return {
+            id: String(row.id), category: 'filmShop', name: String(row.name || ''),
+            slogan: String(row.slogan || ''), address: String(row.address || ''),
+            ward: String(row.ward || ''), district: String(row.district || ''),
+            locations: Array.isArray(locations) ? locations as FilmShopLocation[] : undefined,
+            phone: String(row.hotline || row.phone || ''), link: String(row.fanpage_url || row.fanpageUrl || ''),
+            imageUrl: String(row.image_url || row.imageUrl || ''),
+            productImageUrl: String(row.product_image_url || row.productImageUrl || ''),
+            cheapestRollName: String(row.cheapest_roll_name || row.cheapestRollName || ''),
+            minRollPrice: Number(row.min_roll_price ?? row.minRollPrice) || 0,
+            maxRollPrice: Number(row.max_roll_price ?? row.maxRollPrice) || 0,
+            filmStocks: parseFilms(row.in_stock_films ?? row.inStockFilms),
+            expressDelivery2h: Boolean(row.expressDelivery2h ?? row.express_delivery_2h),
+          };
+        });
+      const labs = records.filter(hasMapCoordinates).map((row) => {
         const address = String(row.address || '');
         const filmsValue = row.in_stock_films ?? row.inStockFilms;
-        let availableFilms: string[] = [];
-        try { const parsed = typeof filmsValue === 'string' ? JSON.parse(filmsValue) : filmsValue; if (Array.isArray(parsed)) availableFilms = parsed.map(String); } catch { availableFilms = []; }
+        const availableFilms = parseFilms(filmsValue);
         const lat = Number(row.lat);
         const lng = Number(row.lng);
         const phone = String(row.hotline || row.phone || '');
@@ -99,14 +126,16 @@ export function useNearestLabs(optionsOrFilter?: string | { filmStockQuery?: str
           fanpageUrl: String(row.fanpage_url || row.fanpageUrl || ''),
           productImageUrl: String(row.product_image_url || row.productImageUrl || ''),
           minRollPrice, maxRollPrice,
+          expressDelivery2h: Boolean(row.expressDelivery2h ?? row.express_delivery_2h),
           googleMapsUrl: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`,
           services: Array.isArray(row.services) ? row.services.map(String) : [],
           priceRange: maxRollPrice > 0 ? `${minRollPrice.toLocaleString('vi-VN')}đ – ${maxRollPrice.toLocaleString('vi-VN')}đ/cuộn` : String(row.price_range || ''),
           rating: Number(row.rating) || 0, reviewCount: Number(row.review_count) || 0, description: String(row.description || '')
         } satisfies FilmLab;
       });
-    }).then((rows) => { if (active) setFilmLabs(rows); })
-      .catch((error: unknown) => { console.warn('Không tải được dữ liệu lab từ D1.', error); if (active) setFilmLabs([]); });
+      return { labs, areaOnlyShops };
+    }).then(({ labs, areaOnlyShops: shops }) => { if (active) { setFilmLabs(labs); setAreaOnlyShops(shops); } })
+      .catch((error: unknown) => { console.warn('Không tải được dữ liệu lab từ D1.', error); if (active) { setFilmLabs([]); setAreaOnlyShops([]); } });
     return () => { active = false; };
   }, [catalogRevision]);
 
@@ -205,6 +234,7 @@ export function useNearestLabs(optionsOrFilter?: string | { filmStockQuery?: str
 
   return {
     labs: sortedLabs,
+    areaOnlyShops,
     userCoords,
     isLocating,
     isUsingFallback,
