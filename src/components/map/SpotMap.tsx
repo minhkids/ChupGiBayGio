@@ -247,7 +247,7 @@ export const SpotMap: React.FC<SpotMapProps> = ({
       const isSelected = selectedSpot?.id === spot.id;
       if (editorial) {
         const safeName = spot.name.replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character] || character);
-        const pinHtml = `<span class="editorial-map-pin${isSelected ? ' is-selected' : ''}"><span class="editorial-map-dot">${isUpcomingCandidate(spot.seasonalTrend) ? '?' : ''}</span><span class="editorial-map-label">${safeName}</span></span>`;
+        const pinHtml = `<span class="editorial-map-pin${isSelected ? ' is-selected' : ''}"><span class="editorial-map-dot"></span><span class="editorial-map-label">${safeName}</span></span>`;
         const icon = L.divIcon({ className: 'editorial-marker', html: pinHtml, iconSize: [20, 20], iconAnchor: [10, 10] });
         L.marker([spot.lat, spot.lng], { icon, title: spot.name, alt: spot.name, zIndexOffset: isSelected ? 1000 : 0 })
           .on('click', () => { if (!isPickingLocation) onSelectSpot(spot); })
@@ -256,14 +256,11 @@ export const SpotMap: React.FC<SpotMapProps> = ({
       }
       const status = getEffectiveSeasonalStatus(spot.seasonalTrend);
       const statusInfo = getStatusBadgeInfo(status, spot.seasonalTrend.daysLeftInPeak);
-      const upcoming = isUpcomingCandidate(spot.seasonalTrend);
 
       let markerBg = '#1C1D1F';
       let pulseRing = '';
 
-      if (upcoming) {
-        markerBg = '#8A633C'; // Forecast, no verified-peak pulse.
-      } else if (status === 'PEAK') {
+      if (status === 'PEAK') {
         markerBg = '#C85A32'; // Terracotta
         pulseRing = '<div class="absolute -inset-1.5 border-2 border-terracotta rounded-none animate-ping opacity-60 pointer-events-none"></div>';
       } else if (status === 'ENDING_SOON') {
@@ -291,7 +288,7 @@ export const SpotMap: React.FC<SpotMapProps> = ({
         popupAnchor: [0, -32]
       });
 
-      const marker = L.marker([spot.lat, spot.lng], { icon: customIcon, title: upcoming ? `${spot.name} — Có thể hot (dự kiến)` : spot.name, alt: upcoming ? `${spot.name} — Có thể hot (dự kiến)` : spot.name });
+      const marker = L.marker([spot.lat, spot.lng], { icon: customIcon, title: spot.name, alt: spot.name });
 
       // Editorial Viewfinder Popup
       const popupContent = `
@@ -300,12 +297,12 @@ export const SpotMap: React.FC<SpotMapProps> = ({
             <img src="${spot.coverImageUrl}" style="width: 100%; height: 100%; object-fit: cover;" alt="${spot.name}" />
             <div data-reference-pin></div>
             <span style="position: absolute; top: 6px; left: 6px; font-family: 'IBM Plex Mono', monospace; font-size: 9px; font-weight: 700; background: ${markerBg}; color: #fff; padding: 2px 5px; border: 1px solid #1C1D1F;">
-              ${upcoming ? '? Có thể hot — chưa xác nhận đang rộ' : statusInfo.label}
+              ${isUpcomingCandidate(spot.seasonalTrend) ? 'Địa điểm chụp ảnh' : statusInfo.label}
             </span>
           </div>
           <div style="padding: 10px; background-color: #FBF9F5;">
             <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #C85A32; font-weight: 700; text-transform: uppercase;">
-              ${spot.seasonalTrend.trendTitle}
+              ${isUpcomingCandidate(spot.seasonalTrend) ? 'ĐỊA ĐIỂM THEO STYLE' : spot.seasonalTrend.trendTitle}
             </div>
             <div style="font-family: 'Fraunces', Georgia, serif; font-weight: 700; font-size: 14px; color: #1C1D1F; margin: 3px 0; line-height: 1.2;">
               ${spot.name}

@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 import type { PlaceCategory, Spot, FilterState } from '../types';
 import { CONCEPT_METADATA } from '../utils/season';
-import { isUpcomingCandidate, selectUpcomingSpots } from '../utils/upcomingSpots';
+import { isUpcomingCandidate } from '../utils/upcomingSpots';
 import { getPlaceCategoryLabel } from '../utils/placeCategories';
 import { REGIONS } from '../data/regions';
 import { SpotMap } from './map/SpotMap';
@@ -31,8 +31,7 @@ import { LeftNavRail } from './navigation/LeftNavRail';
 import { MobileViewMenuItems } from './navigation/MobileViewMenuItems';
 import { PoseCamera } from './features/PoseCamera';
 import { useWeather } from '../hooks/useWeather';
-import { trendArticleApi, type TrendArticle, type TrendArticleSection } from '../services/trendArticleApi';
-import { TrendArticleFeed } from './views/TrendArticleFeed';
+import { MapStyleCategoryBrowser } from './views/MapStyleCategoryBrowser';
 import { POSES, type PoseItem } from '../data/poses';
 import { TapToShopImage } from './outfit/TapToShopImage';
 import { NearestFilmShopsDrawer } from './layout/NearestFilmShopsDrawer';
@@ -43,7 +42,6 @@ import { SingleFilmLabCard } from './layout/SingleFilmLabCard';
 const ShootServicesHubDrawer = lazy(() => import('./layout/ShootServicesHubDrawer').then(m => ({ default: m.ShootServicesHubDrawer })));
 
 interface GoogleMapsLayoutProps {
-  spots: Spot[];
   placeCategories: PlaceCategory[];
   filteredSpots: Spot[];
   selectedSpot: Spot | null;
@@ -69,7 +67,6 @@ interface GoogleMapsLayoutProps {
 }
 
 export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
-  spots,
   placeCategories,
   filteredSpots,
   selectedSpot,
@@ -95,9 +92,6 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
 }) => {
   // Desktop sidebar collapse toggle state
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-
-  // Selected section for the trend and upcoming-spots feed.
-  const [sidebarTab, setSidebarTab] = useState<TrendArticleSection>('hotTrend');
 
   // Detail card tab state: 'info' (Cẩm nang) | 'posts' (Bài viết liên quan)
   const [detailTab, setDetailTab] = useState<'info' | 'posts'>('info');
@@ -186,17 +180,6 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
   // Real-time weather from Open-Meteo API (Hanoi)
   const weather = useWeather();
 
-  const [trendArticles, setTrendArticles] = useState<TrendArticle[]>([]);
-  const [trendArticlesLoading, setTrendArticlesLoading] = useState(true);
-
-  useEffect(() => {
-    let active = true;
-    trendArticleApi.list().then((items) => { if (active) setTrendArticles(items); })
-      .catch((error: unknown) => { console.warn('Không tải được bài viết xu hướng.', error); if (active) setTrendArticles([]); })
-      .finally(() => { if (active) setTrendArticlesLoading(false); });
-    return () => { active = false; };
-  }, []);
-
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 2400);
@@ -234,14 +217,6 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
     }
   };
 
-  const handleOpenTrendingSpot = (spot: Spot) => {
-    onChangeView('map');
-    setFocusedCoordinates({ lat: spot.lat, lng: spot.lng, zoom: 15 });
-    setActivePhotoIdx(0);
-    setDetailTab('info');
-    onSelectSpot(spot);
-  };
-
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-[#F7F5F0] font-sans select-none">
 
@@ -275,10 +250,9 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
       {/* ========================================================================= */}
       <div className="absolute inset-0 z-0 lg:pl-[76px]">
         <SpotMap
-          spots={sidebarTab === 'upcomingSpot' ? selectUpcomingSpots(spots, activeRegionId, filters.searchQuery, filters.month ?? undefined, filters.placeCategory) : filteredSpots}
-          statusFilter={sidebarTab === 'upcomingSpot' ? 'ALL' : filters.status}
+          spots={filteredSpots}
+          statusFilter={filters.status}
           onToggleStatusFilter={(status) => {
-            setSidebarTab('hotTrend');
             onChangeFilters(prev => ({ ...prev, status: prev.status === status ? 'ALL' : status }));
           }}
           selectedSpot={selectedSpot}
@@ -345,7 +319,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                 type="text"
                 value={filters.searchQuery}
                 onChange={(e) => onChangeFilters(prev => ({ ...prev, searchQuery: e.target.value }))}
-                placeholder="Tìm bài hot hoặc địa điểm sắp nổi..."
+                placeholder="Tìm địa điểm, khu vực hoặc style chụp..."
                 className="w-full bg-transparent text-sm text-[#2C2621] placeholder-[#8C8377] focus:outline-none font-medium"
               />
             </div>
@@ -504,7 +478,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                 type="text"
                 value={filters.searchQuery}
                 onChange={(e) => onChangeFilters(prev => ({ ...prev, searchQuery: e.target.value }))}
-                placeholder="Tìm bài hot hoặc địa điểm sắp nổi..."
+                placeholder="Tìm địa điểm, khu vực hoặc style chụp..."
                 className="w-full bg-transparent text-sm text-[#2C2621] placeholder-[#8C8377] focus:outline-none font-medium"
               />
             </div>
@@ -532,14 +506,15 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
             </div>
           </div>
 
-
-
-          <TrendArticleFeed articles={trendArticles} spots={spots} regionId={activeRegionId} searchQuery={filters.searchQuery} anchorMonth={filters.month ?? undefined} placeCategories={placeCategories} placeCategory={filters.placeCategory} onPlaceCategoryChange={placeCategory => onChangeFilters(prev => ({ ...prev, placeCategory }))} activeSection={sidebarTab} onSectionChange={setSidebarTab} onOpenSpot={handleOpenTrendingSpot} tabsOnly />
         </div>
 
-        {/* ─── SCROLLABLE EDITORIAL FEED ─── */}
+        {/* ─── STYLE CATEGORY MOODBOARD ─── */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          <TrendArticleFeed articles={trendArticles} spots={spots} regionId={activeRegionId} searchQuery={filters.searchQuery} anchorMonth={filters.month ?? undefined} placeCategories={placeCategories} placeCategory={filters.placeCategory} onAnchorMonthChange={month => onChangeFilters(prev => ({ ...prev, month }))} loading={trendArticlesLoading} activeSection={sidebarTab} onSectionChange={setSidebarTab} onOpenSpot={handleOpenTrendingSpot} showTabs={false} />
+          <MapStyleCategoryBrowser
+            categories={placeCategories}
+            selectedCategory={filters.placeCategory}
+            onSelectCategory={placeCategory => onChangeFilters(prev => ({ ...prev, placeCategory }))}
+          />
         </div>
       </div>
 
@@ -580,7 +555,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
 
               {/* Status Badge */}
               <span className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-terracotta text-white text-xs font-semibold shadow-sm">
-                {isUpcomingCandidate(selectedSpot.seasonalTrend) ? '? Có thể hot — dự kiến' : selectedSpot.seasonalTrend?.status === 'PEAK' ? 'Đang rộ' : (selectedSpot.seasonalTrend?.status || 'Đang rộ')}
+                {isUpcomingCandidate(selectedSpot.seasonalTrend) ? 'Địa điểm chụp ảnh' : selectedSpot.seasonalTrend?.status === 'PEAK' ? 'Đang rộ' : (selectedSpot.seasonalTrend?.status || 'Đang rộ')}
               </span>
 
               {/* Ghost Pose Camera launcher (temporarily disabled)
@@ -712,10 +687,10 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                   <div className="bg-[#F3EAD7] border border-[#D8CFBD] rounded-xl p-4 space-y-2">
                     <div className="flex items-center justify-between text-xs font-mono-spec">
                       <span className="font-bold text-[#2C2621]">
-                        TÌNH TRẠNG HOA / PHONG CẢNH
+                        {isUpcomingCandidate(selectedSpot.seasonalTrend) ? 'GỢI Ý STYLE CHỤP' : 'TÌNH TRẠNG HOA / PHONG CẢNH'}
                       </span>
                       <span className="font-bold text-terracotta">
-                        {isUpcomingCandidate(selectedSpot.seasonalTrend) ? `DỰ KIẾN T.${selectedSpot.seasonalTrend.expectedMonths?.join(', ')}` : `${selectedSpot.seasonalTrend?.bloomPercentage ?? 85}% ĐANG NỞ`}
+                        {isUpcomingCandidate(selectedSpot.seasonalTrend) ? 'ĐỊA ĐIỂM THEO STYLE' : `${selectedSpot.seasonalTrend?.bloomPercentage ?? 85}% ĐANG NỞ`}
                       </span>
                     </div>
                     <div className={`w-full bg-[#E2DAD0] h-1.5 rounded-full overflow-hidden ${isUpcomingCandidate(selectedSpot.seasonalTrend) ? 'hidden' : ''}`}>
@@ -725,7 +700,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                       />
                     </div>
                     <p className="text-sm text-[#554D43] font-sans leading-relaxed pt-1">
-                      {selectedSpot.description}
+                      {isUpcomingCandidate(selectedSpot.seasonalTrend) ? 'Khám phá địa điểm này theo nhóm style chụp.' : selectedSpot.description}
                     </p>
                   </div>
 
@@ -872,8 +847,8 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
 
           <div className="w-full flex items-center justify-between font-mono-spec">
 
-            <div className="mr-2 min-w-0 flex-1">
-              <TrendArticleFeed articles={trendArticles} spots={spots} regionId={activeRegionId} searchQuery={filters.searchQuery} anchorMonth={filters.month ?? undefined} placeCategories={placeCategories} placeCategory={filters.placeCategory} onPlaceCategoryChange={placeCategory => onChangeFilters(prev => ({ ...prev, placeCategory }))} activeSection={sidebarTab} onSectionChange={setSidebarTab} onOpenSpot={handleOpenTrendingSpot} tabsOnly />
+            <div className="mr-2 min-w-0 flex-1 text-left text-sm font-bold text-[#2C2621]">
+              Bạn định chụp style gì?
             </div>
 
             {/* Snap Toggle Indicator */}
@@ -886,9 +861,13 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
           </div>
         </div>
 
-        {/* Mobile Feed */}
+        {/* Mobile Moodboard */}
         <div className="flex-1 overflow-y-auto p-4 space-y-3">
-          <TrendArticleFeed articles={trendArticles} spots={spots} regionId={activeRegionId} searchQuery={filters.searchQuery} anchorMonth={filters.month ?? undefined} placeCategories={placeCategories} placeCategory={filters.placeCategory} onAnchorMonthChange={month => onChangeFilters(prev => ({ ...prev, month }))} loading={trendArticlesLoading} activeSection={sidebarTab} onSectionChange={setSidebarTab} onOpenSpot={handleOpenTrendingSpot} showTabs={false} />
+          <MapStyleCategoryBrowser
+            categories={placeCategories}
+            selectedCategory={filters.placeCategory}
+            onSelectCategory={placeCategory => onChangeFilters(prev => ({ ...prev, placeCategory }))}
+          />
         </div>
       </motion.div>
 
@@ -958,7 +937,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                 />
 
                 <span className="absolute top-2.5 left-2.5 px-2.5 py-1 rounded-full bg-terracotta text-white text-[11px] font-semibold shadow-md">
-                  {isUpcomingCandidate(selectedSpot.seasonalTrend) ? '? Có thể hot — dự kiến' : selectedSpot.seasonalTrend?.status === 'PEAK' ? 'Đang rộ' : (selectedSpot.seasonalTrend?.status || 'Đang rộ')}
+                  {isUpcomingCandidate(selectedSpot.seasonalTrend) ? 'Địa điểm chụp ảnh' : selectedSpot.seasonalTrend?.status === 'PEAK' ? 'Đang rộ' : (selectedSpot.seasonalTrend?.status || 'Đang rộ')}
                 </span>
 
                 {/* Thumbnails */}
@@ -1025,10 +1004,10 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
               <div className="bg-[#F3EAD7] border border-[#D8CFBD] rounded-2xl p-3.5 space-y-1.5">
                 <div className="flex items-center justify-between text-xs font-mono-spec">
                   <span className="font-bold text-[#2C2621]">
-                    TÌNH TRẠNG HOA / PHONG CẢNH
+                    {isUpcomingCandidate(selectedSpot.seasonalTrend) ? 'GỢI Ý STYLE CHỤP' : 'TÌNH TRẠNG HOA / PHONG CẢNH'}
                   </span>
                   <span className="font-bold text-terracotta">
-                    {isUpcomingCandidate(selectedSpot.seasonalTrend) ? `DỰ KIẾN T.${selectedSpot.seasonalTrend.expectedMonths?.join(', ')}` : `${selectedSpot.seasonalTrend?.bloomPercentage ?? 85}% ĐANG NỞ`}
+                    {isUpcomingCandidate(selectedSpot.seasonalTrend) ? 'ĐỊA ĐIỂM THEO STYLE' : `${selectedSpot.seasonalTrend?.bloomPercentage ?? 85}% ĐANG NỞ`}
                   </span>
                 </div>
                 <div className={`w-full bg-[#E2DAD0] h-1.5 rounded-full overflow-hidden ${isUpcomingCandidate(selectedSpot.seasonalTrend) ? 'hidden' : ''}`}>
@@ -1038,7 +1017,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                   />
                 </div>
                 <p className="text-xs text-[#554D43] font-sans leading-relaxed pt-1">
-                  {selectedSpot.description}
+                  {isUpcomingCandidate(selectedSpot.seasonalTrend) ? 'Khám phá địa điểm này theo nhóm style chụp.' : selectedSpot.description}
                 </p>
               </div>
 

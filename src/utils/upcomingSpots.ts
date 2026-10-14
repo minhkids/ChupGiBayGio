@@ -33,7 +33,6 @@ export function selectUpcomingSpots(spots: Spot[], regionId: string, query = '',
 }
 
 export function getSpotMarkerSymbol(trend: SeasonalTrend): string {
-  if (isUpcomingCandidate(trend)) return '?';
   const status = getEffectiveSeasonalStatus(trend);
   return status === 'PEAK' ? '★' : status === 'ENDING_SOON' ? '!' : '+';
 }

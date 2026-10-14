@@ -5,10 +5,9 @@ import { MapSpotLegend } from './MapSpotLegend';
 
 describe('MapSpotLegend', () => {
   afterEach(() => cleanup());
-  it('explains forecast question-mark pins separately from verified status controls', () => {
+  it('does not show a hot/upcoming forecast legend on the map', () => {
     render(<MapSpotLegend selectedStatus="ALL" onSelectStatus={vi.fn()} />);
-    expect(screen.getByText('Có thể hot (dự kiến)')).toBeTruthy();
-    expect(screen.queryByRole('button', { name: 'Có thể hot (dự kiến)' })).toBeNull();
+    expect(screen.queryByText(/Có thể hot|Dự báo theo mùa/)).toBeNull();
   });
 
   it('lets users filter spots by each map-pin category', () => {

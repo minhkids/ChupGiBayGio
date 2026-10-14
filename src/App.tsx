@@ -301,7 +301,6 @@ export function App() {
       <div className="w-screen h-screen overflow-hidden">
         <Suspense fallback={<div className="w-full h-full bg-neutral-100 flex items-center justify-center"><div className="animate-spin w-8 h-8 border-2 border-terracotta border-t-transparent rounded-full" /></div>}>
         <GoogleMapsLayout
-          spots={spots}
           placeCategories={placeCategories}
           filteredSpots={filteredSpots}
           selectedSpot={selectedSpot}

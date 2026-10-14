@@ -4,12 +4,17 @@ import { getSpotMarkerSymbol, getUpcomingMonths, isUpcomingCandidate, matchesSpo
 
 const candidate = { ...MOCK_SPOTS[0], regionId: 'hanoi', name: 'Mùa hoa tương lai', seasonalTrend: { ...MOCK_SPOTS[0].seasonalTrend, status: 'ACTIVE' as const, upcoming: true, expectedMonths: [11, 12], placeCategories: ['CAFE', 'RED_RIVER'] as ['CAFE', 'RED_RIVER'] } };
 describe('upcoming seasonal candidates', () => {
-  it('uses a question mark for speculation, never for a verified peak', () => {
-    expect(getSpotMarkerSymbol(candidate.seasonalTrend)).toBe('?');
+  it('uses ordinary status symbols for places instead of a forecast question mark', () => {
+    expect(getSpotMarkerSymbol(candidate.seasonalTrend)).toBe('+');
     const peak = { ...candidate.seasonalTrend, status: 'PEAK' as const, statusValidUntil: '2099-12-31' };
     expect(isUpcomingCandidate(peak)).toBe(false);
     expect(getSpotMarkerSymbol(peak)).toBe('★');
   });
+  it('retains category assignments even when seasonal metadata also marks a forecast', () => {
+    expect(isUpcomingCandidate(candidate.seasonalTrend)).toBe(true);
+    expect(candidate.seasonalTrend.placeCategories).toContain('CAFE');
+  });
+
   it('looks three months ahead and wraps the year without dropping next-season spots', () => {
     expect(getUpcomingMonths(10)).toEqual([11, 12, 1]);
     expect(matchesSpotMonth(candidate.seasonalTrend, 10)).toBe(true);
