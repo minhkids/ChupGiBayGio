@@ -27,6 +27,7 @@ import { getPlaceCategoryLabel } from '../utils/placeCategories';
 import { REGIONS } from '../data/regions';
 import { SpotMap } from './map/SpotMap';
 import { AtmosphericFX } from './features/AtmosphericFX';
+import { ThemeToggle } from './features/ThemeToggle';
 import { LeftNavRail } from './navigation/LeftNavRail';
 import { MobileViewMenuItems } from './navigation/MobileViewMenuItems';
 import type { ViewId } from './navigation/viewItems';
@@ -346,6 +347,8 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
               ))}
             </select>
           </div>
+
+          <ThemeToggle />
 
           {/* Mobile Menu / View Toggle Pill */}
           <div className="relative shrink-0">

@@ -16,6 +16,7 @@ import {
 import type { LucideIcon } from 'lucide-react';
 import type { WeatherData } from '../../hooks/useWeather';
 import { NAV_ITEMS, type ViewId } from './viewItems';
+import { ThemeToggle } from '../features/ThemeToggle';
 
 interface LeftNavRailProps {
   activeView: ViewId;
@@ -166,6 +167,7 @@ export const LeftNavRail: React.FC<LeftNavRailProps> = ({
 
         {/* ─── BOTTOM: utilities ─── */}
         <div className="flex w-full flex-col items-center gap-3">
+          <ThemeToggle />
           {/* Film filter shortcut (conditional) */}
           {onSelectFilmFilter && (
             <button
@@ -273,6 +275,7 @@ export const LeftNavRail: React.FC<LeftNavRailProps> = ({
           </span>
           <span className="text-[10px] font-medium leading-tight text-amber-600">Thêm</span>
         </button>
+        <ThemeToggle variant="nav" />
       </nav>
     </>
   );

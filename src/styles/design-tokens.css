@@ -5,6 +5,14 @@
  */
 
 :root {
+  /* Scheduled day/night UI tokens; photo and moodboard palette colors stay fixed. */
+  --ui-bg: #F7F5F0;
+  --ui-surface: #FAF8F4;
+  --ui-text: #2C2621;
+  --ui-muted: #6E655B;
+  --ui-border: #D8CFBD;
+  --ui-control: #ECE4D0;
+  --ui-accent: #C76B3C;
   /* Warm darkroom palette; retain legacy paper tokens for light cards. */
   --editorial-bg: #141312;
   --editorial-surface: #1C1A18;
@@ -88,6 +96,18 @@
   --safe-bottom: env(safe-area-inset-bottom, 0);
   --safe-left: env(safe-area-inset-left, 0);
   --safe-right: env(safe-area-inset-right, 0);
+}
+
+:root[data-color-scheme='light'] { color-scheme: light; }
+:root[data-color-scheme='dark'] {
+  color-scheme: dark;
+  --ui-bg: #141312;
+  --ui-surface: #1C1A18;
+  --ui-text: #F3EFE9;
+  --ui-muted: #BBAF9F;
+  --ui-border: #49413A;
+  --ui-control: #2E2A27;
+  --ui-accent: #E7A16C;
 }
 
 /* =========================================================================

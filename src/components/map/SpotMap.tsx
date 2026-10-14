@@ -300,14 +300,14 @@ export const SpotMap: React.FC<SpotMapProps> = ({
               ${isUpcomingCandidate(spot.seasonalTrend) ? 'Địa điểm chụp ảnh' : statusInfo.label}
             </span>
           </div>
-          <div style="padding: 10px; background-color: #FBF9F5;">
-            <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #C85A32; font-weight: 700; text-transform: uppercase;">
+          <div style="padding: 10px; background-color: var(--ui-surface);">
+            <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--ui-accent); font-weight: 700; text-transform: uppercase;">
               ${isUpcomingCandidate(spot.seasonalTrend) ? 'ĐỊA ĐIỂM THEO STYLE' : spot.seasonalTrend.trendTitle}
             </div>
-            <div style="font-family: 'Fraunces', Georgia, serif; font-weight: 700; font-size: 14px; color: #1C1D1F; margin: 3px 0; line-height: 1.2;">
+            <div style="font-family: 'Fraunces', Georgia, serif; font-weight: 700; font-size: 14px; color: var(--ui-text); margin: 3px 0; line-height: 1.2;">
               ${spot.name}
             </div>
-            <div style="font-size: 11px; color: #666; margin-bottom: 8px;">
+            <div style="font-size: 11px; color: var(--ui-muted); margin-bottom: 8px;">
               ☀️ ${spot.bestTimeDescription}
             </div>
             <button id="view-spot-${spot.id}" style="width: 100%; background-color: #1C1D1F; color: #fff; border: 1px solid #1C1D1F; font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 700; padding: 5px 0; cursor: pointer;">
@@ -370,7 +370,7 @@ export const SpotMap: React.FC<SpotMapProps> = ({
 
       const labIconHtml = `
         <div class="relative cursor-pointer transition-transform hover:scale-125 ${isSelected ? 'scale-125 z-50' : 'z-30'}" title="${lab.name} - ${lab.address}">
-          <div style="background-color: #FAF8F4; border: 2px solid #C76B3C; box-shadow: 0 2px 10px rgba(199, 107, 60, 0.35);" 
+          <div style="background-color: var(--ui-surface); border: 2px solid #C76B3C; box-shadow: 0 2px 10px rgba(199, 107, 60, 0.35);"
                class="w-8 h-8 rounded-full flex items-center justify-center text-[#C76B3C]">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M7 3v18"/><path d="M3 7.5h4"/><path d="M3 12h18"/><path d="M3 16.5h4"/><path d="M17 3v18"/><path d="M17 7.5h4"/><path d="M17 16.5h4"/></svg>
           </div>

@@ -32,4 +32,5 @@ it('removes Cảm hứng and Màu Film navigation while keeping the other main d
   expect(screen.getAllByText('Tạp chí', { exact: true }).length).toBeGreaterThan(0);
   expect(screen.queryAllByText('Màu Film', { exact: true })).toHaveLength(0);
   expect(screen.getAllByText('Dịch vụ', { exact: true }).length).toBeGreaterThan(0);
+  expect(screen.getAllByRole('button', { name: 'Chuyển sang giao diện tối' })).toHaveLength(2);
 });

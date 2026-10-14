@@ -1,0 +1,92 @@
+/* Compatibility bridge for the existing warm-paper utilities across lazy views
+   and body-portaled dialogs. Only UI colors change: no image or palette inversion. */
+html[data-color-scheme='dark'] :is(
+  [class~='bg-[#F7F5F0]'], [class~='bg-[#E8DEC7]'],
+  [class~='bg-paper-light'], [class~='bg-paper-warm']
+) { background-color: var(--ui-bg); }
+
+html[data-color-scheme='dark'] :is(
+  [class~='bg-[#FAF8F4]'], [class~='bg-[#FFF8F2]'], [class~='bg-[#FAF0E4]'],
+  [class~='bg-paper-card'], [class~='bg-[#E0D6BF]'], [class~='bg-[#F3EBDD]']
+) { background-color: var(--ui-surface); }
+html[data-color-scheme='dark'] :is(
+  [class~='bg-[#FAF8F4]/95'], [class~='bg-[#E0D6BF]/95'], [class~='bg-[#FAF0E4]/95']
+) { background-color: rgb(28 26 24 / 95%); }
+html[data-color-scheme='dark'] [class~='bg-[#FAF8F4]/90'] { background-color: rgb(28 26 24 / 90%); }
+
+html[data-color-scheme='dark'] :is(
+  [class~='bg-[#ECE4D0]'], [class~='bg-[#E0D5BE]'], [class~='bg-[#EFE9DF]'],
+  [class~='bg-[#F3EAD7]'], [class~='bg-[#DDD3BD]'], [class~='bg-[#E2DAD0]'],
+  [class~='bg-[#D0C5AC]'], [class~='bg-[#F4E9DA]'], [class~='bg-[#EFE5D4]'],
+  [class~='bg-[#F0E8D9]'], [class~='bg-[#EAE1D1]'], [class~='bg-[#E8E1D4]'],
+  [class~='bg-[#F3E6D6]'], [class~='bg-[#DED3B8]'], [class~='bg-[#B7AA96]']
+) { background-color: var(--ui-control); }
+html[data-color-scheme='dark'] :is(
+  [class~='bg-[#ECE4D0]/80'], [class~='bg-[#ECE4D0]/70'], [class~='bg-[#ECE4D0]/60'],
+  [class~='bg-[#F3EBDD]/70'], [class~='bg-[#DDD3BD]/50']
+) { background-color: rgb(46 42 39 / 80%); }
+
+/* Respect components that already declare their own Tailwind dark palette. */
+html[data-color-scheme='dark'] :is(
+  [class~='bg-white'], [class~='bg-white/70'], [class~='bg-white/90'], [class~='bg-white/95']
+):not([class*='dark:bg-']) { background-color: var(--ui-surface); }
+html[data-color-scheme='dark'] :is(
+  [class~='text-neutral-900'], [class~='text-neutral-800'], [class~='text-slateInk']
+):not([class*='dark:text-']) { color: var(--ui-text); }
+
+html[data-color-scheme='dark'] :is([class~='text-[#2C2621]'], [class~='text-[#554D43]']) { color: var(--ui-text); }
+html[data-color-scheme='dark'] :is(
+  [class~='text-[#6E655B]'], [class~='text-[#8C8377]'], [class~='text-[#675D52]'],
+  [class~='text-[#82786E]'], [class~='text-[#958A7C]'], [class~='text-[#B9AD98]']
+) { color: var(--ui-muted); }
+html[data-color-scheme='dark'] :is(
+  [class~='text-[#C76B3C]'], [class~='text-[#8B4828]'], [class~='text-[#8A4A2C]'],
+  [class~='text-[#9A4F29]'], [class~='text-[#8C4A1F]'], [class~='text-[#A7502F]'],
+  [class~='text-[#A8512C]'], [class~='text-[#A64B1E]'], [class~='text-[#8F3F23]']
+) { color: var(--ui-accent); }
+
+html[data-color-scheme='dark'] :is(
+  [class~='border-[#D8CFBD]'], [class~='border-[#E2DAD0]'], [class~='border-[#DFCDB2]'],
+  [class~='border-[#EFE9DF]'], [class~='border-[#D0C4AA]'], [class~='border-[#C9B99F]'],
+  [class~='border-[#D0C5AC]'], [class~='border-[#EAD3B9]'], [class~='border-[#DDD5C7]'],
+  [class~='border-[#B6A88F]'], [class~='border-[#E2D3BD]'], [class~='border-[#E6C3A8]'],
+  [class~='border-[#CFC4B2]'], [class~='border-[#C9BDA8]'], [class~='border-[#E2D8C6]']
+) { border-color: var(--ui-border); }
+html[data-color-scheme='dark'] [class~='placeholder-[#8C8377]']::placeholder,
+html[data-color-scheme='dark'] [class~='placeholder:text-[#958A7C]']::placeholder { color: var(--ui-muted); }
+html[data-color-scheme='dark'] :is(
+  [class~='hover:bg-white'], [class~='hover:bg-[#ECE4D0]'], [class~='hover:bg-[#E0D5BE]'],
+  [class~='hover:bg-[#E2DAD0]'], [class~='hover:bg-[#DDD3BD]/50']
+):hover { background-color: var(--ui-control); }
+html[data-color-scheme='dark'] :is(
+  [class~='hover:text-[#2C2621]'], [class~='hover:text-[#6F2D18]']
+):hover { color: var(--ui-text); }
+html[data-color-scheme='dark'] button[aria-pressed='true'][class~='bg-[#2C2621]'] {
+  background-color: #493322;
+  border-color: var(--ui-accent);
+}
+
+/* Treat only the basemap as a night map; marker colors and photos are untouched. */
+.leaflet-tile-pane { transition: filter 450ms ease; }
+html[data-color-scheme='dark'] .leaflet-tile-pane {
+  filter: invert(90%) hue-rotate(180deg) saturate(55%) brightness(85%);
+}
+html[data-color-scheme='dark'] .leaflet-control-zoom a,
+html[data-color-scheme='dark'] .leaflet-control-attribution {
+  background-color: var(--ui-surface);
+  color: var(--ui-text);
+  border-color: var(--ui-border);
+}
+
+/* Color-only fade: do not animate layout, pictures or decorative moodboard swatches. */
+html[data-color-scheme] :is(
+  body, [class*='bg-[#'], [class*='text-[#'], [class*='border-[#']
+) {
+  transition-property: background-color, color, border-color;
+  transition-duration: 450ms;
+  transition-timing-function: ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  html[data-color-scheme] :is(body, [class*='bg-[#'], [class*='text-[#'], [class*='border-[#']),
+  .leaflet-tile-pane { transition: none; }
+}
