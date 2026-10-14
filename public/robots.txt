@@ -2,6 +2,13 @@
 User-agent: *
 Allow: /
 
+User-agent: Googlebot-Image
+Allow: /favicon.ico
+Allow: /icon-192.png
+Allow: /icon-512.png
+Allow: /apple-touch-icon.png
+Allow: /site.webmanifest
+
 # Sitemap
 Sitemap: https://chupgibaygio.com/sitemap.xml
 
