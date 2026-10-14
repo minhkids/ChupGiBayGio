@@ -19,6 +19,7 @@ describe('MapStyleCategoryBrowser', () => {
     expect(screen.getByRole('button', { name: 'Hoàng hôn' })).toBeTruthy();
     expect(screen.getByRole('heading', { name: 'Một khoảng chậm giữa phố' })).toBeTruthy();
     expect(screen.getByText('Ba khung hình thử ngay')).toBeTruthy();
+    expect(screen.getByRole('link', { name: /Chưa biết chụp gì hôm nay/ }).getAttribute('href')).toBe('/chup-gi/');
     expect(screen.queryByText(/Xem trên bản đồ|Chưa có địa điểm trong nhóm/)).toBeNull();
     expect(screen.getByRole('button', { name: /Đổi mood/ })).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Hoàng hôn' }));

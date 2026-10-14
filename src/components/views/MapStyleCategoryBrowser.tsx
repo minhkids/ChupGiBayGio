@@ -69,6 +69,9 @@ export const MapStyleCategoryBrowser = ({ categories, selectedCategory, onSelect
         <p className="font-mono-spec text-[10px] font-bold uppercase tracking-[0.14em] text-[#C76B3C]">Style finder / map</p>
         <h2 className="text-lg font-bold text-[#2C2621]">Bạn định chụp style gì?</h2>
         <p className="text-xs leading-relaxed text-[#6E655B]">Chọn một mood. Ghim trên bản đồ sẽ đổi theo category bạn chọn.</p>
+        <a href="/chup-gi/" className="inline-flex text-xs font-semibold text-[#8F3F23] underline decoration-[#C76B3C]/60 underline-offset-4 hover:text-[#6F2D18]">
+          Chưa biết chụp gì hôm nay? Xem gợi ý chụp ảnh
+        </a>
       </header>
 
       <div role="group" aria-label="Category địa điểm" className="grid grid-cols-2 gap-2">
