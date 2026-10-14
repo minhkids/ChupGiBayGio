@@ -1,5 +1,7 @@
 import type { SeasonalTrend, Spot } from '../types';
 import { getCurrentMonthInVietnam, getEffectiveSeasonalStatus, isSpotActiveInMonth } from './season';
+import { matchesPlaceCategory } from './placeCategories';
+import type { PlaceCategoryFilter } from '../types';
 
 /** Candidates are forecasts, not evidence that a place is currently at peak. */
 export function isUpcomingCandidate(trend: SeasonalTrend): boolean {
@@ -20,11 +22,12 @@ export function matchesSpotMonth(trend: SeasonalTrend, month: number | null): bo
   return isSpotActiveInMonth(trend.startMonth, trend.endMonth, month);
 }
 
-export function selectUpcomingSpots(spots: Spot[], regionId: string, query = '', anchorMonth = getCurrentMonthInVietnam()): Spot[] {
+export function selectUpcomingSpots(spots: Spot[], regionId: string, query = '', anchorMonth = getCurrentMonthInVietnam(), placeCategory: PlaceCategoryFilter = 'ALL'): Spot[] {
   const window = getUpcomingMonths(anchorMonth);
   const search = query.trim().toLowerCase();
   return spots.filter(spot => isUpcomingCandidate(spot.seasonalTrend)
     && spot.seasonalTrend.expectedMonths!.some(month => window.includes(month))
+    && matchesPlaceCategory(spot.seasonalTrend, placeCategory)
     && (regionId === 'all' || spot.regionId === regionId)
     && (!search || `${spot.name} ${spot.address} ${spot.description} ${spot.seasonalTrend.trendTitle}`.toLowerCase().includes(search)));
 }

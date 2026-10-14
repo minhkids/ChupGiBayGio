@@ -20,9 +20,10 @@ import {
   PlusCircle,
   Layers
 } from 'lucide-react';
-import type { Spot, FilterState } from '../types';
+import type { PlaceCategory, Spot, FilterState } from '../types';
 import { CONCEPT_METADATA } from '../utils/season';
 import { isUpcomingCandidate, selectUpcomingSpots } from '../utils/upcomingSpots';
+import { getPlaceCategoryLabel } from '../utils/placeCategories';
 import { REGIONS } from '../data/regions';
 import { SpotMap } from './map/SpotMap';
 import { AtmosphericFX } from './features/AtmosphericFX';
@@ -43,6 +44,7 @@ const ShootServicesHubDrawer = lazy(() => import('./layout/ShootServicesHubDrawe
 
 interface GoogleMapsLayoutProps {
   spots: Spot[];
+  placeCategories: PlaceCategory[];
   filteredSpots: Spot[];
   selectedSpot: Spot | null;
   onSelectSpot: (spot: Spot | null) => void;
@@ -68,6 +70,7 @@ interface GoogleMapsLayoutProps {
 
 export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
   spots,
+  placeCategories,
   filteredSpots,
   selectedSpot,
   onSelectSpot,
@@ -272,7 +275,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
       {/* ========================================================================= */}
       <div className="absolute inset-0 z-0 lg:pl-[76px]">
         <SpotMap
-          spots={sidebarTab === 'upcomingSpot' ? selectUpcomingSpots(spots, activeRegionId, filters.searchQuery, filters.month ?? undefined) : filteredSpots}
+          spots={sidebarTab === 'upcomingSpot' ? selectUpcomingSpots(spots, activeRegionId, filters.searchQuery, filters.month ?? undefined, filters.placeCategory) : filteredSpots}
           statusFilter={sidebarTab === 'upcomingSpot' ? 'ALL' : filters.status}
           onToggleStatusFilter={(status) => {
             setSidebarTab('hotTrend');
@@ -531,12 +534,12 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
 
 
 
-          <TrendArticleFeed articles={trendArticles} spots={spots} regionId={activeRegionId} searchQuery={filters.searchQuery} anchorMonth={filters.month ?? undefined} activeSection={sidebarTab} onSectionChange={setSidebarTab} onOpenSpot={handleOpenTrendingSpot} tabsOnly />
+          <TrendArticleFeed articles={trendArticles} spots={spots} regionId={activeRegionId} searchQuery={filters.searchQuery} anchorMonth={filters.month ?? undefined} placeCategories={placeCategories} placeCategory={filters.placeCategory} onPlaceCategoryChange={placeCategory => onChangeFilters(prev => ({ ...prev, placeCategory }))} activeSection={sidebarTab} onSectionChange={setSidebarTab} onOpenSpot={handleOpenTrendingSpot} tabsOnly />
         </div>
 
         {/* ─── SCROLLABLE EDITORIAL FEED ─── */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          <TrendArticleFeed articles={trendArticles} spots={spots} regionId={activeRegionId} searchQuery={filters.searchQuery} anchorMonth={filters.month ?? undefined} onAnchorMonthChange={month => onChangeFilters(prev => ({ ...prev, month }))} loading={trendArticlesLoading} activeSection={sidebarTab} onSectionChange={setSidebarTab} onOpenSpot={handleOpenTrendingSpot} showTabs={false} />
+          <TrendArticleFeed articles={trendArticles} spots={spots} regionId={activeRegionId} searchQuery={filters.searchQuery} anchorMonth={filters.month ?? undefined} placeCategories={placeCategories} placeCategory={filters.placeCategory} onAnchorMonthChange={month => onChangeFilters(prev => ({ ...prev, month }))} loading={trendArticlesLoading} activeSection={sidebarTab} onSectionChange={setSidebarTab} onOpenSpot={handleOpenTrendingSpot} showTabs={false} />
         </div>
       </div>
 
@@ -621,6 +624,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                   <h2 className="font-editorial text-2xl font-bold leading-tight text-[#2C2621] line-clamp-2 mt-1">
                     {selectedSpot.name}
                   </h2>
+                  {selectedSpot.seasonalTrend.placeCategories?.length ? <div className="mt-2 flex flex-wrap gap-1">{selectedSpot.seasonalTrend.placeCategories.map(id => <span key={id} className="rounded-full bg-[#ECE4D0] px-2 py-1 text-[10px] font-semibold text-[#554D43]">{getPlaceCategoryLabel(id, placeCategories)}</span>)}</div> : null}
                 </div>
                 <div className="flex items-center space-x-1 shrink-0">
                   <button
@@ -869,7 +873,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
           <div className="w-full flex items-center justify-between font-mono-spec">
 
             <div className="mr-2 min-w-0 flex-1">
-              <TrendArticleFeed articles={trendArticles} spots={spots} regionId={activeRegionId} searchQuery={filters.searchQuery} anchorMonth={filters.month ?? undefined} activeSection={sidebarTab} onSectionChange={setSidebarTab} onOpenSpot={handleOpenTrendingSpot} tabsOnly />
+              <TrendArticleFeed articles={trendArticles} spots={spots} regionId={activeRegionId} searchQuery={filters.searchQuery} anchorMonth={filters.month ?? undefined} placeCategories={placeCategories} placeCategory={filters.placeCategory} onPlaceCategoryChange={placeCategory => onChangeFilters(prev => ({ ...prev, placeCategory }))} activeSection={sidebarTab} onSectionChange={setSidebarTab} onOpenSpot={handleOpenTrendingSpot} tabsOnly />
             </div>
 
             {/* Snap Toggle Indicator */}
@@ -884,7 +888,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
 
         {/* Mobile Feed */}
         <div className="flex-1 overflow-y-auto p-4 space-y-3">
-          <TrendArticleFeed articles={trendArticles} spots={spots} regionId={activeRegionId} searchQuery={filters.searchQuery} anchorMonth={filters.month ?? undefined} onAnchorMonthChange={month => onChangeFilters(prev => ({ ...prev, month }))} loading={trendArticlesLoading} activeSection={sidebarTab} onSectionChange={setSidebarTab} onOpenSpot={handleOpenTrendingSpot} showTabs={false} />
+          <TrendArticleFeed articles={trendArticles} spots={spots} regionId={activeRegionId} searchQuery={filters.searchQuery} anchorMonth={filters.month ?? undefined} placeCategories={placeCategories} placeCategory={filters.placeCategory} onAnchorMonthChange={month => onChangeFilters(prev => ({ ...prev, month }))} loading={trendArticlesLoading} activeSection={sidebarTab} onSectionChange={setSidebarTab} onOpenSpot={handleOpenTrendingSpot} showTabs={false} />
         </div>
       </motion.div>
 
@@ -974,6 +978,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                   </div>
                 )}
               </div>
+              {selectedSpot.seasonalTrend.placeCategories?.length ? <div className="flex flex-wrap gap-1">{selectedSpot.seasonalTrend.placeCategories.map(id => <span key={id} className="rounded-full bg-[#ECE4D0] px-2 py-1 text-[10px] font-semibold text-[#554D43]">{getPlaceCategoryLabel(id, placeCategories)}</span>)}</div> : null}
 
               {/* Action Buttons Row */}
               <div className="grid grid-cols-4 gap-2">

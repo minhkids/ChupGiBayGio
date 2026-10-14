@@ -77,4 +77,17 @@ describe('TrendArticleFeed', () => {
     fireEvent.click(screen.getByRole('button', { name: /xem địa điểm/i }));
     expect(onOpenSpot).toHaveBeenCalledWith(hotSpot);
   });
+
+  it('filters map-location cards by multi-assigned place categories and exposes the category selector', () => {
+    const cafe = { ...MOCK_SPOTS[0], id: 'cafe', name: 'Quán chiều', regionId: 'hanoi', seasonalTrend: { ...MOCK_SPOTS[0].seasonalTrend, status: 'PEAK' as const, placeCategories: ['CAFE', 'SUNSET'] as ['CAFE', 'SUNSET'] } };
+    const mall = { ...cafe, id: 'mall', name: 'Trung tâm thương mại', seasonalTrend: { ...cafe.seasonalTrend, placeCategories: ['SHOPPING_MALL'] as ['SHOPPING_MALL'] } };
+    const onPlaceCategoryChange = vi.fn();
+    render(<TrendArticleFeed articles={[]} spots={[cafe, mall]} regionId="hanoi" activeSection="hotTrend" placeCategory="SUNSET" placeCategories={[{ id: 'SUNSET', label: 'Hoàng hôn chill', sortOrder: 1 }]} onPlaceCategoryChange={onPlaceCategoryChange} />);
+    expect(screen.getByText('Quán chiều')).toBeTruthy();
+    expect(screen.queryByText('Trung tâm thương mại')).toBeNull();
+    expect(screen.getByText('Hoàng hôn chill')).toBeTruthy();
+    render(<TrendArticleFeed articles={[]} regionId="hanoi" tabsOnly placeCategory="ALL" placeCategories={[{ id: 'TIEM_SACH', label: 'Tiệm sách', sortOrder: 6 }]} onPlaceCategoryChange={onPlaceCategoryChange} />);
+    fireEvent.change(screen.getByRole('combobox', { name: 'Nhóm địa điểm' }), { target: { value: 'TIEM_SACH' } });
+    expect(onPlaceCategoryChange).toHaveBeenCalledWith('TIEM_SACH');
+  });
 });

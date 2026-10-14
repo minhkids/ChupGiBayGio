@@ -90,6 +90,14 @@ app.use('/api/*', cors({
 app.get('/health', (c) => c.json({ status: 'ok', timestamp: new Date().toISOString() }));
 
 // API Routes
+app.get('/api/place-categories', async (c) => {
+  const { results } = await getD1(c.env).prepare('SELECT id, label, sort_order FROM place_categories ORDER BY sort_order ASC, label COLLATE NOCASE ASC').all();
+  return c.json((results || []).map((value) => {
+    const row = value as Record<string, unknown>;
+    return { id: String(row.id), label: String(row.label), sortOrder: Number(row.sort_order) };
+  }));
+});
+
 app.get('/api/spots', async (c) => {
   const { results } = await c.env.DB.prepare(
     'SELECT * FROM spots WHERE is_active = 1 ORDER BY created_at DESC'

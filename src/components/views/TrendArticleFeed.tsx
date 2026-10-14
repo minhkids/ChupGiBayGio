@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { Flame, MapPin, Sparkles, ExternalLink } from 'lucide-react';
 import type { TrendArticle, TrendArticleSection } from '../../services/trendArticleApi';
-import type { Spot } from '../../types';
+import type { PlaceCategory, PlaceCategoryFilter, Spot } from '../../types';
 import { getCurrentMonthInVietnam, getEffectiveSeasonalStatus } from '../../utils/season';
 import { getUpcomingMonths, selectUpcomingSpots } from '../../utils/upcomingSpots';
+import { DEFAULT_PLACE_CATEGORIES, getPlaceCategoryLabel, matchesPlaceCategory } from '../../utils/placeCategories';
+import { PlaceCategoryFilterControl } from '../features/PlaceCategoryFilterControl';
 
 interface Props {
   articles: TrendArticle[];
@@ -18,6 +20,9 @@ interface Props {
   onOpenSpot?: (spot: Spot) => void;
   anchorMonth?: number;
   onAnchorMonthChange?: (month: number) => void;
+  placeCategory?: PlaceCategoryFilter;
+  onPlaceCategoryChange?: (category: PlaceCategoryFilter) => void;
+  placeCategories?: PlaceCategory[];
 }
 
 const TABS: { id: TrendArticleSection; label: string; icon: typeof Flame }[] = [
@@ -26,7 +31,7 @@ const TABS: { id: TrendArticleSection; label: string; icon: typeof Flame }[] = [
 ];
 const card = 'rounded-2xl border border-[#D8CFBD] bg-[#FAF8F4] text-[#2C2621]';
 
-export const TrendArticleFeed = ({ articles, spots = [], regionId, searchQuery = '', loading = false, activeSection, onSectionChange, tabsOnly = false, showTabs = true, onOpenSpot, anchorMonth, onAnchorMonthChange }: Props) => {
+export const TrendArticleFeed = ({ articles, spots = [], regionId, searchQuery = '', loading = false, activeSection, onSectionChange, tabsOnly = false, showTabs = true, onOpenSpot, anchorMonth, onAnchorMonthChange, placeCategory = 'ALL', onPlaceCategoryChange, placeCategories = DEFAULT_PLACE_CATEGORIES }: Props) => {
   const [localSection, setLocalSection] = useState<TrendArticleSection>('hotTrend');
   const currentSection = activeSection ?? localSection;
   const changeSection = onSectionChange ?? setLocalSection;
@@ -35,9 +40,10 @@ export const TrendArticleFeed = ({ articles, spots = [], regionId, searchQuery =
     && (!query || `${article.title} ${article.content} ${article.location}`.toLowerCase().includes(query)));
   const hotSpots = spots.filter((spot) => getEffectiveSeasonalStatus(spot.seasonalTrend) === 'PEAK'
     && (regionId === 'all' || spot.regionId === regionId)
+    && matchesPlaceCategory(spot.seasonalTrend, placeCategory)
     && (!query || `${spot.name} ${spot.address} ${spot.description} ${spot.seasonalTrend.trendTitle}`.toLowerCase().includes(query)));
   const selected = visible.filter((article) => article.section === currentSection);
-  const upcomingSpots = selectUpcomingSpots(spots, regionId, searchQuery, anchorMonth);
+  const upcomingSpots = selectUpcomingSpots(spots, regionId, searchQuery, anchorMonth, placeCategory);
   const selectedHotSpots = currentSection === 'hotTrend' ? hotSpots : upcomingSpots;
   const counts: Record<TrendArticleSection, number> = {
     hotTrend: visible.filter((article) => article.section === 'hotTrend').length + hotSpots.length,
@@ -50,7 +56,7 @@ export const TrendArticleFeed = ({ articles, spots = [], regionId, searchQuery =
         <span className="line-clamp-2">{label} ({counts[id]})</span>
       </button>)}
     </div>;
-  if (tabsOnly) return tabs;
+  if (tabsOnly) return <div className="space-y-2">{tabs}{onPlaceCategoryChange && <PlaceCategoryFilterControl value={placeCategory} categories={placeCategories} onChange={onPlaceCategoryChange} />}</div>;
 
   return <div className="space-y-3">
     {showTabs && tabs}
@@ -73,6 +79,7 @@ export const TrendArticleFeed = ({ articles, spots = [], regionId, searchQuery =
                 <h3 className="text-sm font-bold leading-snug">{spot.name}</h3>
                 {spot.seasonalTrend.trendTitle && <p className="text-xs leading-relaxed text-[#6E655B]">{spot.seasonalTrend.trendTitle}</p>}
                 <p className="flex items-center gap-1 text-[11px] text-[#6E655B]"><MapPin aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />{spot.address}</p>
+                {spot.seasonalTrend.placeCategories?.length ? <div className="flex flex-wrap gap-1">{spot.seasonalTrend.placeCategories.map(category => <span key={category} className="rounded-full bg-[#ECE4D0] px-2 py-1 text-[10px] font-semibold text-[#554D43]">{getPlaceCategoryLabel(category, placeCategories)}</span>)}</div> : null}
                 <button type="button" onClick={() => onOpenSpot?.(spot)} className="inline-flex min-h-9 items-center gap-1.5 text-xs font-semibold text-[#A7502F] hover:underline">
                   <MapPin aria-hidden="true" className="h-3.5 w-3.5" />Xem địa điểm
                 </button>

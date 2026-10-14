@@ -71,6 +71,25 @@ function validatedConceptTags(value: unknown): string[] | null {
   return [...new Set(tags)];
 }
 
+function validatedPlaceCategories(value: unknown): string[] | null {
+  const categories = boundedStringArray(value, 20, 40);
+  if (!categories || categories.some((category) => !/^[A-Z][A-Z0-9_]{0,39}$/.test(category))) return null;
+  return [...new Set(categories)];
+}
+
+async function placeCategoriesExist(db: D1Database, categories: string[]): Promise<boolean> {
+  if (!categories.length) return true;
+  const placeholders = categories.map(() => '?').join(', ');
+  const { results } = await db.prepare(`SELECT id FROM place_categories WHERE id IN (${placeholders})`).bind(...categories).all();
+  const existing = new Set((results || []).map((row) => String((row as Record<string, unknown>).id)));
+  return categories.every((category) => existing.has(category));
+}
+
+function categoryIdFromLabel(label: string): string {
+  return label.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[đĐ]/g, 'D').toUpperCase()
+    .replace(/[^A-Z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 40).replace(/_+$/g, '');
+}
+
 function candidateFields(body: Record<string, unknown>) {
   if (body.upcoming !== undefined && typeof body.upcoming !== 'boolean') return null;
   if (body.expectedMonths !== undefined && (!Array.isArray(body.expectedMonths) || body.expectedMonths.length > 12
@@ -107,6 +126,60 @@ function shopLocations(body: Record<string, unknown>) {
   return locations.some((item) => !item.ward || !districts.has(item.district)) ? null : locations;
 }
 
+cms.get('/api/admin/place-categories', async (c) => {
+  const { results } = await getD1(c.env).prepare('SELECT id, label, sort_order FROM place_categories ORDER BY sort_order ASC, label COLLATE NOCASE ASC').all();
+  return c.json((results || []).map((value) => {
+    const row = value as Record<string, unknown>;
+    return { id: String(row.id), label: String(row.label), sortOrder: Number(row.sort_order) };
+  }));
+});
+
+cms.post('/api/admin/place-categories', async (c) => {
+  const body = await c.req.json().catch(() => null) as Record<string, unknown> | null;
+  const label = typeof body?.label === 'string' ? body.label.trim() : '';
+  const id = categoryIdFromLabel(label);
+  if (!label || label.length > 80 || !id || !/^[A-Z][A-Z0-9_]{0,39}$/.test(id)) return c.json({ error: 'Tên nhóm cần từ 1 đến 80 ký tự và tạo được mã nhóm hợp lệ.' }, 400);
+  const db = getD1(c.env);
+  const current = await db.prepare('SELECT COALESCE(MAX(sort_order), 0) AS maximum FROM place_categories').first() as { maximum?: number } | null;
+  const sortOrder = Number(current?.maximum || 0) + 1;
+  try {
+    await db.prepare('INSERT INTO place_categories (id, label, sort_order) VALUES (?, ?, ?)').bind(id, label, sortOrder).run();
+  } catch {
+    return c.json({ error: 'Tên hoặc mã nhóm này đã tồn tại.' }, 409);
+  }
+  return c.json({ id, label, sortOrder }, 201);
+});
+
+cms.put('/api/admin/place-categories/:id', async (c) => {
+  const id = c.req.param('id');
+  const body = await c.req.json().catch(() => null) as Record<string, unknown> | null;
+  const label = typeof body?.label === 'string' ? body.label.trim() : '';
+  if (!label || label.length > 80) return c.json({ error: 'Tên nhóm cần từ 1 đến 80 ký tự.' }, 400);
+  const db = getD1(c.env);
+  try {
+    const result = await db.prepare('UPDATE place_categories SET label = ? WHERE id = ?').bind(label, id).run();
+    if (!result.meta.changes) return c.json({ error: 'Không tìm thấy nhóm địa điểm.' }, 404);
+  } catch {
+    return c.json({ error: 'Tên nhóm này đã được sử dụng.' }, 409);
+  }
+  const row = await db.prepare('SELECT id, label, sort_order FROM place_categories WHERE id = ?').bind(id).first() as Record<string, unknown>;
+  return c.json({ id: String(row.id), label: String(row.label), sortOrder: Number(row.sort_order) });
+});
+
+cms.delete('/api/admin/place-categories/:id', async (c) => {
+  const id = c.req.param('id');
+  const db = getD1(c.env);
+  const category = await db.prepare('SELECT id FROM place_categories WHERE id = ?').bind(id).first();
+  if (!category) return c.json({ error: 'Không tìm thấy nhóm địa điểm.' }, 404);
+  const usage = await db.prepare(`SELECT COUNT(DISTINCT s.id) AS spot_count
+    FROM spots AS s, json_each(CASE WHEN json_valid(s.seasonal_trend) THEN s.seasonal_trend ELSE '{}' END, '$.placeCategories') AS category
+    WHERE category.value = ?`).bind(id).first() as { spot_count?: number } | null;
+  const spotCount = Number(usage?.spot_count || 0);
+  if (spotCount > 0) return c.json({ error: `Nhóm đang được gán cho ${spotCount} địa điểm. Hãy gỡ nhóm khỏi các địa điểm trước khi xóa.`, spotCount }, 409);
+  await db.prepare('DELETE FROM place_categories WHERE id = ?').bind(id).run();
+  return c.json({ success: true });
+});
+
 cms.post('/api/admin/spots', async (c) => {
   const body = await c.req.json().catch(() => null) as Record<string, unknown> | null;
   if (!named(body) || !text(body.slug, 180) || !text(body.address)) return c.json({ error: 'Tên, slug và địa chỉ là bắt buộc.' }, 400);
@@ -116,8 +189,9 @@ cms.post('/api/admin/spots', async (c) => {
   if (bestMonths.some((month) => !Number.isInteger(month) || Number(month) < 1 || Number(month) > 12)) return c.json({ error: 'Tháng đẹp phải nằm trong khoảng 1–12.' }, 400);
   const recommendedLenses = boundedStringArray(body.recommendedLenses ?? [], 12, 120);
   const conceptTags = validatedConceptTags(body.conceptTags ?? []);
+  const placeCategories = validatedPlaceCategories(body.placeCategories ?? []);
   const bloomPercentage = body.bloomPercentage === undefined ? 85 : Number(body.bloomPercentage);
-  if (!recommendedLenses || !conceptTags || !Number.isInteger(bloomPercentage) || bloomPercentage < 0 || bloomPercentage > 100) return c.json({ error: 'Phần trăm hiện trạng, ống kính hoặc concept không hợp lệ.' }, 400);
+  if (!recommendedLenses || !conceptTags || !placeCategories || !(await placeCategoriesExist(getD1(c.env), placeCategories)) || !Number.isInteger(bloomPercentage) || bloomPercentage < 0 || bloomPercentage > 100) return c.json({ error: 'Phần trăm hiện trạng, ống kính, nhóm địa điểm hoặc concept không hợp lệ.' }, 400);
   const spotStatus = text(body.spotStatus, 20) || 'ACTIVE';
   const statusValidUntil = text(body.statusValidUntil, 10);
   if (!['PEAK', 'ACTIVE', 'ENDING_SOON'].includes(spotStatus) || (spotStatus !== 'ACTIVE' && !/^\d{4}-\d{2}-\d{2}$/.test(statusValidUntil))) {
@@ -127,7 +201,7 @@ cms.post('/api/admin/spots', async (c) => {
   const monthNumbers = bestMonths.map(Number);
   const candidate = candidateFields(body);
   if (!candidate) return c.json({ error: 'Dự kiến mùa tới cần cờ bật/tắt và tháng dự kiến 1–12.' }, 400);
-  const seasonalTrend = JSON.stringify({ id, trendTitle: text(body.goldenHour, 300), startMonth: monthNumbers.length ? Math.min(...monthNumbers) : 1, endMonth: monthNumbers.length ? Math.max(...monthNumbers) : 12, status: spotStatus, ...(spotStatus !== 'ACTIVE' ? { statusValidUntil } : {}), bloomPercentage, conceptTags, isTrending: false, trendScore: 0, ...candidate });
+  const seasonalTrend = JSON.stringify({ id, trendTitle: text(body.goldenHour, 300), startMonth: monthNumbers.length ? Math.min(...monthNumbers) : 1, endMonth: monthNumbers.length ? Math.max(...monthNumbers) : 12, status: spotStatus, ...(spotStatus !== 'ACTIVE' ? { statusValidUntil } : {}), bloomPercentage, conceptTags, placeCategories, isTrending: false, trendScore: 0, ...candidate });
   const bestTimeDescription = body.bestTimeDescription === undefined ? text(body.goldenHour, 300) : text(body.bestTimeDescription, 1000);
   await getD1(c.env).prepare(`INSERT INTO spots (id, region_id, name, slug, address, lat, lng, best_time_of_day,
     best_time_description, recommended_lenses, cost_type, cover_image_url, description, district, best_months, golden_hour, entry_fee, parking_fee, source_url, seasonal_trend)
@@ -255,11 +329,13 @@ cms.put('/api/admin/cms/:table/:id', async (c) => {
     const statusValidUntil = text(body.statusValidUntil, 10);
     const recommendedLenses = body.recommendedLenses === undefined ? undefined : boundedStringArray(body.recommendedLenses, 12, 120);
     const conceptTags = body.conceptTags === undefined ? undefined : validatedConceptTags(body.conceptTags);
+    const placeCategories = body.placeCategories === undefined ? undefined : validatedPlaceCategories(body.placeCategories);
     const bloomPercentage = body.bloomPercentage === undefined ? undefined : Number(body.bloomPercentage);
     if (body.recommendedLenses !== undefined && !recommendedLenses
       || body.conceptTags !== undefined && !conceptTags
+      || body.placeCategories !== undefined && (!placeCategories || !(await placeCategoriesExist(getD1(c.env), placeCategories)))
       || body.bloomPercentage !== undefined && (!Number.isInteger(bloomPercentage) || Number(bloomPercentage) < 0 || Number(bloomPercentage) > 100)) {
-      return c.json({ error: 'Phần trăm hiện trạng, ống kính hoặc concept không hợp lệ.' }, 400);
+      return c.json({ error: 'Phần trăm hiện trạng, ống kính, nhóm địa điểm hoặc concept không hợp lệ.' }, 400);
     }
     if (body.spotStatus !== undefined && (!['PEAK', 'ACTIVE', 'ENDING_SOON'].includes(spotStatus) || (spotStatus !== 'ACTIVE' && !/^\d{4}-\d{2}-\d{2}$/.test(statusValidUntil)))) {
       return c.json({ error: 'Nhãn theo mùa cần trạng thái hợp lệ và hạn kiểm chứng YYYY-MM-DD.' }, 400);
@@ -273,6 +349,7 @@ cms.put('/api/admin/cms/:table/:id', async (c) => {
       endMonth: months.length ? Math.max(...months.map(Number)) : 12,
       ...(body.spotStatus !== undefined ? { status: spotStatus, statusValidUntil: spotStatus === 'ACTIVE' ? null : statusValidUntil } : {}),
       ...(conceptTags !== undefined ? { conceptTags } : {}),
+      ...(placeCategories !== undefined ? { placeCategories } : {}),
       ...(bloomPercentage !== undefined ? { bloomPercentage } : {}),
     });
     const bestTimeDescription = body.bestTimeDescription === undefined ? text(body.goldenHour, 300) : text(body.bestTimeDescription, 1000);

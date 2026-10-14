@@ -10,14 +10,17 @@ import {
   RotateCcw
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import type { FilterState, ConceptTag } from '../../types';
+import type { FilterState, ConceptTag, PlaceCategory } from '../../types';
 import { CONCEPT_METADATA } from '../../utils/season';
+import { DEFAULT_PLACE_CATEGORIES } from '../../utils/placeCategories';
+import { PlaceCategoryFilterControl } from './PlaceCategoryFilterControl';
 
 interface FilterBarProps {
   filters: FilterState;
   onChangeFilters: (newFilters: FilterState) => void;
   onResetFilters: () => void;
   totalFilteredCount: number;
+  placeCategories?: PlaceCategory[];
 }
 
 const MONTH_LABELS: Record<number, string> = {
@@ -59,7 +62,8 @@ export const FilterBar: React.FC<FilterBarProps> = ({
   filters,
   onChangeFilters,
   onResetFilters,
-  totalFilteredCount
+  totalFilteredCount,
+  placeCategories = DEFAULT_PLACE_CATEGORIES,
 }) => {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [isMonthPopoverOpen, setIsMonthPopoverOpen] = useState(false);
@@ -120,13 +124,14 @@ export const FilterBar: React.FC<FilterBarProps> = ({
     filters.status !== 'ALL' ||
     filters.timeOfDay !== 'ALL' ||
     filters.concept !== 'ALL' ||
+    filters.placeCategory !== 'ALL' ||
     filters.cost !== 'ALL' ||
     filters.onlyNearby ||
     filters.searchQuery.trim() !== '' ||
     filters.month !== null;
 
   const advancedHasValue =
-    showAdvanced || filters.timeOfDay !== 'ALL' || filters.concept !== 'ALL' || filters.cost !== 'ALL';
+    showAdvanced || filters.timeOfDay !== 'ALL' || filters.concept !== 'ALL' || filters.placeCategory !== 'ALL' || filters.cost !== 'ALL';
 
   return (
     <div className="sticky top-0 z-30 border-b border-[#E2DAD0] bg-[#FAF8F4]/90 backdrop-blur-md select-none">
@@ -346,6 +351,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
                 ))}
               </div>
             </div>
+            <PlaceCategoryFilterControl value={filters.placeCategory} categories={placeCategories} onChange={placeCategory => onChangeFilters({ ...filters, placeCategory })} className="max-w-sm" />
           </div>
         )}
 

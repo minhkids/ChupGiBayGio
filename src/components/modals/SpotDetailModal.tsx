@@ -19,7 +19,7 @@ import {
   ClipboardList
 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import type { Spot, Photographer } from '../../types';
+import type { PlaceCategory, Spot, Photographer } from '../../types';
 import { useShootPlan } from '../../context/ShootPlanContext';
 import { getStatusBadgeInfo, getEffectiveSeasonalStatus, MONTH_SHORT_LABELS } from '../../utils/season';
 import { formatCoordinates, formatDistance } from '../../utils/geo';
@@ -30,6 +30,7 @@ import { SpotPhotographersSection } from '../photographers/SpotPhotographersSect
 import { PoseCamera } from '../features/PoseCamera';
 import { cameraSpring, modalShutterVariants, backdropVariants } from '../../utils/motion-tokens';
 import { POSES, type PoseItem } from '../../data/poses';
+import { getPlaceCategoryLabel } from '../../utils/placeCategories';
 
 interface SpotDetailModalProps {
   spot: Spot | null;
@@ -40,6 +41,7 @@ interface SpotDetailModalProps {
   onOpenAddPostModal?: (spotId: string) => void;
   onSelectPhotographer?: (photographer: Photographer) => void;
   onOpenPhotographerDirectory?: () => void;
+  placeCategories?: PlaceCategory[];
 }
 
 export const SpotDetailModal: React.FC<SpotDetailModalProps> = ({
@@ -51,6 +53,7 @@ export const SpotDetailModal: React.FC<SpotDetailModalProps> = ({
   onOpenAddPostModal,
   onSelectPhotographer,
   onOpenPhotographerDirectory,
+  placeCategories,
 }) => {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [copiedCoords, setCopiedCoords] = useState(false);
@@ -239,6 +242,9 @@ export const SpotDetailModal: React.FC<SpotDetailModalProps> = ({
                 <MapPin className="w-4 h-4 mr-1 text-terracotta shrink-0" />
                 <span>{spot.address}</span>
               </div>
+              {spot.seasonalTrend.placeCategories?.length ? <div className="flex flex-wrap gap-1">
+                {spot.seasonalTrend.placeCategories.map(category => <span key={category} className="border border-paper-border bg-paper-warm px-2 py-1 text-[10px] font-semibold text-slateInk">{getPlaceCategoryLabel(category, placeCategories)}</span>)}
+              </div> : null}
 
               <div className="flex items-center space-x-2 font-mono-spec text-xs">
                 <span className="text-slateInk-muted bg-paper-warm px-2 py-1 border border-paper-border">

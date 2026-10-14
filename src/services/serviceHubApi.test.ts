@@ -4,6 +4,22 @@ import { request, serviceHubApi } from './serviceHubApi';
 afterEach(() => vi.unstubAllGlobals());
 
 describe('serviceHubApi.request', () => {
+  it('uses the public category catalogue and authenticated category CRUD endpoints', async () => {
+    const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) => Response.json({ id: 'CAFE', label: 'Quán cà phê', sortOrder: 1 }));
+    vi.stubGlobal('fetch', fetchMock);
+    await serviceHubApi.listPlaceCategories();
+    await serviceHubApi.createPlaceCategory('Nhà sách');
+    await serviceHubApi.updatePlaceCategory('NHA_SACH', 'Tiệm sách');
+    await serviceHubApi.removePlaceCategory('NHA_SACH');
+    expect(fetchMock.mock.calls.map(([url, init]) => [url, init?.method || 'GET'])).toEqual([
+      ['/api/place-categories', 'GET'],
+      ['/api/admin/place-categories', 'POST'],
+      ['/api/admin/place-categories/NHA_SACH', 'PUT'],
+      ['/api/admin/place-categories/NHA_SACH', 'DELETE'],
+    ]);
+    expect(fetchMock.mock.calls[1]?.[1]?.headers).toBeInstanceOf(Headers);
+  });
+
   it('hydrates forecast metadata and includes it in both spot write payloads', async () => {
     const row = { id: 'forecast', name: 'Mùa hoa', seasonal_trend: JSON.stringify({ status: 'ACTIVE', upcoming: true, expectedMonths: [12, 1] }) };
     vi.stubGlobal('fetch', vi.fn((url: string) => Promise.resolve(Response.json(url === '/api/admin/cms/spots' ? [row] : []))));
@@ -57,14 +73,14 @@ describe('serviceHubApi.request', () => {
       id: 'spot-1', name: 'Hồ Tây', slug: 'ho-tay', region_id: 'hanoi', address: 'Hà Nội', lat: 21, lng: 105,
       best_time_of_day: 'afternoon', best_time_description: 'Chiều muộn.', golden_hour: 'Giờ vàng.',
       recommended_lenses: '["35mm"]', description: 'Hoa đang nở.', best_months: '[10,11]',
-      seasonal_trend: JSON.stringify({ status: 'PEAK', statusValidUntil: '2026-12-31', bloomPercentage: 73, conceptTags: ['HOA_CO'] }),
+      seasonal_trend: JSON.stringify({ status: 'PEAK', statusValidUntil: '2026-12-31', bloomPercentage: 73, conceptTags: ['HOA_CO'], placeCategories: ['CAFE', 'RED_RIVER'] }),
     };
     vi.stubGlobal('fetch', vi.fn((url: string) => Promise.resolve(Response.json(url === '/api/admin/cms/spots' ? [row] : []))));
 
     const spot = (await serviceHubApi.adminList()).find((record) => record.category === 'spot');
 
     expect(spot).toMatchObject({
-      bestTimeDescription: 'Chiều muộn.', recommendedLenses: ['35mm'], conceptTags: ['HOA_CO'],
+      bestTimeDescription: 'Chiều muộn.', recommendedLenses: ['35mm'], conceptTags: ['HOA_CO'], placeCategories: ['CAFE', 'RED_RIVER'],
       bloomPercentage: 73, description: 'Hoa đang nở.',
     });
   });
@@ -74,11 +90,11 @@ describe('serviceHubApi.request', () => {
     vi.stubGlobal('fetch', fetchMock);
     await serviceHubApi.update({
       id: 'spot-1', category: 'spot', name: 'Hồ Tây', slug: 'ho-tay', address: 'Hà Nội', lat: 21, lng: 105,
-      bestTimeDescription: 'Sáng sớm.', recommendedLenses: ['50mm', '85mm'], conceptTags: ['STREET'], bloomPercentage: 61,
+      bestTimeDescription: 'Sáng sớm.', recommendedLenses: ['50mm', '85mm'], conceptTags: ['STREET'], placeCategories: ['SUNSET', 'VINTAGE'], bloomPercentage: 61,
     });
 
     expect(JSON.parse(fetchMock.mock.calls[0][1].body as string)).toMatchObject({
-      bestTimeDescription: 'Sáng sớm.', recommendedLenses: ['50mm', '85mm'], conceptTags: ['STREET'], bloomPercentage: 61,
+      bestTimeDescription: 'Sáng sớm.', recommendedLenses: ['50mm', '85mm'], conceptTags: ['STREET'], placeCategories: ['SUNSET', 'VINTAGE'], bloomPercentage: 61,
     });
   });
 

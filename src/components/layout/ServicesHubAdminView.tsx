@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, LogOut, Pencil, Plus, Save, Trash2 } from 'lucide-react';
 import { serviceHubApi, type ServiceCategory, type ServiceListing } from '../../services/serviceHubApi';
 import { AdminImageField, type AdminHotspot } from './AdminImageField';
@@ -6,8 +6,10 @@ import { LeafletCoordinatePicker } from './LeafletCoordinatePicker';
 import { BulkImportPanel } from './BulkImportPanel';
 import type { BulkRecord } from './bulkImport';
 import { TrendArticlesAdminView } from './TrendArticlesAdminView';
+import { PlaceCategoriesAdminPanel } from './PlaceCategoriesAdminPanel';
 import { CONCEPT_METADATA } from '../../utils/season';
-import type { ConceptTag } from '../../types';
+import { DEFAULT_PLACE_CATEGORIES } from '../../utils/placeCategories';
+import type { ConceptTag, PlaceCategory } from '../../types';
 
 const conceptTags = Object.keys(CONCEPT_METADATA) as ConceptTag[];
 
@@ -22,7 +24,7 @@ const categories: { id: ServiceCategory; label: string }[] = [
 ];
 const blank = (category: ServiceCategory): ServiceListing => ({
   id: '', category, name: '', tags: [], filmStocks: [], services: [],
-  ...(category === 'spot' ? { bloomPercentage: 85, conceptTags: [], recommendedLenses: [] } : {}),
+  ...(category === 'spot' ? { bloomPercentage: 85, conceptTags: [], placeCategories: [], recommendedLenses: [] } : {}),
 });
 const inputClass = 'w-full rounded-xl border border-[#D8CFBD] bg-white px-3 py-2.5 text-sm text-[#2C2621] outline-none focus:border-[#C76B3C]';
 const initialCategory = (): ServiceCategory => {
@@ -52,6 +54,7 @@ export const ServicesHubAdminView: React.FC<Props> = ({ onBack }) => {
   const [password, setPassword] = useState('');
   const [category, setCategory] = useState<ServiceCategory>(initialCategory);
   const [records, setRecords] = useState<ServiceListing[]>([]);
+  const [placeCategories, setPlaceCategories] = useState<PlaceCategory[]>(DEFAULT_PLACE_CATEGORIES);
   const [draft, updateDraft] = useState<ServiceListing>(() => blank(initialCategory()));
   const [listText, setListText] = useState<Partial<Record<keyof ServiceListing, string>>>({});
   const setDraft: React.Dispatch<React.SetStateAction<ServiceListing>> = (next) => {
@@ -62,11 +65,28 @@ export const ServicesHubAdminView: React.FC<Props> = ({ onBack }) => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [trendArticlesOpen, setTrendArticlesOpen] = useState(false);
+  const [placeCategoriesOpen, setPlaceCategoriesOpen] = useState(false);
+  const [placeFilter, setPlaceFilter] = useState('all');
+  const editorRef = useRef<HTMLFormElement>(null);
+  const editRecord = (record: ServiceListing) => {
+    setDraft(record);
+    editorRef.current?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
+  };
+  const changePlaceCategories = (next: PlaceCategory[]) => {
+    setPlaceCategories(next);
+    if (placeFilter !== 'all' && placeFilter !== 'unassigned' && !next.some(item => item.id === placeFilter)) setPlaceFilter('all');
+  };
+  const spots = records.filter(record => record.category === 'spot');
+  const visibleRecords = records.filter(record => record.category === category && (category !== 'spot' || placeFilter === 'all' || (placeFilter === 'unassigned' ? !record.placeCategories?.length : record.placeCategories?.includes(placeFilter))));
 
   const load = async () => {
     setLoading(true);
     setError('');
-    try { setRecords(await serviceHubApi.adminList()); }
+    try {
+      const [items, categoryOptions] = await Promise.all([serviceHubApi.adminList(), serviceHubApi.listPlaceCategories().catch(() => DEFAULT_PLACE_CATEGORIES)]);
+      setRecords(items);
+      setPlaceCategories(categoryOptions);
+    }
     catch (err) {
       serviceHubApi.logout();
       setTokenValid(false);
@@ -76,7 +96,9 @@ export const ServicesHubAdminView: React.FC<Props> = ({ onBack }) => {
   useEffect(() => {
     if (!tokenValid) return;
     let active = true;
-    serviceHubApi.adminList().then((items) => { if (active) setRecords(items); })
+    Promise.all([serviceHubApi.adminList(), serviceHubApi.listPlaceCategories().catch(() => DEFAULT_PLACE_CATEGORIES)]).then(([items, categoryOptions]) => {
+      if (active) { setRecords(items); setPlaceCategories(categoryOptions); }
+    })
       .catch((err: unknown) => {
         serviceHubApi.logout();
         if (active) {
@@ -129,7 +151,11 @@ export const ServicesHubAdminView: React.FC<Props> = ({ onBack }) => {
         else failures.push({ index: start + index, message: result.reason instanceof Error ? result.reason.message : 'Lỗi lưu dữ liệu' });
       });
     }
-    try { setRecords(await serviceHubApi.adminList()); }
+    try {
+      const [items, categoryOptions] = await Promise.all([serviceHubApi.adminList(), serviceHubApi.listPlaceCategories().catch(() => DEFAULT_PLACE_CATEGORIES)]);
+      setRecords(items);
+      setPlaceCategories(categoryOptions);
+    }
     catch (err) { setError(err instanceof Error ? err.message : 'Đã nhập nhưng không làm mới được danh sách.'); }
     return { imported, failures };
   };
@@ -173,6 +199,25 @@ export const ServicesHubAdminView: React.FC<Props> = ({ onBack }) => {
       </div>
     </fieldset>
   );
+  const placeCategoryPicker = (
+    <fieldset className="space-y-2">
+      <legend className="text-xs font-semibold text-[#554D43]">Nhóm địa điểm (có thể chọn nhiều)</legend>
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        {placeCategories.map(({ id, label }) => {
+                  const selected = (draft.placeCategories || []).includes(id);
+                  return <label key={id} className="flex items-center gap-2 rounded-lg border border-[#D8CFBD] bg-white px-3 py-2 text-xs font-medium text-[#554D43]">
+                    <input type="checkbox" aria-label={`Nhóm địa điểm: ${label}`} checked={selected} onChange={(event) => setDraft((current) => ({
+                      ...current,
+                      placeCategories: event.target.checked
+                        ? [...(current.placeCategories || []), id]
+                        : (current.placeCategories || []).filter((item) => item !== id),
+            }))} />
+            {label}
+          </label>;
+        })}
+      </div>
+    </fieldset>
+  );
   const mapLat = draft.lat === undefined || String(draft.lat).trim() === '' ? undefined : Number(draft.lat);
   const mapLng = draft.lng === undefined || String(draft.lng).trim() === '' ? undefined : Number(draft.lng);
 
@@ -181,12 +226,14 @@ export const ServicesHubAdminView: React.FC<Props> = ({ onBack }) => {
     onEditSpot={(spot) => { setTrendArticlesOpen(false); setCategory('spot'); setDraft(spot); }}
   />;
 
+
   return (
     <section className="fixed inset-0 z-[70] flex flex-col overflow-hidden bg-[#F7F5F0] text-[#2C2621]" aria-label="Quản trị dịch vụ">
-      <header className="flex items-center justify-between border-b border-[#D8CFBD] bg-[#FAF8F4] px-4 py-3 sm:px-8">
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-[#D8CFBD] bg-[#FAF8F4] px-4 py-3 sm:px-8">
         <div><p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#C76B3C]">Bảng quản trị</p><h1 className="text-xl font-bold">Quản lý thông tin dịch vụ</h1></div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {tokenValid && <button type="button" onClick={() => setTrendArticlesOpen(true)} className="rounded-full bg-[#ECE4D0] px-3 py-2 text-xs font-semibold">Bài viết xu hướng</button>}
+          {tokenValid && <button type="button" aria-expanded={placeCategoriesOpen && category === 'spot'} onClick={() => { if (category !== 'spot') { setCategory('spot'); setDraft(blank('spot')); } setPlaceCategoriesOpen(current => !current || category !== 'spot'); }} className="rounded-full bg-[#ECE4D0] px-3 py-2 text-xs font-semibold">Quản lý nhóm địa điểm</button>}
           {tokenValid && <button type="button" onClick={() => { serviceHubApi.logout(); setTokenValid(false); setRecords([]); }} className="rounded-full bg-[#ECE4D0] px-3 py-2 text-xs font-semibold"><LogOut className="mr-1 inline h-4 w-4" />Đăng xuất</button>}
           <button type="button" onClick={onBack} className="rounded-full bg-[#E8DEC7] px-3 py-2 text-xs font-semibold"><ArrowLeft className="mr-1 inline h-4 w-4" />Quay lại dịch vụ</button>
         </div>
@@ -204,17 +251,22 @@ export const ServicesHubAdminView: React.FC<Props> = ({ onBack }) => {
             <section className="rounded-2xl border border-[#D8CFBD] bg-[#FAF8F4] p-4 sm:p-6">
               <div className="mb-5 flex flex-wrap gap-2">{categories.map((item) => <button key={item.id} type="button" onClick={() => { setCategory(item.id); setDraft(blank(item.id)); }} className={`rounded-full px-3 py-2 text-xs font-semibold ${category === item.id ? 'bg-[#2C2621] text-white' : 'bg-[#ECE4D0] text-[#554D43]'}`}>{item.label} ({records.filter((record) => record.category === item.id).length})</button>)}</div>
               <h2 className="mb-3 font-bold">{categories.find((item) => item.id === category)?.label}</h2>
-              <BulkImportPanel key={category} category={category} onImport={importRecords} />
+              {category === 'spot' && <p className="mb-3 text-xs leading-relaxed text-[#6E655B]">Chọn nhóm để sửa trực tiếp địa điểm trên bản đồ. Một địa điểm có thể thuộc nhiều nhóm; bài viết biên tập vẫn quản lý riêng tại “Bài viết xu hướng”.</p>}
+              {category === 'spot' && placeCategoriesOpen && <PlaceCategoriesAdminPanel embedded categories={placeCategories} onCategoriesChange={changePlaceCategories} onBack={() => setPlaceCategoriesOpen(false)} />}
+              {category === 'spot' && <nav aria-label="Lọc nhóm địa điểm" className="mb-4 grid gap-2 sm:grid-cols-2">
+                {[{ id: 'all', label: 'Tất cả', count: spots.length }, { id: 'unassigned', label: 'Chưa phân nhóm', count: spots.filter(spot => !spot.placeCategories?.length).length }, ...placeCategories.map(item => ({ ...item, count: spots.filter(spot => spot.placeCategories?.includes(item.id)).length }))].map(item => <button key={item.id} type="button" aria-pressed={placeFilter === item.id} onClick={() => setPlaceFilter(item.id)} className={`min-h-11 rounded-xl border px-3 py-2 text-left text-xs font-semibold ${placeFilter === item.id ? 'border-[#2C2621] bg-[#2C2621] text-white' : 'border-[#D8CFBD] bg-white text-[#554D43]'}`}>{item.label} ({item.count})</button>)}
+              </nav>}
               {loading && <p className="mb-3 text-xs text-[#6E655B]">Đang tải…</p>}
               <div className="space-y-2">
-                {records.filter((record) => record.category === category).map((record) => <article key={record.id} className="flex items-center justify-between gap-3 rounded-xl border border-[#E2DAD0] p-3"><div className="min-w-0"><h3 className="truncate text-sm font-bold">{record.name}</h3><p className="truncate text-xs text-[#6E655B]">{summary(record)}</p></div><div className="flex shrink-0 gap-1"><button type="button" aria-label={`Sửa ${record.name}`} onClick={() => setDraft(record)} className="rounded-lg p-2 hover:bg-[#EFE9DF]"><Pencil className="h-4 w-4" /></button><button type="button" aria-label={`Xóa ${record.name}`} onClick={() => void remove(record.id)} className="rounded-lg p-2 text-red-700 hover:bg-red-50"><Trash2 className="h-4 w-4" /></button></div></article>)}
-                {!loading && records.filter((record) => record.category === category).length === 0 && <p className="rounded-xl bg-white p-5 text-sm text-[#6E655B]">Chưa có thông tin. Thêm mục đầu tiên bằng biểu mẫu bên cạnh.</p>}
+                {visibleRecords.map((record) => <article key={record.id} className="flex items-center justify-between gap-3 rounded-xl border border-[#E2DAD0] p-3"><div className="min-w-0"><h3 className="truncate text-sm font-bold">{record.name}</h3><p className="truncate text-xs text-[#6E655B]">{summary(record)}</p></div><div className="flex shrink-0 gap-1"><button type="button" aria-label={`Sửa ${record.name}`} onClick={() => editRecord(record)} className="rounded-lg p-2 hover:bg-[#EFE9DF]"><Pencil className="h-4 w-4" /></button><button type="button" aria-label={`Xóa ${record.name}`} onClick={() => void remove(record.id)} className="rounded-lg p-2 text-red-700 hover:bg-red-50"><Trash2 className="h-4 w-4" /></button></div></article>)}
+                {!loading && visibleRecords.length === 0 && <p className="rounded-xl bg-white p-5 text-sm text-[#6E655B]">Chưa có thông tin trong nhóm này. Thêm mục mới hoặc chọn nhóm khác.</p>}
               </div>
+              <div className="mt-5"><BulkImportPanel key={category} category={category} onImport={importRecords} /></div>
             </section>
-            <form onSubmit={save} className="space-y-3 rounded-2xl border border-[#D8CFBD] bg-[#FAF8F4] p-4 sm:p-6">
+            <form ref={editorRef} onSubmit={save} className="min-w-0 space-y-3 rounded-2xl border border-[#D8CFBD] bg-[#FAF8F4] p-4 sm:p-6">
               <div className="flex items-center justify-between"><h2 className="font-bold">{draft.id ? 'Chỉnh sửa thông tin' : 'Thêm thông tin mới'}</h2>{draft.id && <button type="button" onClick={() => setDraft(blank(category))} className="text-xs text-[#8A4A2C]">Tạo mới</button>}</div>
               {textField('Tên hiển thị *', 'name', 'Tên tiệm / nhiếp ảnh gia / sản phẩm')}
-              {category === 'spot' ? <>{textField('Slug *', 'slug')}{textField('Khu vực / tỉnh thành', 'regionId', 'hanoi')}{textField('Quận / huyện', 'district')}{textField('Địa chỉ *', 'address')}{textField('Vĩ độ', 'lat')}{textField('Kinh độ', 'lng')}<div className="space-y-2"><p className="text-xs font-semibold text-[#554D43]">Chọn vị trí trên bản đồ</p><LeafletCoordinatePicker value={mapLat !== undefined && mapLng !== undefined && Number.isFinite(mapLat) && Number.isFinite(mapLng) ? { lat: mapLat, lng: mapLng } : undefined} onChange={({ lat, lng }) => setDraft((current) => ({ ...current, lat, lng }))} /><p className="text-[11px] text-[#6E655B]">Bấm vào bản đồ để ghim tọa độ; bạn cũng có thể sửa số ở hai ô phía trên.</p></div>{percentageField}{textField('Giờ vàng', 'goldenHour')}{textField('Thời điểm chụp (mã)', 'bestTimeOfDay', 'morning / afternoon / evening')}{textareaField('Khung giờ đẹp (mô tả)', 'bestTimeDescription')}{listField('Ống kính khuyên dùng', 'recommendedLenses')}<label className="block space-y-1.5 text-xs font-semibold text-[#554D43]">Trạng thái mùa<select className={inputClass} value={draft.spotStatus || 'ACTIVE'} onChange={(event) => setField('spotStatus', event.target.value as 'PEAK' | 'ACTIVE' | 'ENDING_SOON')}><option value="ACTIVE">Quanh năm (ACTIVE)</option><option value="PEAK">Đang rộ nhất (PEAK)</option><option value="ENDING_SOON">Sắp hết mùa (ENDING_SOON)</option></select></label>{draft.spotStatus && draft.spotStatus !== 'ACTIVE' && textField('Hạn kiểm chứng (YYYY-MM-DD) *', 'statusValidUntil', '2026-10-19')}{textField('Phí vé', 'entryFee')}{textField('Phí gửi xe', 'parkingFee')}{textareaField('Mô tả tình trạng hoa / phong cảnh', 'description')}{conceptTagPicker}{textField('Link nguồn Facebook / TikTok', 'sourceUrl')}<div><p className="mb-2 text-xs font-semibold text-[#554D43]">Tháng đẹp nhất</p><div className="grid grid-cols-6 gap-1.5">{Array.from({ length: 12 }, (_, index) => index + 1).map((month) => { const selected = (draft.bestMonths || []).includes(month); return <button key={month} type="button" aria-pressed={selected} onClick={() => setDraft((current) => ({ ...current, bestMonths: selected ? (current.bestMonths || []).filter((item) => item !== month) : [...(current.bestMonths || []), month] }))} className={`rounded-lg border px-2 py-2 text-xs ${selected ? 'border-[#C76B3C] bg-[#C76B3C] text-white' : 'border-[#D8CFBD] bg-white'}`}>T{month}</button>; })}</div></div></> : category === 'filmLab' || category === 'filmShop' ? <>{textField('Mô tả', 'description')}{textField('Địa chỉ khu vực', 'address')}{textField('Phường / xã', 'ward')}{textField('Quận / huyện', 'district')}</> : <>{textField('Mô tả', 'description')}{textField('Địa chỉ', 'address')}{textField('Giá tham khảo', 'price')}</>}
+              {category === 'spot' ? <>{textField('Slug *', 'slug')}{textField('Khu vực / tỉnh thành', 'regionId', 'hanoi')}{textField('Quận / huyện', 'district')}{textField('Địa chỉ *', 'address')}{textField('Vĩ độ', 'lat')}{textField('Kinh độ', 'lng')}<div className="space-y-2"><p className="text-xs font-semibold text-[#554D43]">Chọn vị trí trên bản đồ</p><LeafletCoordinatePicker value={mapLat !== undefined && mapLng !== undefined && Number.isFinite(mapLat) && Number.isFinite(mapLng) ? { lat: mapLat, lng: mapLng } : undefined} onChange={({ lat, lng }) => setDraft((current) => ({ ...current, lat, lng }))} /><p className="text-[11px] text-[#6E655B]">Bấm vào bản đồ để ghim tọa độ; bạn cũng có thể sửa số ở hai ô phía trên.</p></div>{percentageField}{textField('Giờ vàng', 'goldenHour')}{textField('Thời điểm chụp (mã)', 'bestTimeOfDay', 'morning / afternoon / evening')}{textareaField('Khung giờ đẹp (mô tả)', 'bestTimeDescription')}{listField('Ống kính khuyên dùng', 'recommendedLenses')}<label className="block space-y-1.5 text-xs font-semibold text-[#554D43]">Trạng thái mùa<select className={inputClass} value={draft.spotStatus || 'ACTIVE'} onChange={(event) => setField('spotStatus', event.target.value as 'PEAK' | 'ACTIVE' | 'ENDING_SOON')}><option value="ACTIVE">Quanh năm (ACTIVE)</option><option value="PEAK">Đang rộ nhất (PEAK)</option><option value="ENDING_SOON">Sắp hết mùa (ENDING_SOON)</option></select></label>{draft.spotStatus && draft.spotStatus !== 'ACTIVE' && textField('Hạn kiểm chứng (YYYY-MM-DD) *', 'statusValidUntil', '2026-10-19')}{textField('Phí vé', 'entryFee')}{textField('Phí gửi xe', 'parkingFee')}{textareaField('Mô tả tình trạng hoa / phong cảnh', 'description')}{conceptTagPicker}{placeCategoryPicker}{textField('Link nguồn Facebook / TikTok', 'sourceUrl')}<div><p className="mb-2 text-xs font-semibold text-[#554D43]">Tháng đẹp nhất</p><div className="grid grid-cols-6 gap-1.5">{Array.from({ length: 12 }, (_, index) => index + 1).map((month) => { const selected = (draft.bestMonths || []).includes(month); return <button key={month} type="button" aria-pressed={selected} onClick={() => setDraft((current) => ({ ...current, bestMonths: selected ? (current.bestMonths || []).filter((item) => item !== month) : [...(current.bestMonths || []), month] }))} className={`rounded-lg border px-2 py-2 text-xs ${selected ? 'border-[#C76B3C] bg-[#C76B3C] text-white' : 'border-[#D8CFBD] bg-white'}`}>T{month}</button>; })}</div></div></> : category === 'filmLab' || category === 'filmShop' ? <>{textField('Mô tả', 'description')}{textField('Địa chỉ khu vực', 'address')}{textField('Phường / xã', 'ward')}{textField('Quận / huyện', 'district')}</> : <>{textField('Mô tả', 'description')}{textField('Địa chỉ', 'address')}{textField('Giá tham khảo', 'price')}</>}
               {category === 'outfit' && <>{textField('ID địa điểm liên kết (tùy chọn)', 'spotId')}{textField('Chất liệu', 'material')}</>}
               {category === 'photographer' && <>{textField('Thiết bị — Body', 'gearBody')}{textField('Thiết bị — Lens', 'gearLens')}{textField('Đánh giá', 'rating', 'Ví dụ: 4.9 / 5')}{textField('Số lượt đánh giá', 'reviewCount')}{listField('URL ảnh portfolio', 'portfolioPhotos')}<label className="block space-y-1.5 text-xs font-semibold text-[#554D43]">Gói chụp (JSON)<textarea className={`${inputClass} min-h-24`} placeholder='[{"name":"Gói cơ bản","price":1500000,"duration":"2 giờ","deliveredPhotos":20}]' value={JSON.stringify(draft.packages || [])} onChange={(event) => { try { const parsed: unknown = JSON.parse(event.target.value); if (Array.isArray(parsed)) setDraft((current) => ({ ...current, packages: parsed })); } catch { /* Keep last valid package list until JSON is valid. */ } }} /></label></>}
               {category === 'spot' && <>

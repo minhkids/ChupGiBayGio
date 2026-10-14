@@ -130,9 +130,26 @@ describe('admin spot edits read back by the map', () => {
     });
   });
 
+  it('persists venue categories separately from concept tags and preserves them for older clients', async () => {
+    const { env, headers, body, id } = await fixture();
+    const response = await worker.request(`/api/admin/cms/spots/${id}`, {
+      method: 'PUT', headers, body: JSON.stringify({ ...body, placeCategories: ['CAFE', 'RED_RIVER'] }),
+    }, env);
+    expect(response.status).toBe(200);
+    const beforeLegacyEdit = await publicSpot(env, id);
+    expect(JSON.parse(String(beforeLegacyEdit.seasonal_trend))).toMatchObject({ placeCategories: ['CAFE', 'RED_RIVER'] });
+
+    const legacyResponse = await worker.request(`/api/admin/cms/spots/${id}`, {
+      method: 'PUT', headers, body: JSON.stringify(body),
+    }, env);
+    expect(legacyResponse.status).toBe(200);
+    expect(JSON.parse(String((await publicSpot(env, id)).seasonal_trend))).toMatchObject({ placeCategories: ['CAFE', 'RED_RIVER'] });
+  });
+
   it.each([
     { bloomPercentage: 101 },
     { conceptTags: ['NOT_A_CONCEPT'] },
+    { placeCategories: ['NOT_A_CATEGORY'] },
   ])('rejects invalid detail metadata without modifying the public record: %j', async (invalid) => {
     const { env, headers, body, id } = await fixture();
     const before = await publicSpot(env, id);

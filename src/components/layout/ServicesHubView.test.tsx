@@ -9,6 +9,13 @@ vi.mock('../../services/serviceHubApi', () => ({
   filmShopLocations: (shop: { locations?: { ward: string; district: string; openingHours?: string }[]; ward?: string; district?: string; openingHours?: string }) => shop.locations?.length ? shop.locations : (shop.ward || shop.district ? [{ ward: shop.ward || '', district: shop.district || '', openingHours: shop.openingHours }] : []),
   serviceHubApi: {
     list: vi.fn().mockResolvedValue([]), adminList: vi.fn().mockResolvedValue([]),
+    listPlaceCategories: vi.fn().mockResolvedValue([
+      { id: 'CAFE', label: 'Quán cà phê', sortOrder: 1 },
+      { id: 'VINTAGE', label: 'Vintage', sortOrder: 2 },
+      { id: 'SHOPPING_MALL', label: 'Trung tâm thương mại', sortOrder: 3 },
+      { id: 'RED_RIVER', label: 'Gần sông Hồng', sortOrder: 4 },
+      { id: 'SUNSET', label: 'Chụp hoàng hôn', sortOrder: 5 },
+    ]),
     login: vi.fn().mockResolvedValue(undefined), logout: vi.fn(), create: vi.fn(), update: vi.fn(), remove: vi.fn()
   }
 }));

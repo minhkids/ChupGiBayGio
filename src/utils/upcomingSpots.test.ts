@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { MOCK_SPOTS } from '../data/mockSpots';
 import { getSpotMarkerSymbol, getUpcomingMonths, isUpcomingCandidate, matchesSpotMonth, selectUpcomingSpots } from './upcomingSpots';
 
-const candidate = { ...MOCK_SPOTS[0], regionId: 'hanoi', name: 'Mùa hoa tương lai', seasonalTrend: { ...MOCK_SPOTS[0].seasonalTrend, status: 'ACTIVE' as const, upcoming: true, expectedMonths: [11, 12] } };
+const candidate = { ...MOCK_SPOTS[0], regionId: 'hanoi', name: 'Mùa hoa tương lai', seasonalTrend: { ...MOCK_SPOTS[0].seasonalTrend, status: 'ACTIVE' as const, upcoming: true, expectedMonths: [11, 12], placeCategories: ['CAFE', 'RED_RIVER'] as ['CAFE', 'RED_RIVER'] } };
 describe('upcoming seasonal candidates', () => {
   it('uses a question mark for speculation, never for a verified peak', () => {
     expect(getSpotMarkerSymbol(candidate.seasonalTrend)).toBe('?');
@@ -17,5 +17,7 @@ describe('upcoming seasonal candidates', () => {
     expect(selectUpcomingSpots([candidate], 'dalat', '', 10)).toEqual([]);
     expect(selectUpcomingSpots([candidate], 'hanoi', 'không khớp', 10)).toEqual([]);
     expect(selectUpcomingSpots([candidate], 'hanoi', '', 3)).toEqual([]);
+    expect(selectUpcomingSpots([candidate], 'hanoi', '', 10, 'CAFE')).toEqual([candidate]);
+    expect(selectUpcomingSpots([candidate], 'hanoi', '', 10, 'SUNSET')).toEqual([]);
   });
 });

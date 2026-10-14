@@ -2,7 +2,8 @@ import { useState, useMemo, useEffect, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { db } from './services/db';
 import { createCommunitySpot } from './services/communitySpots';
-import type { Spot, FilterState, CommunityReport, InspirationPost } from './types';
+import type { Spot, FilterState, CommunityReport, InspirationPost, PlaceCategory } from './types';
+import { serviceHubApi } from './services/serviceHubApi';
 import {
   FilterBar,
   SpotCard,
@@ -15,6 +16,8 @@ import { useMapLocationPicker } from './hooks/useMapLocationPicker';
 import { useCatalogRevision } from './hooks/useCatalogRevision';
 import { getCurrentMonthInVietnam, matchesSeasonalStatusFilter } from './utils/season';
 import { matchesSpotMonth } from './utils/upcomingSpots';
+import { matchesPlaceCategory } from './utils/placeCategories';
+import { DEFAULT_PLACE_CATEGORIES } from './utils/placeCategories';
 import { calculateDistanceKm } from './utils/geo';
 import { recommendFilmForSpot } from './utils/filmAdvisor';
 import { readSavedSpotIds } from './utils/savedSpots';
@@ -33,6 +36,7 @@ const SpotDetailModal = lazy(() => import('./components/modals/SpotDetailModal')
 
 export function App() {
   const [spots, setSpots] = useState<Spot[]>([]);
+  const [placeCategories, setPlaceCategories] = useState<PlaceCategory[]>(DEFAULT_PLACE_CATEGORIES);
   const catalogRevision = useCatalogRevision();
   const [activeRegionId, setActiveRegionId] = useState<string>('hanoi');
   const [activeView, setActiveView] = useState<'map' | 'grid' | 'film' | 'services'>(() =>
@@ -48,6 +52,7 @@ export function App() {
     status: 'ALL',
     timeOfDay: 'ALL',
     concept: 'ALL',
+    placeCategory: 'ALL',
     cost: 'ALL',
     filmId: 'ALL',
     searchQuery: '',
@@ -81,6 +86,18 @@ export function App() {
         setSelectedSpot(current => current ? data.find(spot => spot.id === current.id) ?? null : null);
       }
     });
+    return () => { mounted = false; };
+  }, [catalogRevision]);
+
+  useEffect(() => {
+    let mounted = true;
+    serviceHubApi.listPlaceCategories().then((categories) => {
+      if (!mounted) return;
+      setPlaceCategories(categories);
+      setFilters(current => current.placeCategory !== 'ALL' && !categories.some(category => category.id === current.placeCategory)
+        ? { ...current, placeCategory: 'ALL' }
+        : current);
+    }).catch(() => { /* Keep bundled categories while the public category API is unavailable. */ });
     return () => { mounted = false; };
   }, [catalogRevision]);
 
@@ -122,6 +139,7 @@ export function App() {
       status: 'ALL',
       timeOfDay: 'ALL',
       concept: 'ALL',
+      placeCategory: 'ALL',
       cost: 'ALL',
       filmId: 'ALL',
       searchQuery: '',
@@ -221,6 +239,9 @@ export function App() {
           return false;
         }
 
+        // Venue category
+        if (!matchesPlaceCategory(spot.seasonalTrend, filters.placeCategory)) return false;
+
         // Cost
         if (filters.cost !== 'ALL' && spot.costType !== filters.cost) {
           return false;
@@ -281,6 +302,7 @@ export function App() {
         <Suspense fallback={<div className="w-full h-full bg-neutral-100 flex items-center justify-center"><div className="animate-spin w-8 h-8 border-2 border-terracotta border-t-transparent rounded-full" /></div>}>
         <GoogleMapsLayout
           spots={spots}
+          placeCategories={placeCategories}
           filteredSpots={filteredSpots}
           selectedSpot={selectedSpot}
           onSelectSpot={setSelectedSpot}
@@ -390,6 +412,7 @@ export function App() {
         {activeView === 'grid' && (
           <FilterBar
             filters={filters}
+            placeCategories={placeCategories}
             onChangeFilters={setFilters}
             onResetFilters={handleResetFilters}
             totalFilteredCount={filteredSpots.length}
@@ -488,6 +511,7 @@ export function App() {
           <Suspense fallback={null}>
           <SpotDetailModal
             spot={selectedSpot}
+            placeCategories={placeCategories}
             onClose={() => setSelectedSpot(null)}
             isSaved={savedSpotIds.includes(selectedSpot.id)}
             onToggleSave={handleToggleSave}

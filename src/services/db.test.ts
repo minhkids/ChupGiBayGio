@@ -9,5 +9,6 @@ it.each(['list', 'detail'])('normalizes a partial candidate seasonal trend from 
   vi.stubGlobal('fetch', vi.fn(async () => Response.json(endpoint === 'list' ? [row] : row)));
   const spot = endpoint === 'list' ? (await db.spots.getAll())[0] : await db.spots.getById(row.id);
   expect(spot?.seasonalTrend.conceptTags).toEqual([]);
+  expect(spot?.seasonalTrend.placeCategories).toEqual([]);
   expect(spot?.seasonalTrend).toMatchObject(forecast);
 });

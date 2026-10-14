@@ -28,6 +28,18 @@ describe('parseBulkRows', () => {
     expect(result.errors).toEqual([{ row: 4, message: 'Trạng thái mùa phải là PEAK, ACTIVE hoặc ENDING_SOON.' }]);
   });
 
+  it('imports multi-assigned place groups and rejects unknown category codes', () => {
+    const result = parseBulkRows('spot', [
+      ['Tên', 'Slug', 'Địa chỉ', 'Vĩ độ', 'Kinh độ', 'Nhóm địa điểm'],
+      ['Cafe ven sông', 'cafe-song', 'Hà Nội', 21, 105, 'CAFE, RED_RIVER'],
+      ['Sai nhóm', 'sai-nhom', 'Hà Nội', 21, 105, 'bad-code'],
+    ]);
+    expect(result.records).toHaveLength(1);
+    expect(result.records[0]).toMatchObject({ placeCategories: ['CAFE', 'RED_RIVER'] });
+    expect(result.errors).toEqual([{ row: 3, message: 'Nhóm địa điểm cần là mã chữ in hoa, số hoặc dấu gạch dưới (ví dụ CAFE, RED_RIVER).' }]);
+    expect(bulkTemplateHeaders('spot')).toContain('Nhóm địa điểm');
+  });
+
   it('parses JSON hotspot and photographer package cells from Excel', () => {
     const outfit = parseBulkRows('outfit', [['name', 'imageUrl', 'hotspots'], ['Váy hoa', 'https://img/a.jpg', '[{"x":20,"y":35,"label":"Váy"}]']]);
     expect(outfit.records[0]).toMatchObject({ name: 'Váy hoa', hotspots: [{ x: 20, y: 35, label: 'Váy' }] });

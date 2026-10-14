@@ -4,7 +4,13 @@ import { afterEach, expect, it, vi } from 'vitest';
 import { ServicesHubAdminView } from './ServicesHubAdminView';
 import { serviceHubApi } from '../../services/serviceHubApi';
 
-vi.mock('../../services/serviceHubApi', () => ({ serviceHubApi: { adminList: vi.fn().mockResolvedValue([]), create: vi.fn().mockResolvedValue({}), update: vi.fn(), logout: vi.fn() } }));
+vi.mock('../../services/serviceHubApi', () => ({ serviceHubApi: { adminList: vi.fn().mockResolvedValue([]), listPlaceCategories: vi.fn().mockResolvedValue([
+  { id: 'CAFE', label: 'Quán cà phê', sortOrder: 1 },
+  { id: 'VINTAGE', label: 'Vintage', sortOrder: 2 },
+  { id: 'SHOPPING_MALL', label: 'Trung tâm thương mại', sortOrder: 3 },
+  { id: 'RED_RIVER', label: 'Gần sông Hồng', sortOrder: 4 },
+  { id: 'SUNSET', label: 'Chụp hoàng hôn', sortOrder: 5 },
+]), createPlaceCategory: vi.fn(), updatePlaceCategory: vi.fn(), removePlaceCategory: vi.fn(), create: vi.fn().mockResolvedValue({}), update: vi.fn(), logout: vi.fn() } }));
 vi.mock('./BulkImportPanel', () => ({ BulkImportPanel: () => null }));
 vi.mock('./LeafletCoordinatePicker', () => ({ LeafletCoordinatePicker: () => null }));
 afterEach(() => { cleanup(); sessionStorage.clear(); vi.clearAllMocks(); });
@@ -61,7 +67,7 @@ it('loads, edits, and saves spot flower condition and photography guide details'
     id: 'spot-1', category: 'spot', name: 'Hồ Tây', slug: 'ho-tay', address: 'Hà Nội', lat: 21, lng: 105,
     regionId: 'hanoi', bestMonths: [10, 11], spotStatus: 'PEAK', statusValidUntil: '2026-12-31',
     description: 'Hoa đang nở.', bestTimeDescription: 'Chiều muộn.', recommendedLenses: ['35mm'],
-    conceptTags: ['HOA_CO'], bloomPercentage: 73,
+    conceptTags: ['HOA_CO'], placeCategories: ['CAFE', 'RED_RIVER'], bloomPercentage: 73,
   };
   vi.mocked(serviceHubApi.adminList).mockResolvedValueOnce([spot] as never);
   vi.mocked(serviceHubApi.update).mockResolvedValueOnce(spot as never);
@@ -74,6 +80,7 @@ it('loads, edits, and saves spot flower condition and photography guide details'
   expect((screen.getByLabelText('Khung giờ đẹp (mô tả)') as HTMLTextAreaElement).value).toBe('Chiều muộn.');
   expect((screen.getByLabelText('Ống kính khuyên dùng') as HTMLTextAreaElement).value).toBe('35mm');
   expect((screen.getByLabelText('Concept: Hoa Cỏ & Mùa Nở') as HTMLInputElement).checked).toBe(true);
+  expect((screen.getByLabelText('Nhóm địa điểm: Quán cà phê') as HTMLInputElement).checked).toBe(true);
 
   fireEvent.change(screen.getByLabelText('Phí gửi xe'), { target: { value: '10.000đ' } });
   fireEvent.change(screen.getByLabelText('Mức độ nở / hiện trạng (%)'), { target: { value: '61' } });
@@ -82,11 +89,13 @@ it('loads, edits, and saves spot flower condition and photography guide details'
   fireEvent.change(screen.getByLabelText('Ống kính khuyên dùng'), { target: { value: '50mm, 85mm' } });
   fireEvent.click(screen.getByLabelText('Concept: Hoa Cỏ & Mùa Nở'));
   fireEvent.click(screen.getByLabelText('Concept: Đường Phố Sống Động'));
+  fireEvent.click(screen.getByLabelText('Nhóm địa điểm: Quán cà phê'));
+  fireEvent.click(screen.getByLabelText('Nhóm địa điểm: Chụp hoàng hôn'));
   fireEvent.click(screen.getByRole('button', { name: 'Lưu thay đổi' }));
 
   await waitFor(() => expect(serviceHubApi.update).toHaveBeenCalledWith(expect.objectContaining({
     id: 'spot-1', bloomPercentage: 61, parkingFee: '10.000đ', description: 'Nở rộ trong tháng này.',
-    bestTimeDescription: 'Sáng sớm.', recommendedLenses: ['50mm', '85mm'], conceptTags: ['STREET'],
+    bestTimeDescription: 'Sáng sớm.', recommendedLenses: ['50mm', '85mm'], conceptTags: ['STREET'], placeCategories: ['RED_RIVER', 'SUNSET'],
   })));
 });
 
@@ -103,4 +112,15 @@ it('hydrates and edits a seasonal candidate without turning it into a verified p
   fireEvent.click(screen.getByLabelText('Tháng dự kiến: 1'));
   fireEvent.click(screen.getByRole('button', { name: 'Lưu thay đổi' }));
   await waitFor(() => expect(serviceHubApi.update).toHaveBeenCalledWith(expect.objectContaining({ upcoming: true, expectedMonths: [11, 12, 1], spotStatus: 'ACTIVE' })));
+});
+
+it('opens category configuration from the authenticated admin screen', async () => {
+  sessionStorage.setItem('service_admin_token', 'test-only');
+  window.history.replaceState({}, '', '/admin/spots');
+  vi.mocked(serviceHubApi.adminList).mockResolvedValueOnce([]);
+  vi.mocked(serviceHubApi.listPlaceCategories).mockResolvedValueOnce([{ id: 'CAFE', label: 'Quán cà phê', sortOrder: 1 }]);
+  render(<ServicesHubAdminView onBack={vi.fn()} />);
+  await waitFor(() => expect(serviceHubApi.adminList).toHaveBeenCalled());
+  fireEvent.click(screen.getByRole('button', { name: 'Quản lý nhóm địa điểm' }));
+  expect(await screen.findByRole('heading', { name: 'Quản lý nhóm địa điểm' })).toBeTruthy();
 });

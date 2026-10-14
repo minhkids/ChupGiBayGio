@@ -1,5 +1,5 @@
 import { CATALOG_UPDATED_EVENT } from '../hooks/useCatalogRevision';
-import type { ConceptTag } from '../types';
+import type { ConceptTag, PlaceCategory, PlaceCategoryId } from '../types';
 
 export type ServiceCategory = 'spot' | 'rental' | 'outfit' | 'photographer' | 'filmLab' | 'filmShop' | 'filmColor';
 
@@ -62,6 +62,7 @@ export interface ServiceListing {
   expectedMonths?: number[];
   bloomPercentage?: number;
   conceptTags?: ConceptTag[];
+  placeCategories?: PlaceCategoryId[];
   recommendedLenses?: string[];
   spotStatus?: 'PEAK' | 'ACTIVE' | 'ENDING_SOON';
   statusValidUntil?: string;
@@ -115,7 +116,7 @@ const tableFor: Record<ServiceCategory, string> = {
 };
 
 function adminPayload(listing: ServiceListing) {
-  if (listing.category === 'spot') return { name: listing.name, slug: listing.slug, regionId: listing.regionId, address: listing.address, district: listing.district, lat: listing.lat, lng: listing.lng, bestTimeOfDay: listing.bestTimeOfDay, bestTimeDescription: listing.bestTimeDescription, recommendedLenses: listing.recommendedLenses, conceptTags: listing.conceptTags, bloomPercentage: listing.bloomPercentage, goldenHour: listing.goldenHour, bestMonths: listing.bestMonths, entryFee: listing.entryFee, parkingFee: listing.parkingFee, sourceUrl: listing.sourceUrl, coverImageUrl: listing.coverImageUrl, description: listing.description, spotStatus: listing.spotStatus, statusValidUntil: listing.statusValidUntil, upcoming: listing.upcoming, expectedMonths: listing.expectedMonths };
+  if (listing.category === 'spot') return { name: listing.name, slug: listing.slug, regionId: listing.regionId, address: listing.address, district: listing.district, lat: listing.lat, lng: listing.lng, bestTimeOfDay: listing.bestTimeOfDay, bestTimeDescription: listing.bestTimeDescription, recommendedLenses: listing.recommendedLenses, conceptTags: listing.conceptTags, placeCategories: listing.placeCategories, bloomPercentage: listing.bloomPercentage, goldenHour: listing.goldenHour, bestMonths: listing.bestMonths, entryFee: listing.entryFee, parkingFee: listing.parkingFee, sourceUrl: listing.sourceUrl, coverImageUrl: listing.coverImageUrl, description: listing.description, spotStatus: listing.spotStatus, statusValidUntil: listing.statusValidUntil, upcoming: listing.upcoming, expectedMonths: listing.expectedMonths };
   if (listing.category === 'rental') return { name: listing.name, address: listing.address, hotline: listing.phone, fanpageUrl: listing.link, dailyPrice: listing.price };
   if (listing.category === 'outfit') return { spotId: listing.spotId, name: listing.name, description: listing.description, material: listing.material, estimatedPrice: listing.price, imageUrl: listing.imageUrl, hotspots: listing.hotspots, shopeeUrl: listing.link, tiktokUrl: listing.secondaryLink };
   if (listing.category === 'photographer') return { name: listing.name, avatarUrl: listing.imageUrl, bio: listing.description, phone: listing.phone, instagram: listing.link, gearBody: listing.gearBody, gearLens: listing.gearLens, styles: listing.tags, portfolioPhotos: listing.portfolioPhotos, packages: listing.packages };
@@ -154,7 +155,7 @@ export const serviceHubApi = {
     ]);
     return [
       ...spots.map((row) => {
-        const trend = parseJsonObject(row.seasonal_trend, { status: 'ACTIVE' as const, statusValidUntil: undefined as string | undefined, conceptTags: [] as ConceptTag[], bloomPercentage: undefined as number | undefined, upcoming: false, expectedMonths: [] as number[] });
+        const trend = parseJsonObject(row.seasonal_trend, { status: 'ACTIVE' as const, statusValidUntil: undefined as string | undefined, conceptTags: [] as ConceptTag[], placeCategories: [] as PlaceCategoryId[], bloomPercentage: undefined as number | undefined, upcoming: false, expectedMonths: [] as number[] });
         return {
           ...row,
           id: String(row.id),
@@ -171,6 +172,7 @@ export const serviceHubApi = {
           bestTimeDescription: String(row.best_time_description || row.golden_hour || ''),
           recommendedLenses: parseList(row.recommended_lenses),
           conceptTags: parseList(trend.conceptTags) as ConceptTag[],
+          placeCategories: parseList(trend.placeCategories) as PlaceCategoryId[],
           bloomPercentage: typeof trend.bloomPercentage === 'number' ? trend.bloomPercentage : 85,
           bestMonths: parseList(row.best_months).map(Number),
           upcoming: trend.upcoming === true,
@@ -192,6 +194,14 @@ export const serviceHubApi = {
       ...legacy
     ] as ServiceListing[];
   },
+  listPlaceCategories: () => request<PlaceCategory[]>('/api/place-categories'),
+  createPlaceCategory: (label: string) => request<PlaceCategory>('/api/admin/place-categories', {
+    method: 'POST', body: JSON.stringify({ label }),
+  }),
+  updatePlaceCategory: (id: string, label: string) => request<PlaceCategory>(`/api/admin/place-categories/${encodeURIComponent(id)}`, {
+    method: 'PUT', body: JSON.stringify({ label }),
+  }),
+  removePlaceCategory: (id: string) => request<{ success: boolean }>(`/api/admin/place-categories/${encodeURIComponent(id)}`, { method: 'DELETE' }),
   login: async (password: string) => {
     const result = await request<{ token: string }>('/api/admin/login', {
       method: 'POST', body: JSON.stringify({ password })

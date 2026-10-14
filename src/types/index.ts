@@ -4,6 +4,10 @@ export type BestTimeOfDay = 'GOLDEN_HOUR_MORNING' | 'SUNSET' | 'NIGHT' | 'DAYLIG
 
 export type CostType = 'FREE' | 'TICKET' | 'COMMERCIAL_FEE';
 
+export type PlaceCategoryId = string;
+export interface PlaceCategory { id: PlaceCategoryId; label: string; sortOrder: number }
+export type PlaceCategoryFilter = 'ALL' | PlaceCategoryId;
+
 export type CrowdLevel = 'Rất vắng' | 'Vắng' | 'Bình thường' | 'Trung bình' | 'Đông' | 'Quá tải';
 
 export type ConceptTag = 
@@ -30,6 +34,7 @@ export interface SeasonalTrend {
   statusValidUntil?: string;
   upcoming?: boolean; // Editorial seasonal forecast, independent of verified status.
   expectedMonths?: number[]; // Exact expected months, including non-contiguous/wrapped seasons.
+  placeCategories?: PlaceCategoryId[]; // Venue/discovery groups, independent of seasonal status and photo concepts.
   bloomPercentage?: number; // 0 - 100%
   daysLeftInPeak?: number;
   peakMonths?: number[];
@@ -162,6 +167,7 @@ export interface FilterState {
   status: 'ALL' | SpotStatus;
   timeOfDay: 'ALL' | BestTimeOfDay;
   concept: 'ALL' | ConceptTag;
+  placeCategory: PlaceCategoryFilter;
   cost: 'ALL' | CostType;
   filmId: string;
   searchQuery: string;

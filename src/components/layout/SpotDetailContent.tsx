@@ -3,6 +3,7 @@ import React from 'react';
 import { Navigation, Share2, Flag, Bookmark, Camera, Clock, Sparkles, ExternalLink } from 'lucide-react';
 import type { Spot } from '../../types';
 import { getStatusBadgeInfo, getEffectiveSeasonalStatus, CONCEPT_METADATA } from '../../utils/season';
+import { getPlaceCategoryLabel } from '../../utils/placeCategories';
 import type { SpotDetailContentProps } from './shared-types';
 import { SpotPhotographersSection } from '../photographers/SpotPhotographersSection';
 
@@ -126,6 +127,18 @@ const PhotographyTips: React.FC<PhotographyTipsProps> = ({ spot }) => {
           </div>
         </div>
       </div>
+
+      {spot.seasonalTrend?.placeCategories?.length ? <div className="flex items-start space-x-2.5 text-xs">
+        <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-[#8A4A2C]" />
+        <div>
+          <span className="font-bold text-neutral-800 dark:text-neutral-200">Nhóm địa điểm: </span>
+          <div className="mt-1 flex flex-wrap gap-1">
+            {spot.seasonalTrend.placeCategories.map(category => <span key={category} className="rounded-md border border-[#D8CFBD] bg-[#ECE4D0] px-2 py-0.5 text-[10px] text-[#554D43]">
+              {getPlaceCategoryLabel(category)}
+            </span>)}
+          </div>
+        </div>
+      </div> : null}
     </div>
   );
 };

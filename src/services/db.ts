@@ -62,6 +62,7 @@ function mapSpotFromAPI(row: any): Spot {
       endMonth: 12,
       status: 'ACTIVE',
       conceptTags: [],
+      placeCategories: [],
       isTrending: false,
       trendScore: 0,
       // Forecast/legacy rows may provide only part of the nested JSON object.
