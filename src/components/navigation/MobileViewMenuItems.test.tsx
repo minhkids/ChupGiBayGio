@@ -13,7 +13,7 @@ it('shows Dịch vụ in the mobile view menu and selects the services view', ()
 
   expect(screen.getByRole('button', { name: 'Bản đồ' })).toBeTruthy();
   expect(screen.getByRole('button', { name: 'Tạp chí' })).toBeTruthy();
-  expect(screen.getByRole('button', { name: 'Màu Film' })).toBeTruthy();
+  expect(screen.queryByRole('button', { name: 'Màu Film' })).toBeNull();
   fireEvent.click(screen.getByRole('button', { name: 'Dịch vụ' }));
 
   expect(onChangeView).toHaveBeenCalledWith('services');

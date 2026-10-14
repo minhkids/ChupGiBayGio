@@ -13,7 +13,7 @@ const weather: WeatherData = {
 
 afterEach(cleanup);
 
-it('removes Cảm hứng navigation while keeping the other main destinations', () => {
+it('removes Cảm hứng and Màu Film navigation while keeping the other main destinations', () => {
   render(<LeftNavRail
     activeView="map"
     onChangeView={vi.fn()}
@@ -30,5 +30,6 @@ it('removes Cảm hứng navigation while keeping the other main destinations', 
   expect(screen.queryAllByText('Cảm hứng', { exact: true })).toHaveLength(0);
   expect(screen.getAllByText('Bản đồ', { exact: true }).length).toBeGreaterThan(0);
   expect(screen.getAllByText('Tạp chí', { exact: true }).length).toBeGreaterThan(0);
-  expect(screen.getAllByText('Màu Film', { exact: true }).length).toBeGreaterThan(0);
+  expect(screen.queryAllByText('Màu Film', { exact: true })).toHaveLength(0);
+  expect(screen.getAllByText('Dịch vụ', { exact: true }).length).toBeGreaterThan(0);
 });

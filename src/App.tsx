@@ -23,6 +23,7 @@ import { recommendFilmForSpot } from './utils/filmAdvisor';
 import { readSavedSpotIds } from './utils/savedSpots';
 import { AlertCircle } from 'lucide-react';
 import { containerVariants, itemVariants } from './utils/motion-tokens';
+import type { ViewId } from './components/navigation/viewItems';
 
 // Lazy-loaded heavy components
 const GoogleMapsLayout = lazy(() => import('./components/GoogleMapsLayout').then(m => ({ default: m.GoogleMapsLayout })));
@@ -30,7 +31,7 @@ const CommunityReportModal = lazy(() => import('./components/modals/CommunityRep
 const AddSpotModal = lazy(() => import('./components/modals/AddSpotModal').then(m => ({ default: m.AddSpotModal })));
 const SavedSpotsModal = lazy(() => import('./components/modals/SavedSpotsModal').then(m => ({ default: m.SavedSpotsModal })));
 const AddFacebookPostModal = lazy(() => import('./components/modals/AddFacebookPostModal').then(m => ({ default: m.AddFacebookPostModal })));
-const FilmGalleryView = lazy(() => import('./components/views/FilmGalleryView').then(m => ({ default: m.FilmGalleryView })));
+
 const ServicesHubView = lazy(() => import('./components/layout/ServicesHubView').then(m => ({ default: m.ServicesHubView })));
 const SpotDetailModal = lazy(() => import('./components/modals/SpotDetailModal').then(m => ({ default: m.SpotDetailModal })));
 
@@ -39,7 +40,7 @@ export function App() {
   const [placeCategories, setPlaceCategories] = useState<PlaceCategory[]>(DEFAULT_PLACE_CATEGORIES);
   const catalogRevision = useCatalogRevision();
   const [activeRegionId, setActiveRegionId] = useState<string>('hanoi');
-  const [activeView, setActiveView] = useState<'map' | 'grid' | 'film' | 'services'>(() =>
+  const [activeView, setActiveView] = useState<ViewId>(() =>
     new URLSearchParams(window.location.search).has('services') ? 'services' : 'map');
   const [uiTheme, setUiTheme] = useState<'modern' | 'editorial'>('modern');
   const currentMonth = useMemo(() => getCurrentMonthInVietnam(), []); // eslint-disable-line react/purity — runs once at mount
@@ -406,8 +407,7 @@ export function App() {
       {/* 2. Main Body Container (Offset by pl-[76px] on desktop, pb-20 for mobile bottom tab bar) */}
       <div className="flex-1 lg:pl-[76px] flex flex-col min-w-0 pb-20 lg:pb-0 bg-[#F7F5F0]">
         
-        {/* Sticky Filter & Search Bar — chỉ thuộc view Tạp chí (grid).
-            Các view khác (Màu Film) không render bộ lọc. */}
+        {/* Sticky Filter & Search Bar — chỉ thuộc view Tạp chí (grid). */}
         {activeView === 'grid' && (
           <FilterBar
             filters={filters}
@@ -487,13 +487,6 @@ export function App() {
               </motion.div>
             )}
           </div>
-        )}
-
-        {/* VIEW 3: Film Rolls Gallery */}
-        {activeView === 'film' && (
-          <Suspense fallback={<div className="p-8 text-center">Đang tải gallery film...</div>}>
-          <FilmGalleryView />
-          </Suspense>
         )}
 
         {activeView === 'services' && (

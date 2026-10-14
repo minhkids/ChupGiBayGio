@@ -29,6 +29,7 @@ import { SpotMap } from './map/SpotMap';
 import { AtmosphericFX } from './features/AtmosphericFX';
 import { LeftNavRail } from './navigation/LeftNavRail';
 import { MobileViewMenuItems } from './navigation/MobileViewMenuItems';
+import type { ViewId } from './navigation/viewItems';
 import { PoseCamera } from './features/PoseCamera';
 import { useWeather } from '../hooks/useWeather';
 import { MapStyleCategoryBrowser } from './views/MapStyleCategoryBrowser';
@@ -53,8 +54,8 @@ interface GoogleMapsLayoutProps {
   onResetFilters: () => void;
   activeRegionId: string;
   onSelectRegion: (regionId: string) => void;
-  activeView: 'map' | 'grid' | 'film' | 'services';
-  onChangeView: (view: 'map' | 'grid' | 'film' | 'services') => void;
+  activeView: ViewId;
+  onChangeView: (view: ViewId) => void;
   onOpenSubmitSpotModal: () => void;
   onOpenSavedModal: () => void;
   onOpenReportModal: (spot: Spot) => void;
@@ -237,11 +238,6 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
           onSelectRegion={onSelectRegion}
           uiTheme={uiTheme}
           onToggleUiTheme={onToggleUiTheme}
-          onOpenNearestLabs={() => {
-            setFilmFilterForLabs('');
-            setIsAllLabsDrawerOpen(true);
-          }}
-
         />
       </div>
 

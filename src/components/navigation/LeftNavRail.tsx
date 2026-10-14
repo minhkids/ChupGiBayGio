@@ -18,8 +18,8 @@ import type { WeatherData } from '../../hooks/useWeather';
 import { NAV_ITEMS, type ViewId } from './viewItems';
 
 interface LeftNavRailProps {
-  activeView: 'map' | 'grid' | 'film' | 'services';
-  onChangeView: (view: 'map' | 'grid' | 'film' | 'services') => void;
+  activeView: ViewId;
+  onChangeView: (view: ViewId) => void;
   savedCount: number;
   onOpenSavedModal: () => void;
   onOpenSubmitSpotModal: () => void;
@@ -31,7 +31,7 @@ interface LeftNavRailProps {
   uiTheme?: 'modern' | 'editorial';
   onToggleUiTheme?: () => void;
   onSelectFilmFilter?: () => void;
-  onOpenNearestLabs?: () => void;
+
 
 }
 
@@ -56,16 +56,13 @@ export const LeftNavRail: React.FC<LeftNavRailProps> = ({
   isAtmosphericActive,
   onToggleAtmospheric,
   onSelectFilmFilter,
-  onOpenNearestLabs,
+
 
 }) => {
   const WeatherIcon = WEATHER_ICONS[weather.effect] ?? CloudSun;
   const temperature = Math.round(weather.temperature);
 
   const handleNavClick = (id: ViewId) => {
-    if (id === 'film' && onOpenNearestLabs) {
-      onOpenNearestLabs();
-    }
     onChangeView(id);
   };
 
