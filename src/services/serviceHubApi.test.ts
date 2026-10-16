@@ -46,7 +46,7 @@ describe('serviceHubApi.request', () => {
     await expect(request<{ id: string }[]>('/api/services')).resolves.toEqual([{ id: 'lab-1' }]);
   });
 
-  it('separates retail film shops from processing labs using the saved roll prices', async () => {
+  it('keeps same-business labs and shops independent of their saved roll prices', async () => {
     const responses: Record<string, unknown[]> = {
       '/api/admin/services': [],
       '/api/admin/cms/spots': [],
@@ -55,8 +55,11 @@ describe('serviceHubApi.request', () => {
       '/api/admin/cms/photographers': [],
       '/api/admin/cms/films': [],
       '/api/admin/cms/labs': [
-        { id: 'lab-1', name: 'Crolab', min_roll_price: 0, max_roll_price: 0, fast_2h: 1, in_stock_films: '[]' },
+        { id: 'lab-1', name: 'Tiệm Film', hotline: '0912345678', address: '36 Lý Quốc Sư', lat: 21.0285, lng: 105.8542, min_roll_price: 90000, max_roll_price: 120000, fast_2h: 1, in_stock_films: '[]' },
+      ],
+      '/api/admin/cms/filmShops': [
         { id: 'shop-1', name: 'Tiệm Film', min_roll_price: 50000, max_roll_price: 150000, cheapest_roll_name: 'Kodak Gold 200', in_stock_films: '["Kodak Gold 200"]', express_delivery_2h: 1 },
+        { id: 'shop-zero', name: 'Tiệm Film', hotline: '0912345678', min_roll_price: 0, max_roll_price: 0 },
       ],
     };
     vi.stubGlobal('fetch', vi.fn((url: string) => Promise.resolve(Response.json(responses[url] || []))));
@@ -65,7 +68,10 @@ describe('serviceHubApi.request', () => {
 
     expect(listings.find((item) => item.id === 'lab-1')?.category).toBe('filmLab');
     expect(listings.find((item) => item.id === 'lab-1')).toMatchObject({ fastService: true, expressDelivery2h: false });
+    expect(listings.find((item) => item.id === 'lab-1')).toMatchObject({ address: '36 Lý Quốc Sư', lat: 21.0285, lng: 105.8542 });
     expect(listings.find((item) => item.id === 'shop-1')).toMatchObject({ category: 'filmShop', cheapestRollName: 'Kodak Gold 200', minRollPrice: 50000, maxRollPrice: 150000, expressDelivery2h: true });
+    expect(listings.find((item) => item.id === 'shop-zero')).toMatchObject({ category: 'filmShop', phone: '0912345678', minRollPrice: 0 });
+    expect(listings).toHaveLength(3);
   });
 
   it('maps spot flower and photography data from D1 rows into admin form fields', async () => {
@@ -98,12 +104,12 @@ describe('serviceHubApi.request', () => {
     });
   });
 
-  it('sends film-shop admin records to the shared labs endpoint with their category and prices', async () => {
+  it('routes film-shop creation independently and preserves the category and prices', async () => {
     const fetchMock = vi.fn().mockResolvedValue(Response.json({ id: 'shop-2' }));
     vi.stubGlobal('fetch', fetchMock);
     await serviceHubApi.create({ category: 'filmShop', name: 'Shop mới', filmStocks: ['Kodak Gold 200'], cheapestRollName: 'Kodak Gold 200', minRollPrice: 45000, maxRollPrice: 120000, expressDelivery2h: true });
 
-    expect(fetchMock).toHaveBeenCalledWith('/api/admin/labs', expect.objectContaining({ method: 'POST' }));
+    expect(fetchMock).toHaveBeenCalledWith('/api/admin/film-shops', expect.objectContaining({ method: 'POST' }));
     const payload = JSON.parse(fetchMock.mock.calls[0][1].body as string);
     expect(payload).toMatchObject({ adminCategory: 'filmShop', minRollPrice: 45000, maxRollPrice: 120000, cheapestRollName: 'Kodak Gold 200', inStockFilms: ['Kodak Gold 200'], expressDelivery2h: true });
   });
@@ -113,7 +119,7 @@ describe('serviceHubApi.request', () => {
       { ward: 'Cửa Nam', district: 'Hoàn Kiếm', openingHours: '09:00–18:00' },
       { ward: 'Dịch Vọng', district: 'Cầu Giấy', openingHours: '10:00–20:00' },
     ];
-    vi.stubGlobal('fetch', vi.fn((url: string) => Promise.resolve(Response.json(url === '/api/admin/cms/labs' ? [{ id: 'shop-3', name: 'Nhiều chi nhánh', min_roll_price: 50000, locations: JSON.stringify(locations) }] : []))));
+    vi.stubGlobal('fetch', vi.fn((url: string) => Promise.resolve(Response.json(url === '/api/admin/cms/filmShops' ? [{ id: 'shop-3', name: 'Nhiều chi nhánh', min_roll_price: 50000, locations: JSON.stringify(locations) }] : []))));
     const [shop] = await serviceHubApi.adminList();
     expect(shop.locations).toEqual(locations);
 
@@ -121,5 +127,20 @@ describe('serviceHubApi.request', () => {
     vi.stubGlobal('fetch', fetchMock);
     await serviceHubApi.create({ category: 'filmShop', name: 'Nhiều chi nhánh', locations, filmStocks: ['Kodak Gold 200'], cheapestRollName: 'Kodak Gold 200', minRollPrice: 50000 });
     expect(JSON.parse(fetchMock.mock.calls[0][1].body as string).locations).toEqual(locations);
+  });
+
+  it('keeps lab and shop writes independent even when they share an id and phone', async () => {
+    const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) => Response.json({ success: true }));
+    vi.stubGlobal('fetch', fetchMock);
+    for (const category of ['filmLab', 'filmShop'] as const) {
+      const record = { id: 'shared/id', category, name: 'Tiệm Film', phone: '0912345678', minRollPrice: 0 };
+      await serviceHubApi.create(record);
+      await serviceHubApi.update(record);
+      await serviceHubApi.remove(record.id, category);
+    }
+    expect(fetchMock.mock.calls.map(([url, init]) => [url, init?.method])).toEqual([
+      ['/api/admin/labs', 'POST'], ['/api/admin/cms/labs/shared%2Fid', 'PUT'], ['/api/admin/cms/labs/shared%2Fid', 'DELETE'],
+      ['/api/admin/film-shops', 'POST'], ['/api/admin/cms/filmShops/shared%2Fid', 'PUT'], ['/api/admin/cms/filmShops/shared%2Fid', 'DELETE'],
+    ]);
   });
 });

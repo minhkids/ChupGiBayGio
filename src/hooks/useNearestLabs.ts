@@ -55,8 +55,9 @@ export function formatDistanceDisplay(km: number): string {
   return `${km.toFixed(1)} km`;
 }
 
-export function useNearestLabs(optionsOrFilter?: string | { filmStockQuery?: string }) {
+export function useNearestLabs(optionsOrFilter?: string | { filmStockQuery?: string; source?: 'labs' | 'shops' | 'all' }) {
   const catalogRevision = useCatalogRevision();
+  const source = typeof optionsOrFilter === 'object' ? optionsOrFilter.source ?? 'labs' : 'labs';
   const initialFilmFilter = typeof optionsOrFilter === 'string' ? optionsOrFilter : optionsOrFilter?.filmStockQuery;
   const [userCoords, setUserCoords] = useState<UserCoordinates>({
     lat: HANOI_DEFAULT_COORDS.lat,
@@ -71,12 +72,15 @@ export function useNearestLabs(optionsOrFilter?: string | { filmStockQuery?: str
 
   useEffect(() => {
     let active = true;
-    const apiBase = import.meta.env.VITE_API_URL || '';
-    fetch(`${apiBase}/api/labs`).then(async (response) => {
-      if (!response.ok) throw new Error(`Lỗi tải lab (${response.status})`);
+    const apiBase = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
+    const sources = source === 'all' ? ['labs', 'shops'] as const : [source];
+    Promise.all(sources.map(async (catalog) => {
+      const response = await fetch(`${apiBase}${catalog === 'shops' ? '/api/film-shops' : '/api/labs'}`);
+      if (!response.ok) throw new Error(`Lỗi tải ${catalog} (${response.status})`);
       const rows: unknown = await response.json();
-      if (!Array.isArray(rows)) return { labs: [] as FilmLab[], areaOnlyShops: [] as ServiceListing[] };
-      const records = rows as Record<string, unknown>[];
+      return Array.isArray(rows) ? rows.map((row: Record<string, unknown>) => ({ ...row, category: catalog === 'shops' ? 'filmShop' : 'filmLab' })) : [];
+    })).then((batches) => {
+      const records: Record<string, unknown>[] = batches.flat();
       const hasMapCoordinates = (row: Record<string, unknown>) => {
         const lat = Number(row.lat);
         const lng = Number(row.lng);
@@ -87,8 +91,7 @@ export function useNearestLabs(optionsOrFilter?: string | { filmStockQuery?: str
         try { const parsed = typeof value === 'string' ? JSON.parse(value) : value; return Array.isArray(parsed) ? parsed.map(String) : []; }
         catch { return []; }
       };
-      const areaOnlyShops = records.filter((row) => !hasMapCoordinates(row)
-        && (Number(row.min_roll_price ?? row.minRollPrice) > 0 || Number(row.max_roll_price ?? row.maxRollPrice) > 0))
+      const areaOnlyShops = records.filter((row) => row.category === 'filmShop' && !hasMapCoordinates(row))
         .map((row): ServiceListing => {
           let locations = row.locations;
           if (typeof locations === 'string') {
@@ -119,7 +122,7 @@ export function useNearestLabs(optionsOrFilter?: string | { filmStockQuery?: str
         const minRollPrice = Number(row.min_roll_price) || 0;
         const maxRollPrice = Number(row.max_roll_price) || 0;
         return {
-          id: String(row.id), name: String(row.name || ''), slogan: String(row.slogan || ''), address, district: String(row.district || ''), ward: String(row.ward || ''), lat, lng,
+          id: String(row.id), category: row.category === 'filmShop' ? 'filmShop' : 'filmLab', name: String(row.name || ''), slogan: String(row.slogan || ''), address, district: String(row.district || ''), ward: String(row.ward || ''), lat, lng,
           openingHours: String(row.opening_hours || row.openingHours || ''),
 
           availableFilms, phone, zaloUrl: phone ? `https://zalo.me/${phone.replace(/\D/g, '')}` : '',
@@ -137,7 +140,7 @@ export function useNearestLabs(optionsOrFilter?: string | { filmStockQuery?: str
     }).then(({ labs, areaOnlyShops: shops }) => { if (active) { setFilmLabs(labs); setAreaOnlyShops(shops); } })
       .catch((error: unknown) => { console.warn('Không tải được dữ liệu lab từ D1.', error); if (active) { setFilmLabs([]); setAreaOnlyShops([]); } });
     return () => { active = false; };
-  }, [catalogRevision]);
+  }, [catalogRevision, source]);
 
   // Update filmFilter if prop changes
   useEffect(() => {

@@ -1,5 +1,6 @@
 export interface FilmLab {
   id: string;
+  category?: 'filmLab' | 'filmShop';
   name: string;
   slogan?: string;
   address: string;

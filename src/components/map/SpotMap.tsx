@@ -60,6 +60,7 @@ export const SpotMap: React.FC<SpotMapProps> = ({
   const markersLayerRef = useRef<L.LayerGroup | null>(null);
   const filmLabsLayerRef = useRef<L.LayerGroup | null>(null);
   const userMarkerRef = useRef<L.Marker | null>(null);
+  const selectedFilmMarkerRef = useRef<L.Marker | null>(null);
 
   const CARTO_DEFAULT_KEY = 'cb1_469u_1_6a12a7c07d0c9adf82fe0c70';
 
@@ -88,14 +89,18 @@ export const SpotMap: React.FC<SpotMapProps> = ({
       if (!response.ok) throw new Error(`Lỗi tải lab (${response.status})`);
       const rows: unknown = await response.json();
       if (!Array.isArray(rows)) return [];
-      return rows.map((value) => {
+      return rows.flatMap((value) => {
         const row = value as Record<string, unknown>;
+        const lat = Number(row.lat);
+        const lng = Number(row.lng);
+        if (row.lat == null || row.lng == null || String(row.lat).trim() === '' || String(row.lng).trim() === ''
+          || !Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) return [];
         const address = String(row.address || '');
         let availableFilms: string[] = [];
         try { const stock = typeof row.in_stock_films === 'string' ? JSON.parse(row.in_stock_films) : row.inStockFilms; if (Array.isArray(stock)) availableFilms = stock.map(String); } catch { availableFilms = []; }
-        return { id: String(row.id), name: String(row.name || ''), address, district: String(row.district || ''), lat: Number(row.lat) || 0, lng: Number(row.lng) || 0,
+        return [{ id: String(row.id), name: String(row.name || ''), address, district: String(row.district || ''), lat, lng,
           openingHours: String(row.opening_hours || ''), availableFilms, phone: String(row.hotline || ''),
-          fanpageUrl: String(row.fanpage_url || ''), googleMapsUrl: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`, services: [] } satisfies FilmLab;
+          fanpageUrl: String(row.fanpage_url || ''), googleMapsUrl: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`, services: [] } satisfies FilmLab];
       });
     }).then((rows) => { if (active) setD1FilmLabs(rows); })
       .catch((error: unknown) => { console.warn('Không tải được lab cho bản đồ từ D1.', error); if (active) setD1FilmLabs([]); });
@@ -382,7 +387,7 @@ export const SpotMap: React.FC<SpotMapProps> = ({
 
     const labs = filmLabs || d1FilmLabs;
     labs.forEach((lab) => {
-      const isSelected = selectedFilmLab?.id === lab.id;
+      const isSelected = selectedFilmLab?.id === lab.id && (selectedFilmLab.category || 'filmLab') === (lab.category || 'filmLab');
 
       const labIconHtml = `
         <div class="relative cursor-pointer transition-transform hover:scale-125 ${isSelected ? 'scale-125 z-50' : 'z-30'}" title="${lab.name} - ${lab.address}">
@@ -411,6 +416,28 @@ export const SpotMap: React.FC<SpotMapProps> = ({
       marker.addTo(filmLabsLayerRef.current!);
     });
   }, [filmLabs, d1FilmLabs, selectedFilmLab, onSelectFilmLab, showFilmLabs]);
+
+  // A shop selected from a drawer remains visible without joining the normal Lab overlay.
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    selectedFilmMarkerRef.current?.remove();
+    selectedFilmMarkerRef.current = null;
+    if (!map || !selectedFilmLab) return;
+    const { lat, lng } = selectedFilmLab;
+    if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) return;
+    const inOverlay = showFilmLabs && (filmLabs || d1FilmLabs).some(lab => lab.id === selectedFilmLab.id
+      && (lab.category || 'filmLab') === (selectedFilmLab.category || 'filmLab'));
+    if (inOverlay) return;
+    const icon = L.divIcon({
+      className: 'selected-film-location-marker',
+      html: '<div style="background:#FAF8F4;border:3px solid #C76B3C;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;color:#C76B3C"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 3v18M17 3v18M3 8h4M3 16h4M17 8h4M17 16h4"/></svg></div>',
+      iconSize: [36, 36], iconAnchor: [18, 36],
+    });
+    const marker = L.marker([lat, lng], { icon, title: selectedFilmLab.name, zIndexOffset: 1000 })
+      .on('click', () => onSelectFilmLab?.(selectedFilmLab)).addTo(map);
+    selectedFilmMarkerRef.current = marker;
+    return () => { marker.remove(); selectedFilmMarkerRef.current = null; };
+  }, [selectedFilmLab, showFilmLabs, filmLabs, d1FilmLabs, onSelectFilmLab]);
 
   // Handle focused coordinates (e.g. fly to film lab on map)
   useEffect(() => {

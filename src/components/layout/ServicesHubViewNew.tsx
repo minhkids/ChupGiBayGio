@@ -63,10 +63,8 @@ export const ServicesHubView: React.FC<Props> = ({ onClose }) => {
     return (!query || [x.name, x.description, ...(x.tags || [])].some((v) => v?.toLowerCase().includes(query)))
       && (budget === 'all' || (budget === 'under500' && price > 0 && price < 500000) || (budget === '500to1000' && price >= 500000 && price <= 1000000) || (budget === 'above1000' && price > 1000000));
   }), [items, personQuery, budget]);
-  const allLabs = items.filter((x) => x.category === 'filmLab');
-  const hasRetailPrice = (item: ServiceListing) => Boolean(item.price?.trim()) || Number(item.minRollPrice) > 0 || Number(item.maxRollPrice) > 0;
-  const labs = allLabs.filter((item) => !hasRetailPrice(item));
-  const filmShops = allLabs.filter(hasRetailPrice);
+  const labs = items.filter((x) => x.category === 'filmLab');
+  const filmShops = items.filter((x) => x.category === 'filmShop');
   const directoryItems = activeTab === 'labs' ? labs : filmShops;
   const getAreas = (item: ServiceListing) => activeTab === 'film' ? filmShopLocations(item) : [{ ward: item.ward || '', district: item.district || '', openingHours: item.openingHours }];
   const allAreas = directoryItems.flatMap((item) => getAreas(item));

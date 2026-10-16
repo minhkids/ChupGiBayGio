@@ -42,7 +42,7 @@ export const NearestFilmShopsDrawer: React.FC<NearestFilmShopsDrawerProps> = ({
     filmFilter,
     setFilmFilter,
     requestLocation
-  } = useNearestLabs(initialFilterFilm);
+  } = useNearestLabs({ filmStockQuery: initialFilterFilm, source: 'all' });
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedAreaOnlyShop, setSelectedAreaOnlyShop] = useState<ServiceListing | null>(null);

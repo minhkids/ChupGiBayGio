@@ -5,7 +5,7 @@ import { ShootServicesHubDrawer } from './ShootServicesHubDrawer';
 import { ShootPlanProvider } from '../../context/ShootPlanContext';
 
 describe('ShootServicesHubDrawer', () => {
-  afterEach(cleanup);
+  afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
   it('renders a dedicated, full-width services page layout', () => {
     render(
@@ -52,17 +52,18 @@ describe('ShootServicesHubDrawer', () => {
   });
 
   it('shows area-only shops and the same compact express badge in the mobile Mua film tab', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify([{
+    const fetcher = vi.fn(async (url: string) => Response.json(url === '/api/film-shops' ? [{
       id: 'mapped-mobile-shop', name: 'Shop có ghim', ward: 'Bồ Đề', district: 'Long Biên',
       address: 'Bồ Đề, Long Biên, Hà Nội', lat: 21.04, lng: 105.88, min_roll_price: 65000, max_roll_price: 0,
       in_stock_films: '["Fuji 200"]', express_delivery_2h: 1,
       locations: [{ ward: 'Bồ Đề', district: 'Long Biên' }],
     }, {
       id: 'area-only-mobile-shop', name: 'Shop Hà Nội', ward: 'Cửa Nam', district: 'Hoàn Kiếm',
-      address: 'Cửa Nam, Hoàn Kiếm, Hà Nội', lat: null, lng: null, min_roll_price: 50000, max_roll_price: 0,
+      address: 'Cửa Nam, Hoàn Kiếm, Hà Nội', lat: null, lng: null, min_roll_price: 0, max_roll_price: 0,
       cheapest_roll_name: 'Kodak Gold 200', in_stock_films: '["Kodak Gold 200"]', express_delivery_2h: 1,
       locations: [{ ward: 'Cửa Nam', district: 'Hoàn Kiếm' }],
-    }]), { status: 200 })));
+    }] : url === '/api/labs' ? [{ id: 'not-a-shop', name: 'Không phải shop', lat: 21.03, lng: 105.85, min_roll_price: 80000 }] : []));
+    vi.stubGlobal('fetch', fetcher);
     render(<ShootPlanProvider><ShootServicesHubDrawer isOpen onClose={() => undefined} /></ShootPlanProvider>);
     fireEvent.click(screen.getByRole('button', { name: /mua film/i }));
 
@@ -70,5 +71,8 @@ describe('ShootServicesHubDrawer', () => {
     expect(screen.getAllByRole('img', { name: 'Giao hỏa tốc trong 2 giờ' })).toHaveLength(2);
     expect(screen.getAllByRole('img', { name: 'Giao hỏa tốc trong 2 giờ' }).every((badge) => badge.textContent === '2h')).toBe(true);
     expect(screen.getByText(/Cửa Nam, Hoàn Kiếm, Hà Nội/)).toBeTruthy();
+    expect(screen.queryByText('Không phải shop')).toBeNull();
+    expect(fetcher.mock.calls.map(([url]) => url)).toContain('/api/film-shops');
+    expect(fetcher.mock.calls.map(([url]) => url)).not.toContain('/api/labs');
   });
 });

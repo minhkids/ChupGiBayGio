@@ -27,11 +27,11 @@ describe('Services Hub admin API', () => {
     const locations = [{ ward: 'Cửa Nam', district: 'Hoàn Kiếm', openingHours: '09:00–18:00' }, { ward: 'Dịch Vọng', district: 'Cầu Giấy', openingHours: '10:00–20:00' }];
     vi.spyOn(env.DB, 'prepare').mockImplementation((sql: string) => ({
       bind() { return this; },
-      async all() { return { results: sql.includes("FROM film_labs WHERE status = 'published'") ? [{ id: 'multi', name: 'Tiệm Film', min_roll_price: 50000, max_roll_price: 0, locations: JSON.stringify(locations) }] : [] }; },
+      async all() { return { results: sql.includes("FROM film_shops WHERE status = 'published'") ? [{ id: 'multi', name: 'Tiệm Film', min_roll_price: 50000, max_roll_price: 0, locations: JSON.stringify(locations) }] : [] }; },
     }) as unknown as D1PreparedStatement);
     const response = await worker.request('/api/services', {}, env);
     expect(response.status).toBe(200);
-    expect((await response.json()).find((item: { id: string }) => item.id === 'multi')).toMatchObject({ category: 'filmLab', locations });
+    expect((await response.json()).find((item: { id: string }) => item.id === 'multi')).toMatchObject({ category: 'filmShop', locations });
   });
 
   it('requires a signed admin session for listing or changing directory entries', async () => {
@@ -146,19 +146,20 @@ describe('Services Hub admin API', () => {
     const locations = [{ ward: 'Cửa Nam', district: 'Hoàn Kiếm', openingHours: '09:00–18:00' }, { ward: 'Dịch Vọng', district: 'Cầu Giấy', openingHours: '10:00–20:00' }];
     const body = { adminCategory: 'filmShop', name: 'Tiệm Film', locations, inStockFilms: ['Kodak Gold 200'], cheapestRollName: 'Kodak Gold 200', minRollPrice: 50000, maxRollPrice: 150000, expressDelivery2h: true };
 
-    const created = await worker.request('/api/admin/labs', { method: 'POST', headers, body: JSON.stringify(body) }, env);
+    const created = await worker.request('/api/admin/film-shops', { method: 'POST', headers, body: JSON.stringify(body) }, env);
     expect(created.status).toBe(201);
-    const updated = await worker.request('/api/admin/cms/labs/shop-1', { method: 'PUT', headers, body: JSON.stringify(body) }, env);
+    const updated = await worker.request('/api/admin/cms/filmShops/shop-1', { method: 'PUT', headers, body: JSON.stringify(body) }, env);
     expect(updated.status).toBe(200);
 
     expect(writes).toHaveLength(2);
+    expect(writes.every(({ sql }) => sql.includes('film_shops'))).toBe(true);
     expect(writes.every(({ sql }) => sql.includes('min_roll_price') && sql.includes('max_roll_price') && sql.includes('cheapest_roll_name'))).toBe(true);
     expect(writes[0].values).toEqual(expect.arrayContaining([50000, 150000, 'Kodak Gold 200']));
     expect(writes.every(({ sql }) => sql.includes('locations'))).toBe(true);
     expect(writes.every(({ sql }) => sql.includes('express_delivery_2h'))).toBe(true);
     expect(writes.every(({ values }) => values.includes(1))).toBe(true);
     expect(writes[0].values).toContain(JSON.stringify(locations));
-    const excessive = await worker.request('/api/admin/labs', { method: 'POST', headers, body: JSON.stringify({ ...body, locations: [...locations, ...locations.slice(0, 2)] }) }, env);
+    const excessive = await worker.request('/api/admin/film-shops', { method: 'POST', headers, body: JSON.stringify({ ...body, locations: [...locations, ...locations.slice(0, 2)] }) }, env);
     expect(excessive.status).toBe(400);
   });
 

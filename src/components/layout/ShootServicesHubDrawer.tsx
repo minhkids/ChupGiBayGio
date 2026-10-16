@@ -78,7 +78,7 @@ export const ShootServicesHubDrawer: React.FC<ShootServicesHubDrawerProps> = ({
   // Tab 3 (Film Labs) State
   const [filmSearch, setFilmSearch] = useState('');
   const { labs, areaOnlyShops, userCoords, isFallback, isLocating, refreshLocation } = useNearestLabs({
-    filmStockQuery: filmSearch
+    filmStockQuery: filmSearch, source: 'shops'
   });
   const filteredAreaOnlyShops = areaOnlyShops.filter((shop) => !filmSearch.trim()
     || [shop.name, shop.slogan, ...(shop.filmStocks || []), ...(shop.locations || []).flatMap((location) => [location.ward, location.district])]

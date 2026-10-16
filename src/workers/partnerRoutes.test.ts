@@ -82,7 +82,7 @@ describe('public partner registration', () => {
     const env = environment({
       photographers: [{ id: 'p-1', name: 'Minh Studio', status: 'published', address: '15 Ngọc Thụy, Hà Nội', district: 'Long Biên', styles: '["MàuFilm"]', preferred_spots: '["Hồ Tây"]', portfolio_photos: '["https://example.com/a.jpg"]' }],
       photographer_packages: [{ id: 'pkg-1', photographer_id: 'p-1', name: 'Ngoại cảnh', price: 600000 }],
-      film_labs: [
+      film_shops: [
         { id: 'lab-1', name: 'Film Shop', slogan: 'Film đẹp cho mọi khoảnh khắc', address: '36 Lý Quốc Sư', ward: 'Cửa Nam', district: 'Hoàn Kiếm', status: 'published', in_stock_films: '["Kodak Gold 200"]', product_image_url: 'https://example.com/product.jpg', cheapest_roll_name: 'Kodak Gold 200', min_roll_price: 125000, max_roll_price: 350000, express_delivery_2h: 1 },
         { id: 'lab-min-only', name: 'Shop chỉ biết giá rẻ nhất', ward: 'Cửa Nam', district: 'Hoàn Kiếm', status: 'published', in_stock_films: '["Kodak Gold 200"]', cheapest_roll_name: 'Kodak Gold 200', min_roll_price: 50000, max_roll_price: 0 },
       ],
@@ -94,10 +94,10 @@ describe('public partner registration', () => {
     expect(directory.status).toBe(200);
     const directoryData = await directory.json();
     expect(directoryData).toContainEqual(expect.objectContaining({ id: 'p-1', category: 'photographer', shootSpots: ['Hồ Tây'], address: '15 Ngọc Thụy, Hà Nội', district: 'Long Biên' }));
-    expect(directoryData).toContainEqual(expect.objectContaining({ id: 'lab-1', category: 'filmLab', slogan: 'Film đẹp cho mọi khoảnh khắc', address: 'Cửa Nam, Hoàn Kiếm, Hà Nội', ward: 'Cửa Nam', district: 'Hoàn Kiếm', productImageUrl: 'https://example.com/product.jpg', cheapestRollName: 'Kodak Gold 200', minRollPrice: 125000, maxRollPrice: 350000, price: '125.000đ – 350.000đ/cuộn', expressDelivery2h: true }));
+    expect(directoryData).toContainEqual(expect.objectContaining({ id: 'lab-1', category: 'filmShop', slogan: 'Film đẹp cho mọi khoảnh khắc', address: 'Cửa Nam, Hoàn Kiếm, Hà Nội', ward: 'Cửa Nam', district: 'Hoàn Kiếm', productImageUrl: 'https://example.com/product.jpg', cheapestRollName: 'Kodak Gold 200', minRollPrice: 125000, maxRollPrice: 350000, price: '125.000đ – 350.000đ/cuộn', expressDelivery2h: true }));
     expect(directoryData).toContainEqual(expect.objectContaining({ id: 'lab-min-only', minRollPrice: 50000, maxRollPrice: 0, price: 'Từ 50.000đ/cuộn' }));
-    const labs = await worker.request('/api/labs', {}, environment({ film_labs: [{ id: 'lab-1', name: 'Film Shop', address: '36 Lý Quốc Sư', ward: 'Cửa Nam', district: 'Hoàn Kiếm', status: 'published', express_delivery_2h: 1 }] }));
-    expect(await labs.json()).toMatchObject([{ id: 'lab-1', address: 'Cửa Nam, Hoàn Kiếm, Hà Nội', ward: 'Cửa Nam', expressDelivery2h: true }]);
+    const shops = await worker.request('/api/film-shops', {}, env);
+    expect(await shops.json()).toMatchObject([{ id: 'lab-1', address: 'Cửa Nam, Hoàn Kiếm, Hà Nội', ward: 'Cửa Nam', expressDelivery2h: true }, { id: 'lab-min-only' }]);
   });
   it('publishes a photographer with package and persisted portfolio images', async () => {
     const env = environment();
@@ -141,7 +141,7 @@ describe('public partner registration', () => {
       const response = await submit('/api/partner/register-lab', { name: 'Lab Hà Nội', ward: 'Cửa Nam', district: 'Hoàn Kiếm', phone: '0912345678', filmStocks: ['Kodak Gold 200'], cheapestRollName: 'Kodak Gold 200', minRollPrice: 120000, maxRollPrice: 340000, expressDelivery2h: true }, [jpg()], env);
       expect(response.status).toBe(201);
       expect(fetchMock).not.toHaveBeenCalled();
-      const insert = env.writes.find(({ sql }) => sql.includes('INSERT INTO film_labs'));
+      const insert = env.writes.find(({ sql }) => sql.includes('INSERT INTO film_shops'));
       expect(insert?.sql).toContain('ward');
       expect(insert?.sql).toContain('cheapest_roll_name');
       expect(insert?.sql).toContain('express_delivery_2h');
@@ -164,7 +164,7 @@ describe('public partner registration', () => {
       cheapestRollName: 'Kodak Gold 200', minRollPrice: 120000,
     }, [], env);
     expect(response.status).toBe(201);
-    const insert = env.writes.find(({ sql }) => sql.includes('INSERT INTO film_labs'));
+    const insert = env.writes.find(({ sql }) => sql.includes('INSERT INTO film_shops'));
     expect(insert?.sql).toContain('locations');
     expect(insert?.values).toContain(JSON.stringify(locations));
     expect(insert?.values).toContain('Cửa Nam');
@@ -217,7 +217,7 @@ describe('public partner registration', () => {
       filmStocks: ['Kodak Gold 200'], cheapestRollName: 'Kodak Gold 200', minRollPrice: 120000,
     }, [], env);
     expect(response.status).toBe(201);
-    const insert = env.writes.find(({ sql }) => sql.includes('INSERT INTO film_labs'));
+    const insert = env.writes.find(({ sql }) => sql.includes('INSERT INTO film_shops'));
     expect(insert?.values).toContain(120000);
     expect(insert?.values).toContain(0);
   });
@@ -229,7 +229,7 @@ describe('public partner registration', () => {
     form.set('productPhoto', jpg());
     const response = await worker.request('/api/partner/register-lab', { method: 'POST', headers: { Origin: 'https://chupgibaygio.com' }, body: form }, env);
     expect(response.status).toBe(201);
-    const insert = env.writes.find(({ sql }) => sql.includes('INSERT INTO film_labs'));
+    const insert = env.writes.find(({ sql }) => sql.includes('INSERT INTO film_shops'));
     expect(insert?.sql).toContain('product_image_url');
     expect(insert?.sql).toContain('cheapest_roll_name');
     expect(insert?.sql).toContain('min_roll_price');
@@ -270,7 +270,7 @@ describe('public partner registration', () => {
         phone: '0912345678', filmStocks: ['Kodak Gold 200'], cheapestRollName: 'Kodak Gold 200', minRollPrice: 120000, maxRollPrice: 340000,
       }, [], env);
       expect(response.status).toBe(201);
-      const insert = env.writes.find(({ sql }) => sql.includes('INSERT INTO film_labs'));
+      const insert = env.writes.find(({ sql }) => sql.includes('INSERT INTO film_shops'));
       expect(insert?.sql).toContain('slogan');
       expect(insert?.values).toContain('a'.repeat(50));
       expect(insert?.values).toContain('Cửa Nam');

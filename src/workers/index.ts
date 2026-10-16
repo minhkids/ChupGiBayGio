@@ -335,13 +335,14 @@ app.get('/api/services', async (c) => {
   ).all();
   const legacy = (results || []).map((row) => mapServiceRow(row as Record<string, unknown>));
   const db = getD1(c.env);
-  const [rentalRows, outfitRows, photographerRows, packageRows, filmRows, labRows] = await Promise.all([
+  const [rentalRows, outfitRows, photographerRows, packageRows, filmRows, labRows, shopRows] = await Promise.all([
     db.prepare('SELECT * FROM rental_shops ORDER BY created_at DESC').all(),
     db.prepare('SELECT * FROM outfits ORDER BY created_at DESC').all(),
     db.prepare("SELECT * FROM photographers WHERE status = 'published' ORDER BY created_at DESC").all(),
     db.prepare('SELECT * FROM photographer_packages ORDER BY rowid').all(),
     db.prepare('SELECT * FROM film_rolls ORDER BY created_at DESC').all(),
-    db.prepare("SELECT * FROM film_labs WHERE status = 'published' ORDER BY created_at DESC").all()
+    db.prepare("SELECT * FROM film_labs WHERE status = 'published' ORDER BY created_at DESC").all(),
+    db.prepare("SELECT * FROM film_shops WHERE status = 'published' ORDER BY created_at DESC").all()
   ]);
   const rows = (value: unknown) => Array.isArray(value) ? value as Record<string, unknown>[] : [];
   const packages = rows(packageRows.results);
@@ -354,7 +355,10 @@ app.get('/api/services', async (c) => {
       return { ...mapFields(row, { description: 'bio', address: 'address', district: 'district', imageUrl: 'avatar_url', phone: 'phone', link: 'instagram', gearBody: 'gear_body', gearLens: 'gear_lens' }), id: row.id, name: row.name, category: 'photographer', price: firstPackage?.price ? String(firstPackage.price) : '', tags: parseJsonField(String(row.styles || '[]'), []), shootSpots: parseJsonField(String(row.preferred_spots || '[]'), []), portfolioPhotos: parseJsonField(String(row.portfolio_photos || '[]'), []), packages: packages.filter((pkg) => pkg.photographer_id === row.id).map((pkg) => ({ id: pkg.id, name: pkg.name, price: pkg.price, duration: pkg.duration, deliveredPhotos: pkg.delivered_photos, deliveredPhotosText: pkg.delivered_photos_text })) };
     }),
     ...rows(filmRows.results).map((row) => ({ ...mapFields(row, { iso: 'iso', recommendedTime: 'tone', filmImageUrl: 'package_image_url', imageUrl: 'sample_image_url' }), id: row.id, name: row.name, category: 'filmColor', tags: parseJsonField(String(row.suitable_seasons || '[]'), []) })),
-    ...rows(labRows.results).map((row) => {
+    ...[
+      ...rows(labRows.results).map(row => ({ ...row, category: 'filmLab' })),
+      ...rows(shopRows.results).map(row => ({ ...row, category: 'filmShop' })),
+    ].map((row: Record<string, unknown>) => {
       const minRollPrice = Number(row.min_roll_price) || 0;
       const maxRollPrice = Number(row.max_roll_price) || 0;
       const price = minRollPrice > 0 && maxRollPrice > 0
@@ -369,7 +373,7 @@ app.get('/api/services', async (c) => {
         expressDelivery2h: Boolean(row.express_delivery_2h),
         address: area, ward, district,
         locations: locations.length ? locations : [{ ward, district, openingHours: String(row.opening_hours || '') }],
-        id: row.id, name: row.name, category: 'filmLab', price, filmStocks: parseJsonField(String(row.in_stock_films || '[]'), [])
+        id: row.id, name: row.name, category: row.category, price, filmStocks: parseJsonField(String(row.in_stock_films || '[]'), []), services: parseJsonField(String(row.services || '[]'), [])
       };
     })
   ];
@@ -381,16 +385,18 @@ app.get('/api/films', async (c) => {
   return c.json(results || []);
 });
 
-app.get('/api/labs', async (c) => {
-  const { results } = await getD1(c.env).prepare("SELECT * FROM film_labs WHERE status = 'published' ORDER BY created_at DESC").all();
-  return c.json((results || []).map((value) => {
-    const row = value as Record<string, unknown>;
-    const ward = String(row.ward || '');
-    const district = String(row.district || '');
-    const locations = parseJsonField(String(row.locations || '[]'), []);
-    return { ...row, expressDelivery2h: Boolean(row.express_delivery_2h), ward, address: [ward, district, 'Hà Nội'].filter(Boolean).join(', '), locations: locations.length ? locations : [{ ward, district, openingHours: String(row.opening_hours || '') }] };
-  }));
-});
+for (const [path, table] of [['/api/labs', 'film_labs'], ['/api/film-shops', 'film_shops']] as const) {
+  app.get(path, async (c) => {
+    const { results } = await getD1(c.env).prepare(`SELECT * FROM ${table} WHERE status = 'published' ORDER BY created_at DESC`).all();
+    return c.json((results || []).map((value) => {
+      const row = value as Record<string, unknown>;
+      const ward = String(row.ward || '');
+      const district = String(row.district || '');
+      const locations = parseJsonField(String(row.locations || '[]'), []);
+      return { ...row, expressDelivery2h: Boolean(row.express_delivery_2h), ward, address: [ward, district, 'Hà Nội'].filter(Boolean).join(', '), locations: locations.length ? locations : [{ ward, district, openingHours: String(row.opening_hours || '') }] };
+    }));
+  });
+}
 
 app.get('/api/outfits', async (c) => {
   const { results } = await getD1(c.env).prepare('SELECT * FROM outfits ORDER BY created_at DESC').all();

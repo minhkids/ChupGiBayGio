@@ -28,7 +28,7 @@ describe('ServicesHubView', () => {
     window.history.replaceState(null, '', '/?services=film&partner=film-shop-1');
     Element.prototype.scrollIntoView = vi.fn();
     vi.mocked(serviceHubApi.list).mockResolvedValueOnce([{
-      id: 'film-shop-1', category: 'filmLab', name: 'Shop Film', slogan: 'Film đẹp cho mọi khoảnh khắc',
+      id: 'film-shop-1', category: 'filmShop', name: 'Shop Film', slogan: 'Film đẹp cho mọi khoảnh khắc',
       address: 'Cửa Nam, Hoàn Kiếm, Hà Nội', ward: 'Cửa Nam', district: 'Hoàn Kiếm', phone: '0912345678', link: 'https://example.com/shop', filmStocks: ['Kodak Gold 200'],
       minRollPrice: 50000, maxRollPrice: 200000, cheapestRollName: 'Kodak Gold 200', price: '50.000đ – 200.000đ/cuộn',
     }]);
@@ -47,7 +47,7 @@ describe('ServicesHubView', () => {
 
   it('shows the shop photo on the film card and the price-list image first in details', async () => {
     vi.mocked(serviceHubApi.list).mockResolvedValueOnce([{
-      id: 'film-shop-1', category: 'filmLab', name: 'Shop Film', address: '36 Lý Quốc Sư',
+      id: 'film-shop-1', category: 'filmShop', name: 'Shop Film', address: '36 Lý Quốc Sư',
       imageUrl: 'https://example.com/shop.jpg',
       productImageUrl: 'https://chupgibaygio.com/api/partner/images/partner/lab/shop/photo.jpg',
       price: '125.000đ – 350.000đ/cuộn', filmStocks: ['Kodak Gold 200'],
@@ -66,7 +66,7 @@ describe('ServicesHubView', () => {
 
   it('shows phone contact only after opening the shop detail', async () => {
     vi.mocked(serviceHubApi.list).mockResolvedValueOnce([{
-      id: 'film-shop-phone-only', category: 'filmLab', name: 'Shop gọi điện', phone: '0912345678', minRollPrice: 50000,
+      id: 'film-shop-phone-only', category: 'filmShop', name: 'Shop gọi điện', phone: '0912345678', minRollPrice: 50000,
     }]);
     renderView();
     fireEvent.click(screen.getByRole('button', { name: 'Mua film' }));
@@ -81,7 +81,7 @@ describe('ServicesHubView', () => {
 
   it('opens complete shop details with contact and phone while hiding the street address', async () => {
     vi.mocked(serviceHubApi.list).mockResolvedValueOnce([{
-      id: 'film-shop-detail', category: 'filmLab', name: 'Tiệm Film Chi Tiết', slogan: 'Film đẹp mỗi ngày',
+      id: 'film-shop-detail', category: 'filmShop', name: 'Tiệm Film Chi Tiết', slogan: 'Film đẹp mỗi ngày',
       address: '123 Đường Mẫu, Cửa Nam, Hoàn Kiếm', ward: 'Cửa Nam', district: 'Hoàn Kiếm',
       phone: '0912345678', link: 'https://example.com/film-shop', openingHours: '09:00–20:00',
       description: 'Có film màu và film đen trắng.', imageUrl: 'https://example.com/shop.jpg',
@@ -115,7 +115,7 @@ describe('ServicesHubView', () => {
 
   it('shows a clear image fallback when a shop photo fails to load', async () => {
     vi.mocked(serviceHubApi.list).mockResolvedValueOnce([{
-      id: 'film-shop-no-image', category: 'filmLab', name: 'Shop thiếu ảnh',
+      id: 'film-shop-no-image', category: 'filmShop', name: 'Shop thiếu ảnh',
       productImageUrl: 'https://example.com/missing.jpg', minRollPrice: 50000,
     }]);
     renderView();
@@ -131,7 +131,7 @@ describe('ServicesHubView', () => {
 
   it('hides the redundant shop heading and refresh action in the film-buying tab', async () => {
     vi.mocked(serviceHubApi.list).mockResolvedValueOnce([{
-      id: 'film-shop-1', category: 'filmLab', name: 'Shop Film', district: 'Hoàn Kiếm', filmStocks: ['Kodak Gold 200'], minRollPrice: 50000,
+      id: 'film-shop-1', category: 'filmShop', name: 'Shop Film', district: 'Hoàn Kiếm', filmStocks: ['Kodak Gold 200'], minRollPrice: 50000,
     }]);
     renderView();
     fireEvent.click(screen.getByRole('button', { name: 'Mua film' }));
@@ -144,13 +144,13 @@ describe('ServicesHubView', () => {
     expect(screen.getByRole('button', { name: 'Làm mới' })).toBeTruthy();
   });
 
-  it('shows seven unpriced labs and one priced shop without duplicates', async () => {
+  it('shows seven labs and one explicitly categorized shop without duplicates', async () => {
     const labs = Array.from({ length: 7 }, (_, index) => ({
       id: `lab-${index + 1}`, category: 'filmLab' as const, name: `Lab ${index + 1}`, district: 'Hoàn Kiếm',
       filmStocks: ['Kodak Gold 200'], services: ['Tráng C-41'], openingHours: '09:00–18:00',
     }));
     const shop = {
-      id: 'shop-1', category: 'filmLab' as const, name: 'Tiệm Film', district: 'Ba Đình',
+      id: 'shop-1', category: 'filmShop' as const, name: 'Tiệm Film', district: 'Ba Đình',
       filmStocks: ['Kodak Gold 200'], minRollPrice: 50000, maxRollPrice: 200000, price: '50.000đ – 200.000đ/cuộn',
     };
     vi.mocked(serviceHubApi.list).mockResolvedValueOnce([...labs, shop]);
@@ -168,11 +168,32 @@ describe('ServicesHubView', () => {
     expect(screen.queryByText('Lab 1')).toBeNull();
   });
 
+  it('keeps a priced lab and a zero-price shop for the same business in their own tabs', async () => {
+    window.history.replaceState(null, '', '/?services=labs');
+    vi.mocked(serviceHubApi.list).mockResolvedValueOnce([
+      { id: 'same-business-lab', category: 'filmLab', name: 'Cùng Tiệm', phone: '0912345678', services: ['Tráng riêng'], price: '80.000đ', minRollPrice: 80000 },
+      { id: 'same-business-shop', category: 'filmShop', name: 'Cùng Tiệm', phone: '0912345678', slogan: 'Bán riêng', minRollPrice: 0, maxRollPrice: 0 },
+    ]);
+    renderView();
+    expect(await screen.findByText('Tráng riêng')).toBeTruthy();
+    expect(screen.getAllByText('Cùng Tiệm')).toHaveLength(1);
+    expect(screen.getByRole('status').textContent).toBe('1 lab');
+    expect(screen.queryByText('Bán riêng')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Mua film' }));
+    expect(await screen.findByText('Bán riêng')).toBeTruthy();
+    expect(screen.getAllByText('Cùng Tiệm')).toHaveLength(1);
+    expect(screen.getByRole('status').textContent).toBe('1 shop');
+    expect(screen.queryByText('Tráng riêng')).toBeNull();
+    expect(screen.getAllByTestId('film-shop-card')).toHaveLength(1);
+    fireEvent.click(screen.getByRole('button', { name: 'Xem chi tiết Cùng Tiệm' }));
+    expect((await screen.findByRole('dialog', { name: 'Cùng Tiệm' })).textContent).toContain('0912345678');
+  });
+
   it('clears a district filter that does not exist in the other directory', async () => {
     vi.mocked(serviceHubApi.list).mockResolvedValueOnce([{
       id: 'lab-1', category: 'filmLab', name: 'Hoàn Kiếm Lab', district: 'Hoàn Kiếm',
     }, {
-      id: 'shop-1', category: 'filmLab', name: 'Ba Đình Film Shop', district: 'Ba Đình', minRollPrice: 50000,
+      id: 'shop-1', category: 'filmShop', name: 'Ba Đình Film Shop', district: 'Ba Đình', minRollPrice: 50000,
     }]);
     renderView();
     fireEvent.click(screen.getByRole('button', { name: 'Mua film' }));
@@ -190,7 +211,7 @@ describe('ServicesHubView', () => {
   it('shows the district selector as a labeled field and keeps the count aligned with the search', async () => {
     window.history.replaceState(null, '', '/?services=film');
     vi.mocked(serviceHubApi.list).mockResolvedValueOnce([{
-      id: 'film-shop-1', category: 'filmLab', name: 'Shop Film', district: 'Hoàn Kiếm', filmStocks: ['Kodak Gold 200'], minRollPrice: 50000,
+      id: 'film-shop-1', category: 'filmShop', name: 'Shop Film', district: 'Hoàn Kiếm', filmStocks: ['Kodak Gold 200'], minRollPrice: 50000,
     }]);
     renderView();
     const district = await screen.findByLabelText('Quận / huyện');
@@ -211,7 +232,7 @@ describe('ServicesHubView', () => {
   it('shows and filters film shops by ward and district without street addresses', async () => {
     window.history.replaceState(null, '', '/?services=film');
     vi.mocked(serviceHubApi.list).mockResolvedValueOnce([{
-      id: 'film-shop-1', category: 'filmLab', name: 'Shop Film', address: 'Cửa Nam, Hoàn Kiếm, Hà Nội',
+      id: 'film-shop-1', category: 'filmShop', name: 'Shop Film', address: 'Cửa Nam, Hoàn Kiếm, Hà Nội',
       ward: 'Cửa Nam', district: 'Hoàn Kiếm', filmStocks: ['Kodak Gold 200'], minRollPrice: 50000, maxRollPrice: 200000,
     }]);
     renderView();
@@ -226,7 +247,7 @@ describe('ServicesHubView', () => {
   it('filters one shop by any of its branch areas and shows every branch in its details', async () => {
     window.history.replaceState(null, '', '/?services=film');
     vi.mocked(serviceHubApi.list).mockResolvedValueOnce([{
-      id: 'multi-branch-shop', category: 'filmLab', name: 'Nhiều Chi Nhánh', minRollPrice: 50000,
+      id: 'multi-branch-shop', category: 'filmShop', name: 'Nhiều Chi Nhánh', minRollPrice: 50000,
       locations: [
         { ward: 'Cửa Nam', district: 'Hoàn Kiếm', openingHours: '09:00–18:00' },
         { ward: 'Dịch Vọng', district: 'Cầu Giấy', openingHours: '10:00–20:00' },

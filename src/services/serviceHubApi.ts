@@ -113,8 +113,24 @@ const parseJsonObject = <T extends Record<string, unknown>>(value: unknown, fall
 
 
 const tableFor: Record<ServiceCategory, string> = {
-  spot: 'spots', rental: 'rentalShops', outfit: 'outfits', photographer: 'photographers', filmLab: 'labs', filmShop: 'labs', filmColor: 'films'
+  spot: 'spots', rental: 'rentalShops', outfit: 'outfits', photographer: 'photographers', filmLab: 'labs', filmShop: 'filmShops', filmColor: 'films'
 };
+
+function mapFilmBusiness(row: Record<string, unknown>, category: 'filmLab' | 'filmShop'): ServiceListing {
+  return {
+    ...row, id: String(row.id), category, name: String(row.name || ''),
+    slogan: String(row.slogan || ''), cheapestRollName: String(row.cheapest_roll_name || ''),
+    address: category === 'filmLab' ? String(row.address || '') : [row.ward, row.district, 'Hà Nội'].filter(Boolean).join(', '),
+    ward: String(row.ward || ''), district: String(row.district || ''),
+    locations: parseJsonArray(row.locations) as FilmShopLocation[],
+    lat: row.lat == null ? undefined : Number(row.lat), lng: row.lng == null ? undefined : Number(row.lng),
+    imageUrl: String(row.image_url || ''), productImageUrl: String(row.product_image_url || ''),
+    minRollPrice: Number(row.min_roll_price) || 0, maxRollPrice: Number(row.max_roll_price) || 0,
+    link: String(row.fanpage_url || ''), phone: String(row.hotline || ''), openingHours: String(row.opening_hours || ''),
+    fastService: Boolean(row.fast_2h), expressDelivery2h: Boolean(row.express_delivery_2h),
+    filmStocks: parseList(row.in_stock_films), services: parseList(row.services),
+  };
+}
 
 function adminPayload(listing: ServiceListing) {
   if (listing.category === 'spot') return { name: listing.name, slug: listing.slug, regionId: listing.regionId, address: listing.address, district: listing.district, lat: listing.lat, lng: listing.lng, bestTimeOfDay: listing.bestTimeOfDay, bestTimeDescription: listing.bestTimeDescription, recommendedLenses: listing.recommendedLenses, conceptTags: listing.conceptTags, placeCategories: listing.placeCategories, bloomPercentage: listing.bloomPercentage, goldenHour: listing.goldenHour, bestMonths: listing.bestMonths, entryFee: listing.entryFee, parkingFee: listing.parkingFee, sourceUrl: listing.sourceUrl, coverImageUrl: listing.coverImageUrl, description: listing.description, spotStatus: listing.spotStatus, statusValidUntil: listing.statusValidUntil, upcoming: listing.upcoming, expectedMonths: listing.expectedMonths };
@@ -145,14 +161,15 @@ export async function request<T>(path: string, init?: RequestInit): Promise<T> {
 export const serviceHubApi = {
   list: () => request<ServiceListing[]>('/api/services'),
   adminList: async () => {
-    const [legacy, spots, rental, outfits, photographers, films, labs] = await Promise.all([
+    const [legacy, spots, rental, outfits, photographers, films, labs, filmShops] = await Promise.all([
       request<ServiceListing[]>('/api/admin/services'),
       request<Record<string, unknown>[]>('/api/admin/cms/spots'),
       request<Record<string, unknown>[]>('/api/admin/cms/rentalShops'),
       request<Record<string, unknown>[]>('/api/admin/cms/outfits'),
       request<Record<string, unknown>[]>('/api/admin/cms/photographers'),
       request<Record<string, unknown>[]>('/api/admin/cms/films'),
-      request<Record<string, unknown>[]>('/api/admin/cms/labs')
+      request<Record<string, unknown>[]>('/api/admin/cms/labs'),
+      request<Record<string, unknown>[]>('/api/admin/cms/filmShops')
     ]);
     return [
       ...spots.map((row) => {
@@ -192,7 +209,8 @@ export const serviceHubApi = {
       ...outfits.map((row) => ({ ...row, id: String(row.id), category: 'outfit' as const, spotId: String(row.spot_id || ''), name: String(row.name || ''), description: String(row.description || ''), price: String(row.estimated_price || ''), imageUrl: String(row.image_url || ''), link: String(row.shopee_url || ''), secondaryLink: String(row.tiktok_url || ''), material: String(row.material || ''), hotspots: parseJsonArray(row.hotspots) })),
       ...photographers.map((row) => ({ ...row, id: String(row.id), category: 'photographer' as const, name: String(row.name || ''), address: String(row.address || ''), district: String(row.district || ''), description: String(row.bio || ''), imageUrl: String(row.avatar_url || ''), phone: String(row.phone || ''), link: String(row.instagram || ''), tags: parseList(row.styles), shootSpots: parseList(row.preferred_spots), gearBody: String(row.gear_body || ''), gearLens: String(row.gear_lens || ''), portfolioPhotos: parseList(row.portfolio_photos), packages: Array.isArray(row.packages) ? row.packages as ServiceListing['packages'] : [] })),
       ...films.map((row) => ({ ...row, id: String(row.id), category: 'filmColor' as const, name: String(row.name || ''), iso: String(row.iso || ''), recommendedTime: String(row.tone || ''), filmImageUrl: String(row.package_image_url || ''), imageUrl: String(row.sample_image_url || ''), suitableSeasons: parseList(row.suitable_seasons) })),
-      ...labs.map((row) => ({ ...row, id: String(row.id), category: Number(row.min_roll_price) > 0 || Number(row.max_roll_price) > 0 ? 'filmShop' as const : 'filmLab' as const, name: String(row.name || ''), slogan: String(row.slogan || ''), cheapestRollName: String(row.cheapest_roll_name || ''), address: [row.ward, row.district, 'Hà Nội'].filter(Boolean).join(', '), ward: String(row.ward || ''), district: String(row.district || ''), locations: parseJsonArray(row.locations) as FilmShopLocation[], imageUrl: String(row.image_url || ''), productImageUrl: String(row.product_image_url || ''), minRollPrice: Number(row.min_roll_price) || 0, maxRollPrice: Number(row.max_roll_price) || 0, link: String(row.fanpage_url || ''), phone: String(row.hotline || ''), openingHours: String(row.opening_hours || ''), fastService: Boolean(row.fast_2h), expressDelivery2h: Boolean(row.express_delivery_2h), filmStocks: parseList(row.in_stock_films), services: parseList(row.services) })),
+      ...labs.map((row) => mapFilmBusiness(row, 'filmLab')),
+      ...filmShops.map((row) => mapFilmBusiness(row, 'filmShop')),
       ...legacy
     ] as ServiceListing[];
   },
@@ -225,7 +243,7 @@ export const serviceHubApi = {
     if (!response.ok) throw new Error(data?.error || `Tải ảnh thất bại (${response.status})`);
     return data;
   },
-  create: (listing: Omit<ServiceListing, 'id'>) => request<ServiceListing>(`/api/admin/${listing.category === 'spot' ? 'spots' : listing.category === 'rental' ? 'rental-shops' : listing.category === 'outfit' ? 'outfits' : listing.category === 'photographer' ? 'photographers' : listing.category === 'filmLab' || listing.category === 'filmShop' ? 'labs' : 'films'}`, {
+  create: (listing: Omit<ServiceListing, 'id'>) => request<ServiceListing>(`/api/admin/${listing.category === 'spot' ? 'spots' : listing.category === 'rental' ? 'rental-shops' : listing.category === 'outfit' ? 'outfits' : listing.category === 'photographer' ? 'photographers' : listing.category === 'filmLab' ? 'labs' : listing.category === 'filmShop' ? 'film-shops' : 'films'}`, {
     method: 'POST', body: JSON.stringify(adminPayload(listing as ServiceListing))
   }),
   update: (listing: ServiceListing) => request<ServiceListing>(`/api/admin/cms/${tableFor[listing.category]}/${encodeURIComponent(listing.id)}`, {
