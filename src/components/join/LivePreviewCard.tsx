@@ -30,7 +30,7 @@ export interface PartnerPreview {
 
 export function LivePreviewCard({ data }: { data: PartnerPreview }) {
   const lab = data.kind === 'lab';
-  const thumbnail = (lab ? data.image || data.productImage : data.portfolio?.[0] || data.image);
+  const thumbnail = (lab ? data.image : data.portfolio?.[0] || data.image);
   const branches = lab ? data.locations?.filter((item) => item.ward.trim() || item.district.trim()) || [] : [];
   const location = lab
     ? [data.ward, data.district, 'Hà Nội'].filter(Boolean).join(', ')
@@ -41,7 +41,7 @@ export function LivePreviewCard({ data }: { data: PartnerPreview }) {
   return <article data-testid="partner-preview" className="mx-auto w-full max-w-sm rounded-2xl border border-[#D8CFBD] bg-[#FAF8F4] p-4 text-[#2C2621] shadow-sm">
     <div className="flex items-start gap-3">
       <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#EAE1D1] sm:h-24 sm:w-24">
-        {thumbnail ? <img src={thumbnail} alt={lab ? `Ảnh film của ${data.name || 'shop'}` : `Ảnh của ${data.name || 'nhiếp ảnh gia'}`} className="h-full w-full object-cover" /> : (lab ? <Film aria-hidden="true" className="h-7 w-7 text-[#B28B72]" /> : <Camera aria-hidden="true" className="h-7 w-7 text-[#B28B72]" />)}
+        {thumbnail ? <img src={thumbnail} alt={lab ? `Ảnh shop ${data.name || ''}` : `Ảnh của ${data.name || 'nhiếp ảnh gia'}`} className="h-full w-full object-cover" /> : (lab ? <Film aria-hidden="true" className="h-7 w-7 text-[#B28B72]" /> : <Camera aria-hidden="true" className="h-7 w-7 text-[#B28B72]" />)}
       </div>
       <div className="min-w-0 flex-1">
         <p className="text-[10px] font-bold uppercase tracking-wide text-[#9A4F29]">{lab ? 'Shop bán film' : 'Nhiếp ảnh gia'}</p>
@@ -60,6 +60,7 @@ export function LivePreviewCard({ data }: { data: PartnerPreview }) {
       {!lab && data.packageName && <p className="leading-relaxed"><span className="font-semibold">{data.packageName}</span>{[data.packageDuration, data.packageDeliverables].filter(Boolean).length ? ` · ${[data.packageDuration, data.packageDeliverables].filter(Boolean).join(' · ')}` : ''}</p>}
       {!lab && !!data.shootSpots?.length && <p className="leading-relaxed">Khu vực chụp: {data.shootSpots.join(' · ')}</p>}
     </div>
+    {lab && data.productImage && <figure className="mt-3 overflow-hidden rounded-xl border border-[#D8CFBD] bg-white p-2"><figcaption className="mb-2 text-[10px] font-bold uppercase tracking-wide text-[#8B4828]">Bảng giá</figcaption><img src={data.productImage} alt={`Bảng giá của ${data.name || 'shop'}`} className="max-h-36 w-full rounded-lg object-contain" /></figure>}
     {data.phone && <a href={`tel:${data.phone.replace(/[^\d+]/g, '')}`} className="mt-3 flex min-h-10 items-center justify-center gap-2 rounded-xl bg-[#C76B3C] px-4 py-2 text-sm font-semibold text-white"><Phone aria-hidden="true" className="h-4 w-4" />Gọi {data.phone}</a>}
   </article>;
 }

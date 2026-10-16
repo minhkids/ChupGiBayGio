@@ -45,7 +45,7 @@ describe('ServicesHubView', () => {
     expect(shopCard.id).toBe('partner-film-shop-1');
   });
 
-  it('shows the shop photo on the film card and the description photo first in details', async () => {
+  it('shows the shop photo on the film card and the price-list image first in details', async () => {
     vi.mocked(serviceHubApi.list).mockResolvedValueOnce([{
       id: 'film-shop-1', category: 'filmLab', name: 'Shop Film', address: '36 Lý Quốc Sư',
       imageUrl: 'https://example.com/shop.jpg',
@@ -61,7 +61,7 @@ describe('ServicesHubView', () => {
     expect(screen.getByRole('img', { name: 'Ảnh shop Shop Film' }).getAttribute('src')).toBe('https://example.com/shop.jpg');
     fireEvent.click(screen.getByRole('button', { name: 'Xem chi tiết Shop Film' }));
     const detail = await screen.findByRole('dialog', { name: 'Shop Film' });
-    expect(within(detail).getByRole('img', { name: 'Film đang bán tại Shop Film' }).getAttribute('src')).toBe('https://chupgibaygio.com/api/partner/images/partner/lab/shop/photo.jpg');
+    expect(within(detail).getByRole('img', { name: 'Bảng giá của Shop Film' }).getAttribute('src')).toBe('https://chupgibaygio.com/api/partner/images/partner/lab/shop/photo.jpg');
   });
 
   it('shows phone contact only after opening the shop detail', async () => {
@@ -122,10 +122,10 @@ describe('ServicesHubView', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Mua film' }));
     fireEvent.click(await screen.findByRole('button', { name: 'Xem chi tiết Shop thiếu ảnh' }));
     const detail = await screen.findByRole('dialog', { name: 'Shop thiếu ảnh' });
-    const image = detail.querySelector('section[aria-label="Ảnh cửa hàng và sản phẩm"] img');
-    if (!(image instanceof HTMLImageElement)) throw new Error('Expected the shop image');
+    const image = detail.querySelector('section[aria-label="Ảnh cửa hàng và bảng giá"] img');
+    if (!(image instanceof HTMLImageElement)) throw new Error('Expected the price-list image');
     fireEvent.error(image);
-    expect(detail.textContent).toContain('Không tải được ảnh shop');
+    expect(detail.textContent).toContain('Không tải được bảng giá');
     expect(detail.querySelector('img')).toBeNull();
   });
 

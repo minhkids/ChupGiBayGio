@@ -222,7 +222,7 @@ describe('public partner registration', () => {
     expect(insert?.values).toContain(0);
   });
 
-  it('stores the product photo and comparable film roll price range for a shop', async () => {
+  it('stores the price-list image and comparable film roll price range for a shop', async () => {
     const env = environment();
     const form = new FormData();
     form.set('payload', JSON.stringify({ name: 'Lab Hà Nội', ward: 'Cửa Nam', district: 'Hoàn Kiếm', phone: '0912345678', filmStocks: ['Kodak Gold 200'], cheapestRollName: 'Kodak Gold 200', minRollPrice: 125000, maxRollPrice: 350000 }));

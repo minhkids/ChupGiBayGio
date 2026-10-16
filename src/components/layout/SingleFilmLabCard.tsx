@@ -65,7 +65,7 @@ export const SingleFilmLabCard: React.FC<SingleFilmLabCardProps> = ({ lab, userC
         </button>
       </header>
 
-      {lab.productImageUrl && <img src={lab.productImageUrl} alt={`Ảnh film đang bán tại ${lab.name}`} className="mt-3 aspect-[16/8] w-full rounded-xl object-cover" />}
+      {lab.productImageUrl && <figure className="mt-3 overflow-hidden rounded-xl border border-[#D8CFBD] bg-white"><figcaption className="px-3 pt-2 text-[10px] font-bold uppercase tracking-wide text-[#8B4828]">Bảng giá</figcaption><img src={lab.productImageUrl} alt={`Bảng giá của shop ${lab.name}`} className="aspect-[16/8] w-full object-contain" /></figure>}
 
       <div className="mt-4 space-y-2 text-xs text-[#6E655B]">
         <p className="flex items-start gap-2"><MapPin size={15} className="mt-0.5 shrink-0 text-[#C76B3C]" />{lab.address}</p>

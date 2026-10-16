@@ -33,7 +33,7 @@ it('reloads public labs after a successful same-tab admin edit', async () => {
   await waitFor(() => expect(result.current.labs[0]?.name).toBe('Edited lab'));
 });
 
-it('exposes a partner-submitted product photo and per-roll price range in shop results', async () => {
+it('exposes a partner-submitted price-list image and per-roll price range in shop results', async () => {
   vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify([{
     id: 'lab-1', name: 'Film shop', slogan: 'Film đẹp cho mọi khoảnh khắc', lat: 21.0285, lng: 105.8542,
     product_image_url: 'https://chupgibaygio.com/api/partner/images/partner/lab/lab-1/photo.jpg',

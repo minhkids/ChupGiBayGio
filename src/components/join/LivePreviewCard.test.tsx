@@ -14,8 +14,8 @@ it('keeps a shop card compact while showing price, ward, district, film and cont
   }} />);
   const card = screen.getByTestId('partner-preview');
   expect(card.className).toContain('max-w-sm');
-  expect(within(card).getAllByRole('img')).toHaveLength(1);
-  expect(within(card).getByRole('img').getAttribute('src')).toBe('/shop.jpg');
+  expect(within(card).getAllByRole('img')).toHaveLength(2);
+  expect(within(card).getByRole('img', { name: 'Ảnh shop Tiệm Film' }).getAttribute('src')).toBe('/shop.jpg');
   expect(within(card).getByRole('heading', { name: 'Tiệm Film' })).toBeTruthy();
   expect(card.textContent).toContain('50.000–200.000đ/cuộn');
   expect(card.textContent).toContain('Rẻ nhất: Kodak Gold 200 · 50.000đ/cuộn');
@@ -44,6 +44,13 @@ it('shows every shop branch in the registration preview instead of only a count'
   expect(card.textContent).toContain('Cơ sở 2');
   expect(card.textContent).toContain('Cửa Nam, Sóc Sơn, Hà Nội');
   expect(card.textContent).not.toContain('2 địa chỉ');
+});
+
+it('previews a price-list image separately from the shop cover', () => {
+  render(<LivePreviewCard data={{ kind: 'lab', name: 'Tiệm Film', image: '/shop.jpg', productImage: '/price-list.jpg' }} />);
+  const card = screen.getByTestId('partner-preview');
+  expect(within(card).getByRole('img', { name: 'Ảnh shop Tiệm Film' }).getAttribute('src')).toBe('/shop.jpg');
+  expect(within(card).getByRole('img', { name: 'Bảng giá của Tiệm Film' }).getAttribute('src')).toBe('/price-list.jpg');
 });
 
 it('highlights optional two-hour express delivery in the registration preview', () => {

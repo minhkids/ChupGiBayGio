@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { ArrowUpRight, Compass, Film, MapPin, ShoppingBag } from 'lucide-react';
+import { ArrowUpRight, Compass, Film, MapPin, ReceiptText, ShoppingBag } from 'lucide-react';
 import { filmShopLocations, type ServiceListing } from '../../services/serviceHubApi';
 import { ExpressDeliveryBadge } from './ExpressDeliveryBadge';
 
@@ -36,7 +36,7 @@ export const FilmShopCard: React.FC<FilmShopCardProps> = ({ shop, isFeatured = f
         <span className="flex w-full items-center gap-3">
           <span className="relative flex h-24 w-20 shrink-0 items-center overflow-hidden rounded-xl bg-[#241E18] p-1.5">
             <span aria-hidden="true" className="mr-1.5 flex h-full flex-col justify-between py-1">{Array.from({ length: 5 }, (_, index) => <span key={index} className="h-2 w-1.5 rounded-sm bg-[#F3EBDD]/70" />)}</span>
-            {thumbnail ? <img key={thumbnail} src={thumbnail} loading="lazy" onError={() => setUnavailableImages((current) => [...current, thumbnail])} alt={thumbnail === shop.imageUrl ? `Ảnh shop ${shop.name}` : `Ảnh film đang bán tại ${shop.name}`} className="h-full min-w-0 flex-1 rounded-sm object-cover transition-transform duration-300 group-hover:scale-105 motion-reduce:transform-none motion-reduce:transition-none" /> : <span className="flex h-full flex-1 items-center justify-center text-[#F3EBDD]" aria-hidden="true"><ShoppingBag className="h-6 w-6" /></span>}
+            {thumbnail ? <img key={thumbnail} src={thumbnail} loading="lazy" onError={() => setUnavailableImages((current) => [...current, thumbnail])} alt={thumbnail === shop.imageUrl ? `Ảnh shop ${shop.name}` : `Bảng giá của ${shop.name}`} className={`h-full min-w-0 flex-1 rounded-sm transition-transform duration-300 group-hover:scale-105 motion-reduce:transform-none motion-reduce:transition-none ${thumbnail === shop.productImageUrl ? 'bg-white object-contain' : 'object-cover'}`} /> : <span className="flex h-full flex-1 items-center justify-center text-[#F3EBDD]" aria-hidden="true"><ShoppingBag className="h-6 w-6" /></span>}
           </span>
           <span className="min-w-0 flex-1">
             <span className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-[#9A4F29]">Shop bán film</span>
@@ -51,6 +51,7 @@ export const FilmShopCard: React.FC<FilmShopCardProps> = ({ shop, isFeatured = f
           </> : <span className="block font-mono text-sm font-semibold text-[#9A4F29]">{shop.price || `Từ ${Number(shop.minRollPrice).toLocaleString('vi-VN')}đ/cuộn`}</span>}
           <span aria-hidden="true" className="absolute inset-y-3 right-3 border-r border-dashed border-[#C9B99F]" />
         </span>}
+        {shop.productImageUrl && <span className="mt-2 inline-flex w-fit items-center gap-1.5 rounded-lg border border-[#E2D3BD] bg-[#F3EBDD] px-2.5 py-1.5 text-[10px] font-semibold text-[#8B4828]"><ReceiptText aria-hidden="true" className="h-3.5 w-3.5" />Có bảng giá ảnh</span>}
         {!!shop.filmStocks?.length && <span className="mt-3 flex w-full flex-wrap gap-1.5 text-[11px] leading-relaxed text-[#554D43]">{shop.filmStocks.slice(0, 3).map((film) => <span key={film} className="inline-flex max-w-full items-center gap-1 rounded-md border border-[#E2DAD0] px-2 py-1"><Film className="h-3 w-3 shrink-0 text-[#9A4F29]" /><span className="min-w-0 break-words">{film}</span></span>)}{shop.filmStocks.length > 3 && <span className="px-1 py-1 text-[#6E655B]">+{shop.filmStocks.length - 3} loại</span>}</span>}
         {shop.slogan && <span data-testid="film-shop-slogan" className="mt-3 block w-full border-t border-[#E2DAD0] pt-3 text-xs italic leading-relaxed text-[#6E655B]">{shop.slogan}</span>}
         <span className="mt-auto block w-full pt-4"><span className="flex min-h-11 items-center justify-between rounded-lg bg-[#ECE4D0] px-3 text-xs font-semibold text-[#8B4828] transition-colors group-hover:bg-[#E0D5BE] motion-reduce:transition-none">Xem chi tiết<ArrowUpRight className="h-4 w-4 transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 motion-reduce:transform-none motion-reduce:transition-none" /></span></span>

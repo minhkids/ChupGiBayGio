@@ -9,8 +9,9 @@ it('keeps the shop card usable if both photos fail', () => {
   const shop = { id: 'shop', category: 'filmShop' as const, name: 'Tiệm Film', imageUrl: '/shop.jpg', productImageUrl: '/products.jpg', minRollPrice: 50000, cheapestRollName: 'Kodak Gold 200', filmStocks: ['Kodak Gold 200'] };
   const onOpen = vi.fn();
   render(<FilmShopCard shop={shop} onOpen={onOpen} />);
+  expect(screen.getByText('Có bảng giá ảnh')).toBeTruthy();
   fireEvent.error(screen.getByRole('img', { name: 'Ảnh shop Tiệm Film' }));
-  const fallback = screen.getByRole('img', { name: 'Ảnh film đang bán tại Tiệm Film' });
+  const fallback = screen.getByRole('img', { name: 'Bảng giá của Tiệm Film' });
   expect(fallback.getAttribute('src')).toBe('/products.jpg');
   fireEvent.error(fallback);
   expect(screen.queryByRole('img')).toBeNull();

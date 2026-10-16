@@ -335,7 +335,7 @@ const LabCard: React.FC<LabCardProps> = ({
         </div>
       </div>
 
-      {lab.productImageUrl && <img src={lab.productImageUrl} alt={`Ảnh film đang bán tại ${lab.name}`} className="mb-3 aspect-[16/8] w-full rounded-xl object-cover" />}
+      {lab.productImageUrl && <figure className="mb-3 overflow-hidden rounded-xl border border-[#D8CFBD] bg-white"><figcaption className="px-3 pt-2 text-[10px] font-bold uppercase tracking-wide text-[#8B4828]">Bảng giá</figcaption><img src={lab.productImageUrl} alt={`Bảng giá của shop ${lab.name}`} className="aspect-[16/8] w-full object-contain" /></figure>}
 
       {/* Opening Hours & Fast service badge */}
       <div className="flex flex-wrap items-center gap-2 my-2.5 text-xs">

@@ -22,13 +22,14 @@ it('highlights two-hour express delivery in shop details', () => {
 it('cycles gallery photos with controls and arrow keys without leaving the dialog', () => {
   render(<FilmShopDetailDialog shop={shop} onClose={vi.fn()} />);
   const dialog = screen.getByRole('dialog', { name: shop.name });
-  const gallery = within(dialog).getByRole('region', { name: 'Ảnh cửa hàng và sản phẩm' });
-  expect(within(gallery).getByRole('img', { name: 'Film đang bán tại Tiệm Film' }).getAttribute('src')).toBe('/products.jpg');
+  const gallery = within(dialog).getByRole('region', { name: 'Ảnh cửa hàng và bảng giá' });
+  expect(within(gallery).getByRole('img', { name: 'Bảng giá của Tiệm Film' }).getAttribute('src')).toBe('/products.jpg');
+  expect(within(gallery).getByText('BẢNG GIÁ')).toBeTruthy();
   fireEvent.click(within(gallery).getByRole('button', { name: 'Ảnh tiếp theo' }));
   expect(within(gallery).getByRole('img', { name: 'Ảnh cửa hàng Tiệm Film' }).getAttribute('src')).toBe('/shop.jpg');
   expect(within(gallery).getByText('02 / 02')).toBeTruthy();
   fireEvent.keyDown(dialog, { key: 'ArrowRight' });
-  expect(within(gallery).getByRole('img', { name: 'Film đang bán tại Tiệm Film' }).getAttribute('src')).toBe('/products.jpg');
+  expect(within(gallery).getByRole('img', { name: 'Bảng giá của Tiệm Film' }).getAttribute('src')).toBe('/products.jpg');
   fireEvent.click(within(gallery).getByRole('button', { name: 'Ảnh trước' }));
   expect(within(gallery).getByRole('img', { name: 'Ảnh cửa hàng Tiệm Film' })).toBeTruthy();
 });
@@ -38,7 +39,7 @@ it('opens a selected shop photo full screen and closes only the photo viewer', (
   const detail = screen.getByRole('dialog', { name: shop.name });
   fireEvent.click(within(detail).getByRole('button', { name: 'Phóng to ảnh' }));
   const viewer = screen.getByRole('dialog', { name: 'Ảnh phóng to' });
-  expect(within(viewer).getByRole('img', { name: 'Film đang bán tại Tiệm Film' }).getAttribute('src')).toBe('/products.jpg');
+  expect(within(viewer).getByRole('img', { name: 'Bảng giá của Tiệm Film' }).getAttribute('src')).toBe('/products.jpg');
   expect(document.activeElement).toBe(within(viewer).getByRole('button', { name: 'Đóng ảnh phóng to' }));
 
   fireEvent.keyDown(window, { key: 'Escape' });

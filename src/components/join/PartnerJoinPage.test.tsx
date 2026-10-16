@@ -33,6 +33,8 @@ describe('partner onboarding pages', () => {
     fireEvent.click(expressDelivery);
     expect(expressDelivery.getAttribute('aria-pressed')).toBe('true');
     expect(screen.getByRole('img', { name: 'Giao hỏa tốc trong 2 giờ' }).textContent).toBe('2h');
+    const priceList = new File(['price list'], 'bang-gia.jpg', { type: 'image/jpeg' });
+    fireEvent.change(screen.getByLabelText('Ảnh bảng giá'), { target: { files: [priceList] } });
     fireEvent.submit(screen.getByRole('button', { name: 'Hoàn tất đăng ký' }).closest('form')!);
     await waitFor(() => expect(fetchMock).toHaveBeenCalled());
     const form = fetchMock.mock.calls[0][1].body as FormData;
@@ -41,11 +43,12 @@ describe('partner onboarding pages', () => {
     expect(payload).not.toHaveProperty('maxRollPrice');
     expect(payload).not.toHaveProperty('address');
     expect(payload.expressDelivery2h).toBe(true);
+    expect(form.get('productPhoto')).toBe(priceList);
   });
 
   it('requires only the cheapest roll price on the film-shop registration form', () => {
     render(<PartnerJoinPage kind="lab" />);
-    expect(screen.getByLabelText('Ảnh mô tả sản phẩm')).toBeTruthy();
+    expect(screen.getByLabelText('Ảnh bảng giá')).toBeTruthy();
     const minPrice = screen.getByLabelText(/Giá cuộn film rẻ nhất/) as HTMLInputElement;
     expect(minPrice.required).toBe(true);
     expect(screen.queryByLabelText(/Giá cuộn film đắt nhất/)).toBeNull();

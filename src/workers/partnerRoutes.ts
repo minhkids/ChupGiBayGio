@@ -56,7 +56,7 @@ routes.get('/api/partner/address-suggestions', async (c) => {
 async function photos(form: FormData, min: number, max: number, field = 'photos') {
   const files = form.getAll(field);
   const limitError = field === 'productPhoto'
-    ? 'Ảnh mô tả sản phẩm phải là JPG, PNG hoặc WebP, tối đa 3 MB.'
+    ? 'Ảnh bảng giá phải là JPG, PNG hoặc WebP, tối đa 3 MB.'
     : 'Cần 3–6 ảnh portfolio (JPG, PNG, WebP; tối đa 3 MB/ảnh).';
   if (files.length < min || files.length > max || files.some((file) => !(file instanceof File) || file.size < 1 || file.size > 3 * 1024 * 1024)) return { error: limitError };
   const uploads: { bytes: Uint8Array; ext: string; type: string }[] = [];

@@ -30,12 +30,18 @@ export const FilmShopDetailDialog: React.FC<FilmShopDetailDialogProps> = ({ shop
   const wasExpandedRef = useRef(false);
   const images = [...new Set([shop.productImageUrl, shop.imageUrl].filter((value): value is string => Boolean(value)))];
   const [activeImage, setActiveImage] = useState(images[0] || '');
+  const isPriceListImage = Boolean(shop.productImageUrl && activeImage === shop.productImageUrl);
   const [isImageExpanded, setIsImageExpanded] = useState(false);
   const [unavailableImages, setUnavailableImages] = useState<string[]>([]);
   const expandedRef = useRef(isImageExpanded);
   const locations = filmShopLocations(shop);
   const priceLabel = getPriceLabel(shop);
   const availableImages = images.filter((image) => !unavailableImages.includes(image));
+  const priceListUnavailable = Boolean(shop.productImageUrl && unavailableImages.includes(shop.productImageUrl));
+  const shopPhotoUnavailable = Boolean(shop.imageUrl && unavailableImages.includes(shop.imageUrl));
+  const unavailableImageMessage = unavailableImages.length
+    ? priceListUnavailable && shopPhotoUnavailable ? 'Không tải được ảnh shop và bảng giá' : priceListUnavailable ? 'Không tải được bảng giá' : 'Không tải được ảnh shop'
+    : shop.productImageUrl ? 'Chưa có ảnh bảng giá' : 'Shop chưa có ảnh';
   const imageIndex = availableImages.indexOf(activeImage);
   const changeImage = (direction: number) => {
     if (availableImages.length > 1) setActiveImage(availableImages[(imageIndex + direction + availableImages.length) % availableImages.length]);
@@ -120,19 +126,19 @@ export const FilmShopDetailDialog: React.FC<FilmShopDetailDialogProps> = ({ shop
 
         <main className="min-h-0 flex-1 overflow-y-auto">
           <div className="grid lg:grid-cols-[1.05fr_.95fr]">
-            <section className="min-w-0 p-4 sm:p-7 lg:border-r lg:border-[#E2DAD0]" aria-label="Ảnh cửa hàng và sản phẩm">
+            <section className="min-w-0 p-4 sm:p-7 lg:border-r lg:border-[#E2DAD0]" aria-label="Ảnh cửa hàng và bảng giá">
               <div className="overflow-hidden rounded-2xl bg-[#241E18] p-3 shadow-sm">
                 <div aria-hidden="true" className="mb-3 flex justify-between gap-2">{Array.from({ length: 10 }, (_, index) => <span key={index} className="h-2 w-4 rounded-sm bg-[#F3EBDD]/70" />)}</div>
                 <div className="relative overflow-hidden rounded-lg bg-[#EFE9DF]">
                   {activeImage ? (
                     <button ref={zoomButtonRef} type="button" aria-label="Phóng to ảnh" onClick={() => setIsImageExpanded(true)} className="group block w-full cursor-zoom-in focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-[#C76B3C]">
-                      <motion.img key={activeImage} initial={reducedMotion ? false : { opacity: 0, scale: 1.025 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: reducedMotion ? 0 : 0.3 }} src={activeImage} onError={() => markImageUnavailable(activeImage)} alt={activeImage === shop.productImageUrl ? `Film đang bán tại ${shop.name}` : `Ảnh cửa hàng ${shop.name}`} className="aspect-[4/3] w-full object-cover transition-[filter] group-hover:brightness-95" />
+                      <motion.img key={activeImage} initial={reducedMotion ? false : { opacity: 0, scale: 1.025 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: reducedMotion ? 0 : 0.3 }} src={activeImage} onError={() => markImageUnavailable(activeImage)} alt={isPriceListImage ? `Bảng giá của ${shop.name}` : `Ảnh cửa hàng ${shop.name}`} className={`aspect-[4/3] w-full transition-[filter] group-hover:brightness-95 ${isPriceListImage ? 'bg-white object-contain' : 'object-cover'}`} />
                       <span className="sr-only">Nhấn để xem ảnh toàn màn hình</span>
                     </button>
                   ) : (
                     <div className="flex aspect-[4/3] w-full flex-col items-center justify-center gap-3 text-[#8B4828]">
                       <ShoppingBag className="h-8 w-8" />
-                      <span className="text-sm font-medium text-[#6E655B]">{unavailableImages.length ? 'Không tải được ảnh shop' : 'Shop chưa có ảnh'}</span>
+                      <span className="text-sm font-medium text-[#6E655B]">{unavailableImageMessage}</span>
                     </div>
                   )}
                   {availableImages.length > 1 && <div className="absolute inset-x-0 top-1/2 flex -translate-y-1/2 justify-between px-2">
@@ -141,7 +147,7 @@ export const FilmShopDetailDialog: React.FC<FilmShopDetailDialogProps> = ({ shop
                   </div>}
                 </div>
                 <div className="mt-3 flex items-center justify-between gap-3 font-mono text-[10px] tracking-wider text-[#F3EBDD]">
-                  <span className="flex items-center gap-2"><Film className="h-3.5 w-3.5" />{activeImage === shop.productImageUrl ? 'ẢNH SẢN PHẨM' : 'GÓC CỬA HÀNG'}</span>
+                  <span className="flex items-center gap-2"><Film className="h-3.5 w-3.5" />{isPriceListImage ? 'BẢNG GIÁ' : 'GÓC CỬA HÀNG'}</span>
                   {activeImage && <span aria-live="polite">{String(imageIndex + 1).padStart(2, '0')} / {String(availableImages.length).padStart(2, '0')}</span>}
                 </div>
               </div>
@@ -185,7 +191,7 @@ export const FilmShopDetailDialog: React.FC<FilmShopDetailDialogProps> = ({ shop
               <header className="flex shrink-0 items-center justify-between gap-4 px-4 py-3 sm:px-7"><p className="truncate text-sm font-medium">{shop.name}</p><button type="button" onClick={() => setIsImageExpanded(false)} aria-label="Đóng ảnh phóng to" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#FAF8F4]/15 hover:bg-[#FAF8F4]/25 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#F3C08E]"><X className="h-5 w-5" /></button></header>
               <div className="flex min-h-0 flex-1 items-center justify-center gap-2 px-2 pb-2 sm:gap-5 sm:px-6">
                 {availableImages.length > 1 && <button type="button" aria-label="Ảnh phóng to trước" onClick={() => changeImage(-1)} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#FAF8F4]/15 hover:bg-[#FAF8F4]/25"><ChevronLeft className="h-5 w-5" /></button>}
-                <img src={activeImage} alt={activeImage === shop.productImageUrl ? `Film đang bán tại ${shop.name}` : `Ảnh cửa hàng ${shop.name}`} className="max-h-[calc(100dvh-7rem)] max-w-[calc(100vw-8rem)] object-contain sm:max-w-[calc(100vw-12rem)]" />
+                <img src={activeImage} alt={isPriceListImage ? `Bảng giá của ${shop.name}` : `Ảnh cửa hàng ${shop.name}`} className="max-h-[calc(100dvh-7rem)] max-w-[calc(100vw-8rem)] object-contain sm:max-w-[calc(100vw-12rem)]" />
                 {availableImages.length > 1 && <button type="button" aria-label="Ảnh phóng to tiếp theo" onClick={() => changeImage(1)} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#FAF8F4]/15 hover:bg-[#FAF8F4]/25"><ChevronRight className="h-5 w-5" /></button>}
               </div>
               <p className="shrink-0 pb-4 text-center font-mono text-xs text-[#F3EBDD]/80" aria-live="polite">{String(imageIndex + 1).padStart(2, '0')} / {String(availableImages.length).padStart(2, '0')}</p>
