@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
-import { Camera, ChevronDown, Compass, ExternalLink, FlaskConical, MapPin, MessageCircle, Phone, Plus, Search, Shirt, ShoppingBag, Upload, X, RefreshCw, Settings2 } from 'lucide-react';
+import { Camera, ChevronDown, Compass, ExternalLink, FlaskConical, MapPin, MessageCircle, Phone, Plus, Search, Shirt, ShoppingBag, Upload, X, RefreshCw } from 'lucide-react';
 import { useShootPlan } from '../../context/ShootPlanContext';
 import { filmShopLocations, serviceHubApi, type ServiceListing } from '../../services/serviceHubApi';
 import { ServicesHubAdminView } from './ServicesHubAdminView';
@@ -24,7 +24,7 @@ export const ServicesHubView: React.FC<Props> = ({ onClose }) => {
     const section = new URLSearchParams(window.location.search).get('services');
     return section === 'film' || section === 'labs' || section === 'photographers' ? section : 'outfit';
   });
-  const [adminOpen, setAdminOpen] = useState(false);
+  const [adminOpen, setAdminOpen] = useState(() => window.location.pathname === '/admin' || window.location.pathname.startsWith('/admin/'));
   const [items, setItems] = useState<ServiceListing[]>([]);
   const [selectedFilmShop, setSelectedFilmShop] = useState<ServiceListing | null>(null);
   const [loading, setLoading] = useState(true);
@@ -82,10 +82,16 @@ export const ServicesHubView: React.FC<Props> = ({ onClose }) => {
     const file = event.target.files?.[0]; if (!file) return;
     const reader = new FileReader(); reader.onload = () => { if (typeof reader.result === 'string') setImage(reader.result); }; reader.readAsDataURL(file);
   };
-  if (adminOpen) return <ServicesHubAdminView onBack={() => { setAdminOpen(false); void load(); }} />;
+  if (adminOpen) return <ServicesHubAdminView onBack={() => {
+    setAdminOpen(false);
+    if (window.location.pathname === '/admin' || window.location.pathname.startsWith('/admin/')) {
+      window.history.replaceState(null, '', `/?services=${activeTab}`);
+    }
+    void load();
+  }} />;
 
   return <section className="fixed inset-x-0 top-0 bottom-20 z-40 flex flex-col overflow-hidden bg-[#F7F5F0] text-[#2C2621] lg:bottom-0 lg:left-[76px]" aria-label="Chuẩn bị cho buổi chụp">
-    <header className="flex shrink-0 items-center justify-between gap-3 border-b border-[#E2DAD0] bg-[#FAF8F4] px-4 py-3 sm:px-8 lg:px-12"><div><h1 className="text-2xl font-bold">Chuẩn bị cho buổi chụp</h1><p className="hidden text-sm text-[#6E655B] sm:block">Trang phục, người chụp và film — chọn nhanh mọi thứ bạn cần.</p></div><div className="flex gap-2"><button onClick={() => setAdminOpen(true)} className="inline-flex min-h-10 items-center gap-2 rounded-full bg-[#ECE4D0] px-3 text-sm font-semibold" aria-label="Quản lý dịch vụ"><Settings2 className="h-4 w-4" /><span className="hidden sm:inline">Quản lý</span></button><button onClick={onClose} className="inline-flex min-h-10 items-center gap-2 rounded-full bg-[#E8DEC7] px-4 text-sm font-semibold" aria-label="Trở về Bản đồ"><X className="h-4 w-4" />Trở về Bản đồ</button></div></header>
+    <header className="flex shrink-0 items-center justify-between gap-3 border-b border-[#E2DAD0] bg-[#FAF8F4] px-4 py-3 sm:px-8 lg:px-12"><div><h1 className="text-2xl font-bold">Chuẩn bị cho buổi chụp</h1><p className="hidden text-sm text-[#6E655B] sm:block">Trang phục, người chụp và film — chọn nhanh mọi thứ bạn cần.</p></div><button onClick={onClose} className="inline-flex min-h-10 items-center gap-2 rounded-full bg-[#E8DEC7] px-4 text-sm font-semibold" aria-label="Trở về Bản đồ"><X className="h-4 w-4" />Trở về Bản đồ</button></header>
     <nav className="shrink-0 border-b border-[#E2DAD0] px-3 py-3 sm:px-6" aria-label="Danh mục dịch vụ"><div className="mx-auto grid w-full max-w-4xl grid-cols-4 gap-1.5 rounded-2xl bg-[#E8DEC7] p-1.5 shadow-inner select-none">{tabItems.map(({ id, label, mobileLabel, icon: Icon }) => <button key={id} onClick={() => { if ((id === 'labs' || id === 'film') && id !== activeTab) { setFilmQuery(''); setFilmDistrict('all'); setFilmWard('all'); } setActiveTab(id); }} aria-label={label} aria-current={activeTab === id ? 'page' : undefined} className={`flex h-11 w-full items-center justify-center gap-2 rounded-xl px-1.5 text-center text-[10px] font-semibold sm:px-3 sm:text-xs ${activeTab === id ? 'bg-[#FAF8F4] font-bold text-[#2C2621] shadow-sm' : 'text-[#6E655B] hover:bg-[#DDD3BD]/50 hover:text-[#2C2621]'}`}><Icon className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4"/><span className="whitespace-nowrap sm:hidden">{mobileLabel}</span><span className="hidden whitespace-nowrap sm:inline">{label}</span></button>)}</div></nav>
     <main className="min-h-0 flex-1 overflow-y-auto px-4 py-5 sm:px-8 sm:py-7 lg:px-12">
       {(activeTab === 'film' || activeTab === 'photographers') && <div className="mx-auto mb-5 flex max-w-6xl flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#D8CFBD] bg-[#FAF8F4] p-4 text-sm"><p className="font-semibold">{activeTab === 'film' ? 'Bạn có shop bán film?' : 'Bạn là nhiếp ảnh gia hoặc studio?'}</p><a href={activeTab === 'film' ? '/join/film-lab' : '/join/photographer'} className={primary}>Đăng ký miễn phí <ExternalLink className="h-4 w-4" /></a></div>}

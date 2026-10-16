@@ -40,8 +40,10 @@ export function App() {
   const [placeCategories, setPlaceCategories] = useState<PlaceCategory[]>(DEFAULT_PLACE_CATEGORIES);
   const catalogRevision = useCatalogRevision();
   const [activeRegionId, setActiveRegionId] = useState<string>('hanoi');
-  const [activeView, setActiveView] = useState<ViewId>(() =>
-    new URLSearchParams(window.location.search).has('services') ? 'services' : 'map');
+  const [activeView, setActiveView] = useState<ViewId>(() => {
+    const isAdminRoute = window.location.pathname === '/admin' || window.location.pathname.startsWith('/admin/');
+    return isAdminRoute || new URLSearchParams(window.location.search).has('services') ? 'services' : 'map';
+  });
   const [uiTheme, setUiTheme] = useState<'modern' | 'editorial'>('modern');
   const currentMonth = useMemo(() => getCurrentMonthInVietnam(), []); // eslint-disable-line react/purity — runs once at mount
 
@@ -492,7 +494,12 @@ export function App() {
 
         {activeView === 'services' && (
           <Suspense fallback={<div className="p-8 text-center">Đang tải dịch vụ...</div>}>
-            <ServicesHubView onClose={() => setActiveView('map')} />
+            <ServicesHubView onClose={() => {
+              setActiveView('map');
+              if (window.location.pathname === '/admin' || window.location.pathname.startsWith('/admin/')) {
+                window.history.replaceState(null, '', '/');
+              }
+            }} />
           </Suspense>
         )}
 

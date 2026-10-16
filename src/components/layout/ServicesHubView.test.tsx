@@ -278,10 +278,11 @@ describe('ServicesHubView', () => {
   });
 
   it('opens the admin screen and prompts for the admin password', async () => {
+    window.history.replaceState(null, '', '/admin/spots');
     renderView();
-    fireEvent.click(screen.getByRole('button', { name: 'Quản lý dịch vụ' }));
     expect(await screen.findByRole('heading', { name: 'Quản lý thông tin dịch vụ' })).toBeDefined();
     expect(screen.getByLabelText('Mật khẩu')).toBeDefined();
+    expect(screen.queryByRole('button', { name: 'Quản lý dịch vụ' })).toBeNull();
     fireEvent.change(screen.getByLabelText('Mật khẩu'), { target: { value: 'example' } });
     fireEvent.click(screen.getByRole('button', { name: 'Đăng nhập' }));
     expect(await screen.findByRole('heading', { name: 'Thêm thông tin mới' })).toBeDefined();
@@ -294,5 +295,20 @@ describe('ServicesHubView', () => {
     fireEvent.change(screen.getByLabelText(/Tên hiển thị/), { target: { value: 'Tiệm mới' } });
     fireEvent.click(screen.getByRole('button', { name: 'Thêm mục' }));
     expect(serviceHubApi.create).toHaveBeenCalledWith(expect.objectContaining({ category: 'rental', name: 'Tiệm mới' }));
+  });
+
+  it('does not expose an admin entry point in the public service directory', async () => {
+    renderView();
+    expect(await screen.findByRole('heading', { name: 'Chuẩn bị cho buổi chụp' })).toBeDefined();
+    expect(screen.queryByRole('button', { name: 'Quản lý dịch vụ' })).toBeNull();
+  });
+
+  it('returns from the private admin route to the public directory', async () => {
+    window.history.replaceState(null, '', '/admin/spots');
+    renderView();
+    fireEvent.click(screen.getByRole('button', { name: 'Quay lại dịch vụ' }));
+    expect(await screen.findByRole('heading', { name: 'Chuẩn bị cho buổi chụp' })).toBeDefined();
+    expect(window.location.pathname).toBe('/');
+    expect(window.location.search).toBe('?services=outfit');
   });
 });
