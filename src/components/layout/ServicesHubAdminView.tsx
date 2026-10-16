@@ -50,9 +50,9 @@ const isPendingCommunitySpot = (record: ServiceListing) => record.category === '
   && record.slug?.startsWith('community-') === true
   && record.isActive === false;
 
-interface Props { onBack: () => void }
+interface Props { onBack?: () => void }
 
-export const ServicesHubAdminView: React.FC<Props> = ({ onBack }) => {
+export const ServicesHubAdminView: React.FC<Props> = () => {
   const [tokenValid, setTokenValid] = useState(Boolean(sessionStorage.getItem('service_admin_token')));
   const [password, setPassword] = useState('');
   const [category, setCategory] = useState<ServiceCategory>(initialCategory);
@@ -272,7 +272,7 @@ export const ServicesHubAdminView: React.FC<Props> = ({ onBack }) => {
           {tokenValid && <button type="button" onClick={() => setTrendArticlesOpen(true)} className="rounded-full bg-[#ECE4D0] px-3 py-2 text-xs font-semibold">Bài viết xu hướng</button>}
           {tokenValid && <button type="button" aria-expanded={placeCategoriesOpen && category === 'spot'} onClick={() => { if (category !== 'spot') { setCategory('spot'); setDraft(blank('spot')); } setPlaceCategoriesOpen(current => !current || category !== 'spot'); }} className="rounded-full bg-[#ECE4D0] px-3 py-2 text-xs font-semibold">Quản lý nhóm địa điểm</button>}
           {tokenValid && <button type="button" onClick={() => { serviceHubApi.logout(); setTokenValid(false); setRecords([]); }} className="rounded-full bg-[#ECE4D0] px-3 py-2 text-xs font-semibold"><LogOut className="mr-1 inline h-4 w-4" />Đăng xuất</button>}
-          <button type="button" onClick={onBack} className="rounded-full bg-[#E8DEC7] px-3 py-2 text-xs font-semibold"><ArrowLeft className="mr-1 inline h-4 w-4" />Quay lại dịch vụ</button>
+          <a href="/?services=outfit" className="rounded-full bg-[#E8DEC7] px-3 py-2 text-xs font-semibold"><ArrowLeft className="mr-1 inline h-4 w-4" />Quay lại dịch vụ</a>
         </div>
       </header>
       <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-8">

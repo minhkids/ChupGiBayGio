@@ -24,7 +24,7 @@ export const ServicesHubView: React.FC<Props> = ({ onClose }) => {
     const section = new URLSearchParams(window.location.search).get('services');
     return section === 'film' || section === 'labs' || section === 'photographers' ? section : 'outfit';
   });
-  const [adminOpen, setAdminOpen] = useState(() => window.location.pathname === '/admin' || window.location.pathname.startsWith('/admin/'));
+  const adminOpen = window.location.pathname === '/admin' || window.location.pathname.startsWith('/admin/');
   const [items, setItems] = useState<ServiceListing[]>([]);
   const [selectedFilmShop, setSelectedFilmShop] = useState<ServiceListing | null>(null);
   const [loading, setLoading] = useState(true);
@@ -82,13 +82,7 @@ export const ServicesHubView: React.FC<Props> = ({ onClose }) => {
     const file = event.target.files?.[0]; if (!file) return;
     const reader = new FileReader(); reader.onload = () => { if (typeof reader.result === 'string') setImage(reader.result); }; reader.readAsDataURL(file);
   };
-  if (adminOpen) return <ServicesHubAdminView onBack={() => {
-    setAdminOpen(false);
-    if (window.location.pathname === '/admin' || window.location.pathname.startsWith('/admin/')) {
-      window.history.replaceState(null, '', `/?services=${activeTab}`);
-    }
-    void load();
-  }} />;
+  if (adminOpen) return <ServicesHubAdminView />;
 
   return <section className="fixed inset-x-0 top-0 bottom-20 z-40 flex flex-col overflow-hidden bg-[#F7F5F0] text-[#2C2621] lg:bottom-0 lg:left-[76px]" aria-label="Chuẩn bị cho buổi chụp">
     <header className="flex shrink-0 items-center justify-between gap-3 border-b border-[#E2DAD0] bg-[#FAF8F4] px-4 py-3 sm:px-8 lg:px-12"><div><h1 className="text-2xl font-bold">Chuẩn bị cho buổi chụp</h1><p className="hidden text-sm text-[#6E655B] sm:block">Trang phục, người chụp và film — chọn nhanh mọi thứ bạn cần.</p></div><button onClick={onClose} className="inline-flex min-h-10 items-center gap-2 rounded-full bg-[#E8DEC7] px-4 text-sm font-semibold" aria-label="Trở về Bản đồ"><X className="h-4 w-4" />Trở về Bản đồ</button></header>

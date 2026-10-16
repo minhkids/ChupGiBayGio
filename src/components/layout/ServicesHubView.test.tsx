@@ -306,9 +306,7 @@ describe('ServicesHubView', () => {
   it('returns from the private admin route to the public directory', async () => {
     window.history.replaceState(null, '', '/admin/spots');
     renderView();
-    fireEvent.click(screen.getByRole('button', { name: 'Quay lại dịch vụ' }));
-    expect(await screen.findByRole('heading', { name: 'Chuẩn bị cho buổi chụp' })).toBeDefined();
-    expect(window.location.pathname).toBe('/');
-    expect(window.location.search).toBe('?services=outfit');
+    const publicServicesLink = await screen.findByRole('link', { name: 'Quay lại dịch vụ' });
+    expect(publicServicesLink.getAttribute('href')).toBe('/?services=outfit');
   });
 });
