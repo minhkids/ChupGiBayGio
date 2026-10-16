@@ -346,13 +346,21 @@ export const SpotMap: React.FC<SpotMapProps> = ({
       const userIcon = L.divIcon({
         className: 'user-location-marker',
         html: `
-          <div class="relative w-5 h-5 flex items-center justify-center">
-            <span class="absolute w-full h-full rounded-full bg-blue-500 animate-ping opacity-75"></span>
-            <span class="w-3.5 h-3.5 rounded-full bg-blue-600 border-2 border-white shadow-hard"></span>
+          <div class="relative flex h-12 w-11 items-start justify-center">
+            <span class="absolute left-1/2 top-1.5 h-8 w-8 -translate-x-1/2 rounded-full bg-[#C76B3C]/25 animate-ping"></span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="42" height="48" viewBox="0 0 42 48" fill="none" style="position:relative;z-index:1;filter:drop-shadow(0 2px 4px rgba(44,38,33,.35))">
+              <path d="M21 2.5C10.8 2.5 2.5 10.5 2.5 20.4c0 12.1 18.5 25.1 18.5 25.1s18.5-13 18.5-25.1C39.5 10.5 31.2 2.5 21 2.5Z" fill="#C76B3C" stroke="#FAF8F4" stroke-width="2.5"/>
+              <circle cx="21" cy="19" r="10.5" fill="#FAF8F4"/>
+              <circle cx="17.5" cy="17.5" r="1.25" fill="#2C2621"/>
+              <circle cx="24.5" cy="17.5" r="1.25" fill="#2C2621"/>
+              <path d="M17 21c1.05 2.05 2.4 3.1 4 3.1s2.95-1.05 4-3.1" stroke="#2C2621" stroke-width="1.7" stroke-linecap="round"/>
+              <path d="M32.5 9.5v3m-1.5-1.5h3" stroke="#F3CF93" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
           </div>
         `,
-        iconSize: [20, 20],
-        iconAnchor: [10, 10]
+        iconSize: [42, 48],
+        iconAnchor: [21, 46],
+        popupAnchor: [0, -44]
       });
 
       userMarkerRef.current = L.marker([userCoords.lat, userCoords.lng], { icon: userIcon })

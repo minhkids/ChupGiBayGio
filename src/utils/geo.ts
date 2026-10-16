@@ -5,7 +5,16 @@ export function calculateDistanceKm(
   lat2: number,
   lon2: number
 ): number {
-  const R = 6371; // Earth's radius in kilometers
+  return Number(calculateDistanceKmExact(lat1, lon1, lat2, lon2).toFixed(1));
+}
+
+export function calculateDistanceKmExact(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
+): number {
+  const R = 6371; // Earth's radius in km
   const dLat = toRad(lat2 - lat1);
   const dLon = toRad(lon2 - lon1);
   const a =
@@ -15,7 +24,36 @@ export function calculateDistanceKm(
       Math.sin(dLon / 2) *
       Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return Number((R * c).toFixed(1));
+  return R * c;
+}
+
+export function getNearestSpots<T extends { lat: number; lng: number }>(
+  spots: T[],
+  origin: { lat: number; lng: number },
+  limit = 5
+): (T & { distanceKm: number })[] {
+  if (!isValidCoordinates(origin.lat, origin.lng)) return [];
+  const count = Number.isFinite(limit) ? Math.max(0, Math.floor(limit)) : 5;
+  return spots
+    .map((spot, index) => ({
+      spot,
+      index,
+      exactDistanceKm: isValidCoordinates(spot.lat, spot.lng)
+        ? calculateDistanceKmExact(origin.lat, origin.lng, spot.lat, spot.lng)
+        : Number.POSITIVE_INFINITY,
+    }))
+    .filter(({ exactDistanceKm }) => Number.isFinite(exactDistanceKm))
+    .sort((a, b) => a.exactDistanceKm - b.exactDistanceKm || a.index - b.index)
+    .slice(0, count)
+    .map(({ spot, exactDistanceKm }) => ({
+      ...spot,
+      distanceKm: Number(exactDistanceKm.toFixed(1)),
+    }));
+}
+
+function isValidCoordinates(lat: number, lng: number): boolean {
+  return Number.isFinite(lat) && Number.isFinite(lng)
+    && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
 }
 
 function toRad(degrees: number): number {

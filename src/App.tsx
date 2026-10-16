@@ -304,6 +304,7 @@ export function App() {
         <GoogleMapsLayout
           placeCategories={placeCategories}
           filteredSpots={filteredSpots}
+          allSpots={spots}
           selectedSpot={selectedSpot}
           onSelectSpot={setSelectedSpot}
           savedSpotIds={savedSpotIds}

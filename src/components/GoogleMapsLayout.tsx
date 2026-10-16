@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useState, useEffect } from 'react';
+import React, { lazy, Suspense, useMemo, useState, useEffect } from 'react';
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import {
   X,
@@ -17,7 +17,8 @@ import {
   ChevronDown,
   ExternalLink,
   PlusCircle,
-  Layers
+  Layers,
+  LocateFixed
 } from 'lucide-react';
 import type { PlaceCategory, Spot, FilterState } from '../types';
 import { CONCEPT_METADATA } from '../utils/season';
@@ -39,12 +40,14 @@ import { NearestFilmShopsDrawer } from './layout/NearestFilmShopsDrawer';
 import type { ServicesTab } from './layout/ShootServicesHubDrawer';
 import type { FilmLab } from '../data/filmLabsData';
 import { SingleFilmLabCard } from './layout/SingleFilmLabCard';
+import { formatDistance, getNearestSpots } from '../utils/geo';
 
 const ShootServicesHubDrawer = lazy(() => import('./layout/ShootServicesHubDrawer').then(m => ({ default: m.ShootServicesHubDrawer })));
 
 interface GoogleMapsLayoutProps {
   placeCategories: PlaceCategory[];
   filteredSpots: Spot[];
+  allSpots: Spot[];
   selectedSpot: Spot | null;
   onSelectSpot: (spot: Spot | null) => void;
   savedSpotIds: string[];
@@ -70,6 +73,7 @@ interface GoogleMapsLayoutProps {
 export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
   placeCategories,
   filteredSpots,
+  allSpots,
   selectedSpot,
   onSelectSpot,
   savedSpotIds,
@@ -106,6 +110,8 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
 
   // Toast feedback state
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [isLocatingUser, setIsLocatingUser] = useState(false);
+  const [showNearbySpots, setShowNearbySpots] = useState(false);
 
   // Quick active photo gallery index for detail card
   const [activePhotoIdx, setActivePhotoIdx] = useState<number>(0);
@@ -125,6 +131,17 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
   // State quản lý Shoot Services Hub Drawer (Trang phục + Thợ chụp + Tiệm film)
   const [isServicesHubOpen, setIsServicesHubOpen] = useState(false);
   const [servicesHubTab, setServicesHubTab] = useState<ServicesTab>('outfit');
+
+  const nearbySpots = useMemo(
+    () => filters.userCoords ? getNearestSpots(allSpots, filters.userCoords, 5) : [],
+    [allSpots, filters.userCoords]
+  );
+  const mapSpots = useMemo(() => {
+    if (nearbySpots.length === 0) return filteredSpots;
+    const spotsById = new Map(filteredSpots.map(spot => [spot.id, spot]));
+    nearbySpots.forEach(spot => spotsById.set(spot.id, spot));
+    return [...spotsById.values()];
+  }, [filteredSpots, nearbySpots]);
 
   // Lắng nghe sự kiện toàn cục mở Shoot Services Hub (từ tab, nút dịch vụ...)
   useEffect(() => {
@@ -188,6 +205,42 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
     setTimeout(() => setToastMessage(null), 2400);
   };
 
+  const handleLocateUser = () => {
+    if (!navigator.geolocation?.getCurrentPosition) {
+      showToast('Trình duyệt không hỗ trợ xác định vị trí.');
+      return;
+    }
+
+    setIsLocatingUser(true);
+    setShowNearbySpots(false);
+    navigator.geolocation.getCurrentPosition(
+      position => {
+        const coords = { lat: position.coords.latitude, lng: position.coords.longitude };
+        setIsLocatingUser(false);
+        onChangeFilters(current => ({ ...current, userCoords: coords }));
+        setFocusedCoordinates({ ...coords, zoom: 14 });
+        setShowNearbySpots(true);
+      },
+      error => {
+        setIsLocatingUser(false);
+        if (error.code === error.PERMISSION_DENIED) {
+          showToast('Hãy cho phép truy cập vị trí để tìm địa điểm gần bạn.');
+        } else if (error.code === error.TIMEOUT) {
+          showToast('Hết thời gian xác định vị trí. Vui lòng thử lại.');
+        } else {
+          showToast('Không xác định được vị trí của bạn.');
+        }
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+    );
+  };
+
+  const handleSelectNearbySpot = (spot: Spot) => {
+    onSelectSpot(spot);
+    setFocusedCoordinates({ lat: spot.lat, lng: spot.lng, zoom: 15 });
+    setShowNearbySpots(false);
+  };
+
   // Google Maps directions launcher
   const handleOpenDirections = (spot: Spot) => {
     const url = `https://www.google.com/maps/dir/?api=1&destination=${spot.lat},${spot.lng}`;
@@ -248,7 +301,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
       {/* ========================================================================= */}
       <div className="absolute inset-0 z-0 lg:pl-[76px]">
         <SpotMap
-          spots={filteredSpots}
+          spots={mapSpots}
           statusFilter={filters.status}
           onToggleStatusFilter={(status) => {
             onChangeFilters(prev => ({ ...prev, status: prev.status === status ? 'ALL' : status }));
@@ -260,7 +313,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
             setDetailTab('info');
           }}
           activeRegionId={activeRegionId}
-          userCoords={null}
+          userCoords={filters.userCoords}
           isPickingLocation={isPickingLocation}
           pickedLocation={pickedLocation}
           onPickLocation={onPickLocation}
@@ -389,6 +442,70 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
         </div>
 
       </div>
+
+      <button
+        type="button"
+        onClick={handleLocateUser}
+        disabled={isLocatingUser}
+        aria-label="Vị trí của tôi"
+        aria-pressed={showNearbySpots}
+        aria-busy={isLocatingUser}
+        title="Hiển thị 5 địa điểm gần bạn nhất"
+        className="fixed right-3 top-16 lg:right-5 lg:top-5 z-30 inline-flex h-11 items-center gap-2 rounded-full border border-[#D8CFBD] bg-[#FAF8F4]/95 px-3 text-[#2C2621] shadow-lg backdrop-blur-md transition-colors hover:border-[#C76B3C] disabled:cursor-wait disabled:opacity-70"
+      >
+        <LocateFixed className={`h-5 w-5 text-[#C76B3C] ${isLocatingUser ? 'animate-pulse' : ''}`} />
+        <span className="hidden text-sm font-semibold lg:inline">{isLocatingUser ? 'Đang xác định vị trí…' : 'Vị trí của tôi'}</span>
+      </button>
+
+      <AnimatePresence>
+        {showNearbySpots && (
+          <motion.aside
+            role="region"
+            aria-label="Địa điểm gần bạn"
+            initial={{ opacity: 0, y: -8, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -8, scale: 0.98 }}
+            className="fixed right-3 top-28 lg:right-5 lg:top-20 z-50 flex max-h-[72vh] w-[min(23rem,calc(100vw-1.5rem))] flex-col overflow-hidden rounded-2xl border border-[#D8CFBD] bg-[#FAF8F4] text-[#2C2621] shadow-2xl backdrop-blur-md"
+          >
+            <div className="flex items-center justify-between gap-3 border-b border-[#E2DAD0] px-4 py-3">
+              <div>
+                <h2 className="text-sm font-bold">5 địa điểm gần bạn nhất</h2>
+                <p className="mt-0.5 text-[11px] text-[#6E655B]">Xếp theo khoảng cách đường chim bay</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowNearbySpots(false)}
+                aria-label="Đóng danh sách địa điểm gần bạn"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#ECE4D0] hover:bg-[#E0D5BE]"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            {nearbySpots.length > 0 ? (
+              <ol role="list" className="min-h-0 space-y-1 overflow-y-auto p-2">
+                {nearbySpots.map((spot, index) => (
+                  <li key={spot.id}>
+                    <button
+                      type="button"
+                      onClick={() => handleSelectNearbySpot(spot)}
+                      className="flex w-full items-center gap-3 rounded-xl px-2.5 py-2 text-left hover:bg-[#F1EADB] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C76B3C]"
+                    >
+                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#ECE4D0] text-xs font-bold text-[#8A4A2C]">{index + 1}</span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-semibold">{spot.name}</span>
+                        <span className="block truncate text-xs text-[#6E655B]">{spot.address}</span>
+                      </span>
+                      <span className="shrink-0 text-xs font-semibold text-[#8A4A2C]">{formatDistance(spot.distanceKm)}</span>
+                    </button>
+                  </li>
+                ))}
+              </ol>
+            ) : (
+              <p className="p-5 text-sm text-[#6E655B]">Chưa có địa điểm nào có tọa độ để tính khoảng cách.</p>
+            )}
+          </motion.aside>
+        )}
+      </AnimatePresence>
 
       {/* ========================================================================= */}
       {/* FLOATING RE-OPEN BUTTON (Attached right next to Nav Rail when panel collapsed) */}
