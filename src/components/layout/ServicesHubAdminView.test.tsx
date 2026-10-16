@@ -10,7 +10,7 @@ vi.mock('../../services/serviceHubApi', () => ({ serviceHubApi: { adminList: vi.
   { id: 'SHOPPING_MALL', label: 'Trung tâm thương mại', sortOrder: 3 },
   { id: 'RED_RIVER', label: 'Gần sông Hồng', sortOrder: 4 },
   { id: 'SUNSET', label: 'Chụp hoàng hôn', sortOrder: 5 },
-]), createPlaceCategory: vi.fn(), updatePlaceCategory: vi.fn(), removePlaceCategory: vi.fn(), create: vi.fn().mockResolvedValue({}), update: vi.fn(), logout: vi.fn() } }));
+]), createPlaceCategory: vi.fn(), updatePlaceCategory: vi.fn(), removePlaceCategory: vi.fn(), approveCommunitySpot: vi.fn().mockResolvedValue({ success: true }), rejectCommunitySpot: vi.fn().mockResolvedValue({ success: true }), create: vi.fn().mockResolvedValue({}), update: vi.fn(), logout: vi.fn() } }));
 vi.mock('./BulkImportPanel', () => ({ BulkImportPanel: () => null }));
 vi.mock('./LeafletCoordinatePicker', () => ({ LeafletCoordinatePicker: () => null }));
 afterEach(() => { cleanup(); sessionStorage.clear(); vi.clearAllMocks(); });
@@ -123,4 +123,19 @@ it('opens category configuration from the authenticated admin screen', async () 
   await waitFor(() => expect(serviceHubApi.adminList).toHaveBeenCalled());
   fireEvent.click(screen.getByRole('button', { name: 'Quản lý nhóm địa điểm' }));
   expect(await screen.findByRole('heading', { name: 'Quản lý nhóm địa điểm' })).toBeTruthy();
+});
+
+it('notifies the admin about community submissions and publishes only after approval', async () => {
+  sessionStorage.setItem('service_admin_token', 'test-only');
+  window.history.replaceState({}, '', '/admin/spots');
+  const pending = { id: '12345678-1234-1234-1234-123456789abc', category: 'spot' as const, name: 'Vườn hoa cộng đồng', slug: 'community-12345678', address: 'Hà Nội', lat: 21, lng: 105, description: 'Hoa đang nở', placeCategories: ['CAFE'], isActive: false };
+  vi.mocked(serviceHubApi.adminList).mockResolvedValueOnce([pending]).mockResolvedValueOnce([]);
+  render(<ServicesHubAdminView onBack={vi.fn()} />);
+  expect(await screen.findByRole('button', { name: '1 địa điểm chờ duyệt' })).toBeTruthy();
+  expect(await screen.findByRole('region', { name: 'Địa điểm cộng đồng chờ duyệt' })).toBeTruthy();
+  expect(screen.getByText(/1 địa điểm.*chờ bạn duyệt/i)).toBeTruthy();
+  expect(screen.getByText('Vườn hoa cộng đồng')).toBeTruthy();
+  fireEvent.click(screen.getByRole('button', { name: 'Duyệt và xuất bản Vườn hoa cộng đồng' }));
+  await waitFor(() => expect(serviceHubApi.approveCommunitySpot).toHaveBeenCalledWith(pending.id));
+  await waitFor(() => expect(screen.queryByRole('region', { name: 'Địa điểm cộng đồng chờ duyệt' })).toBeNull());
 });

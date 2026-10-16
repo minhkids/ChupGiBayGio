@@ -27,6 +27,24 @@ cms.use('*', async (c, next) => {
   await next();
 });
 
+cms.post('/api/admin/community-spots/:id/approve', async (c) => {
+  const id = c.req.param('id');
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return c.json({ error: 'Mã địa điểm không hợp lệ.' }, 400);
+  const result = await getD1(c.env).prepare(`UPDATE spots SET is_active = 1
+    WHERE id = ? AND is_active = 0 AND slug LIKE 'community-%'`).bind(id).run();
+  if (!result.meta.changes) return c.json({ error: 'Không tìm thấy địa điểm đang chờ duyệt.' }, 404);
+  return c.json({ success: true, id });
+});
+
+cms.delete('/api/admin/community-spots/:id', async (c) => {
+  const id = c.req.param('id');
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return c.json({ error: 'Mã địa điểm không hợp lệ.' }, 400);
+  const result = await getD1(c.env).prepare(`DELETE FROM spots
+    WHERE id = ? AND is_active = 0 AND slug LIKE 'community-%'`).bind(id).run();
+  if (!result.meta.changes) return c.json({ error: 'Không tìm thấy địa điểm đang chờ duyệt.' }, 404);
+  return c.json({ success: true, id });
+});
+
 cms.post('/api/admin/upload', async (c) => {
   const form = await c.req.formData().catch(() => null);
   const file = form?.get('file');

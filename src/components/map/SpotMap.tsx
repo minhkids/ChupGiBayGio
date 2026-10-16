@@ -23,6 +23,7 @@ interface SpotMapProps {
   pickedLocation?: { lat: number; lng: number; address?: string } | null;
   onPickLocation?: (coords: { lat: number; lng: number }) => void;
   filmLabs?: FilmLab[];
+  showFilmLabs?: boolean;
   selectedFilmLab?: FilmLab | null;
   onSelectFilmLab?: (lab: FilmLab) => void;
   focusedCoordinates?: { lat: number; lng: number; zoom?: number } | null;
@@ -44,6 +45,7 @@ export const SpotMap: React.FC<SpotMapProps> = ({
   pickedLocation = null,
   onPickLocation,
   filmLabs,
+  showFilmLabs = true,
   selectedFilmLab,
   onSelectFilmLab,
   focusedCoordinates,
@@ -168,7 +170,7 @@ export const SpotMap: React.FC<SpotMapProps> = ({
 
     const markersLayer = L.layerGroup().addTo(map);
     markersLayerRef.current = markersLayer;
-    const filmLabsLayer = L.layerGroup().addTo(map);
+    const filmLabsLayer = L.layerGroup();
     filmLabsLayerRef.current = filmLabsLayer;
     mapInstanceRef.current = map;
 
@@ -362,7 +364,13 @@ export const SpotMap: React.FC<SpotMapProps> = ({
   // Render Film Lab Markers Layer (cuộn film hoặc ống kính màu hổ phách)
   useEffect(() => {
     if (!mapInstanceRef.current || !filmLabsLayerRef.current) return;
-    filmLabsLayerRef.current.clearLayers();
+    const layer = filmLabsLayerRef.current;
+    layer.clearLayers();
+    if (!showFilmLabs) {
+      layer.removeFrom(mapInstanceRef.current);
+      return;
+    }
+    layer.addTo(mapInstanceRef.current);
 
     const labs = filmLabs || d1FilmLabs;
     labs.forEach((lab) => {
@@ -394,7 +402,7 @@ export const SpotMap: React.FC<SpotMapProps> = ({
 
       marker.addTo(filmLabsLayerRef.current!);
     });
-  }, [filmLabs, d1FilmLabs, selectedFilmLab, onSelectFilmLab]);
+  }, [filmLabs, d1FilmLabs, selectedFilmLab, onSelectFilmLab, showFilmLabs]);
 
   // Handle focused coordinates (e.g. fly to film lab on map)
   useEffect(() => {

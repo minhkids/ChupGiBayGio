@@ -73,6 +73,7 @@ export interface ServiceListing {
   parkingFee?: string;
   sourceUrl?: string;
   coverImageUrl?: string;
+  isActive?: boolean;
   spotId?: string;
 }
 
@@ -160,6 +161,7 @@ export const serviceHubApi = {
           ...row,
           id: String(row.id),
           category: 'spot' as const,
+          isActive: Number(row.is_active) === 1,
           name: String(row.name || ''),
           slug: String(row.slug || ''),
           regionId: String(row.region_id || ''),
@@ -202,6 +204,8 @@ export const serviceHubApi = {
     method: 'PUT', body: JSON.stringify({ label }),
   }),
   removePlaceCategory: (id: string) => request<{ success: boolean }>(`/api/admin/place-categories/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+  approveCommunitySpot: (id: string) => request<{ success: boolean }>(`/api/admin/community-spots/${encodeURIComponent(id)}/approve`, { method: 'POST' }),
+  rejectCommunitySpot: (id: string) => request<{ success: boolean }>(`/api/admin/community-spots/${encodeURIComponent(id)}`, { method: 'DELETE' }),
   login: async (password: string) => {
     const result = await request<{ token: string }>('/api/admin/login', {
       method: 'POST', body: JSON.stringify({ password })

@@ -187,11 +187,9 @@ export function App() {
     }
   };
 
-  // Handle new spot submission from crowdsourcing modal
+  // Keep public contributions hidden until an admin approves them.
   const handleAddNewSpot = async (draft: Spot) => {
-    const newSpot = await createCommunitySpot(draft);
-    setSpots(prev => [newSpot, ...prev.filter(spot => spot.id !== newSpot.id)]);
-    setSelectedSpot(newSpot);
+    await createCommunitySpot(draft);
   };
 
   // Handle adding Facebook community post
@@ -310,11 +308,13 @@ export function App() {
           onToggleSave={handleToggleSave}
           filters={filters}
           onChangeFilters={setFilters}
-          onResetFilters={handleResetFilters}
           activeRegionId={activeRegionId}
           onSelectRegion={handleSelectRegion}
           activeView={activeView}
-          onChangeView={setActiveView}
+          onChangeView={(view) => {
+            setActiveView(view);
+            if (view === 'map') setFilters((current) => current.searchQuery ? { ...current, searchQuery: '' } : current);
+          }}
           onOpenSubmitSpotModal={() => setIsSubmitModalOpen(true)}
           onOpenSavedModal={() => setIsSavedModalOpen(true)}
           onOpenReportModal={(spot) => setReportSpot(spot)}
@@ -357,6 +357,7 @@ export function App() {
           onCancelMapPick={mapLocationPicker.cancelPicking}
           onClearLocation={mapLocationPicker.clearLocation}
           isGeocoding={mapLocationPicker.isGeocoding}
+        placeCategories={placeCategories}
         />
         </Suspense>
 
@@ -544,6 +545,7 @@ export function App() {
         onCancelMapPick={mapLocationPicker.cancelPicking}
         onClearLocation={mapLocationPicker.clearLocation}
         isGeocoding={mapLocationPicker.isGeocoding}
+        placeCategories={placeCategories}
       />
       </Suspense>
 

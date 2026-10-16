@@ -1,4 +1,4 @@
-import { Camera, RefreshCw, Sparkles } from 'lucide-react';
+import { Camera, Film, RefreshCw, Sparkles } from 'lucide-react';
 import { useState } from 'react';
 import type { PlaceCategory, PlaceCategoryFilter } from '../../types';
 
@@ -20,6 +20,8 @@ interface Props {
   categories: PlaceCategory[];
   selectedCategory: PlaceCategoryFilter;
   onSelectCategory: (category: PlaceCategoryFilter) => void;
+  showFilmLabs?: boolean;
+  onToggleFilmLabs?: () => void;
 }
 
 const moodboards: Record<string, Moodboard[]> = {
@@ -54,7 +56,7 @@ const fallbackMoodboards = (label: string): Moodboard[] => [
     { eyebrow: `${label.toUpperCase()} / STYLE NOTE`, title: 'Thử phá vỡ bố cục quen thuộc', description: 'Đổi góc nhìn trước khi đổi thiết bị: thấp hơn, gần hơn hoặc chụp xuyên qua một lớp.', palette: [{ name: 'Nắng', color: '#D8B16A' }, { name: 'Linen', color: '#F1E6D2' }, { name: 'Olive', color: '#73785C' }], frames: [{ label: '01 · LOW', title: 'Hạ máy xuống', direction: 'Để đường dẫn hoặc tiền cảnh mở rộng hơn bình thường.' }, { label: '02 · THROUGH', title: 'Chụp xuyên lớp', direction: 'Dùng kính, lá hoặc bóng đổ để tạo chiều sâu.' }, { label: '03 · CROP', title: 'Cắt sát chủ thể', direction: 'Bỏ bớt chi tiết thừa, giữ lại đúng một điểm nhấn.' }] },
   ];
 
-export const MapStyleCategoryBrowser = ({ categories, selectedCategory, onSelectCategory }: Props) => {
+export const MapStyleCategoryBrowser = ({ categories, selectedCategory, onSelectCategory, showFilmLabs = true, onToggleFilmLabs }: Props) => {
   const [moodCursor, setMoodCursor] = useState({ category: selectedCategory, index: 0 });
   const selectedLabel = categories.find(category => category.id === selectedCategory)?.label ?? 'Tất cả style';
   const boardOptions = moodboards[selectedCategory] ?? fallbackMoodboards(selectedLabel);
@@ -64,14 +66,11 @@ export const MapStyleCategoryBrowser = ({ categories, selectedCategory, onSelect
   const changeMood = () => setMoodCursor({ category: selectedCategory, index: (boardIndex + 1) % boardOptions.length });
 
   return (
-    <section aria-label="Khám phá style chụp" className="space-y-4">
+    <section aria-label="Khám phá style chụp" className="space-y-5 sm:space-y-4">
       <header className="space-y-1">
         <p className="font-mono-spec text-[10px] font-bold uppercase tracking-[0.14em] text-[#C76B3C]">Style finder / map</p>
-        <h2 className="text-lg font-bold text-[#2C2621]">Bạn định chụp style gì?</h2>
-        <p className="text-xs leading-relaxed text-[#6E655B]">Chọn một mood. Ghim trên bản đồ sẽ đổi theo category bạn chọn.</p>
-        <a href="/chup-gi/" className="inline-flex text-xs font-semibold text-[#8F3F23] underline decoration-[#C76B3C]/60 underline-offset-4 hover:text-[#6F2D18]">
-          Chưa biết chụp gì hôm nay? Xem gợi ý chụp ảnh
-        </a>
+        <h2 className="text-xl font-bold leading-tight text-[#2C2621] sm:text-lg">Bạn định chụp style gì?</h2>
+        <p className="text-sm leading-relaxed text-[#6E655B] sm:text-xs">Chọn một mood. Ghim trên bản đồ sẽ đổi theo category bạn chọn.</p>
       </header>
 
       <div role="group" aria-label="Category địa điểm" className="grid grid-cols-2 gap-2">
@@ -81,19 +80,22 @@ export const MapStyleCategoryBrowser = ({ categories, selectedCategory, onSelect
         {categories.map(category => <button key={category.id} type="button" aria-pressed={selectedCategory === category.id} onClick={() => onSelectCategory(category.id)} className={`min-h-11 rounded-xl border px-3 py-2 text-left text-xs font-semibold transition-colors ${selectedCategory === category.id ? 'border-[#2C2621] bg-[#2C2621] text-white' : 'border-[#D8CFBD] bg-[#FAF8F4] text-[#554D43] hover:bg-white'}`}>
           {category.label}
         </button>)}
+        <button type="button" aria-pressed={showFilmLabs} onClick={onToggleFilmLabs} className={`inline-flex min-h-11 items-center gap-2 rounded-xl border px-3 py-2 text-left text-xs font-semibold transition-colors ${showFilmLabs ? 'border-[#C76B3C] bg-[#F3EAD7] text-[#8F3F23]' : 'border-[#D8CFBD] bg-[#FAF8F4] text-[#6E655B] hover:bg-white'}`}>
+          <Film aria-hidden="true" className="h-4 w-4 shrink-0" />Lab film
+        </button>
       </div>
 
-      <section aria-label="Bảng cảm hứng chụp" aria-live="polite" className="overflow-hidden rounded-[1.35rem] border border-[#D8CFBD] bg-[#FAF8F4] shadow-sm">
-        <div className="relative isolate min-h-40 overflow-hidden bg-[#2C2621] p-4 text-[#FAF8F4]">
-          <div aria-hidden="true" className="absolute -right-7 -top-9 h-36 w-36 rounded-full opacity-25" style={{ backgroundColor: board.palette[0].color }} />
-          <div aria-hidden="true" className="absolute right-5 top-4 h-28 w-20 rotate-6 rounded-xl border border-white/40 bg-white/10 p-2 shadow-xl">
+      <section aria-label="Bảng cảm hứng chụp" aria-live="polite" className="overflow-hidden rounded-2xl border border-[#D8CFBD] bg-[#FAF8F4] shadow-sm sm:rounded-[1.35rem]">
+        <div className="relative isolate min-h-44 overflow-hidden bg-[#2C2621] p-5 text-[#FAF8F4] sm:min-h-40 sm:p-4">
+          <div aria-hidden="true" className="absolute -right-7 -top-9 h-36 w-36 rounded-full opacity-25 max-[360px]:hidden" style={{ backgroundColor: board.palette[0].color }} />
+          <div aria-hidden="true" className="absolute right-5 top-4 h-28 w-20 rotate-6 rounded-xl border border-white/40 bg-white/10 p-2 shadow-xl max-[360px]:hidden">
             <div className="relative h-full overflow-hidden rounded-lg border border-white/30">
               <span className="absolute right-2 top-2 h-5 w-5 rounded-full" style={{ backgroundColor: board.palette[0].color }} />
               <span className="absolute inset-x-0 bottom-0 h-12 opacity-80" style={{ background: `linear-gradient(155deg, transparent 20%, ${board.palette[2].color} 21%)` }} />
               <span className="absolute bottom-0 left-0 h-8 w-9 opacity-80" style={{ background: `linear-gradient(35deg, ${board.palette[1].color} 48%, transparent 50%)` }} />
             </div>
           </div>
-          <div className="relative z-10 max-w-[calc(100%-5.5rem)] space-y-2">
+          <div className="relative z-10 max-w-[calc(100%-7rem)] space-y-2 max-[360px]:max-w-full sm:max-w-[calc(100%-6rem)]">
             <p className="font-mono-spec text-[9px] font-bold uppercase tracking-[0.16em] text-[#E8B184]">Moodboard / {String(boardIndex + 1).padStart(2, '0')}</p>
             <h3 className="font-editorial text-xl font-bold leading-tight">{board.title}</h3>
             <p className="text-xs leading-relaxed text-white/75">{board.description}</p>
@@ -101,16 +103,16 @@ export const MapStyleCategoryBrowser = ({ categories, selectedCategory, onSelect
           <Camera aria-hidden="true" className="absolute bottom-3 right-3 h-4 w-4 text-white/70" />
         </div>
 
-        <div className="space-y-4 p-3.5">
+        <div className="space-y-5 p-4 sm:space-y-4 sm:p-3.5">
           <div>
             <div className="mb-2 flex items-center justify-between">
               <h4 className="font-mono-spec text-[10px] font-bold uppercase tracking-[0.12em] text-[#6E655B]">Bảng màu</h4>
               <span className="text-[10px] text-[#8C8377]">3 tông gợi ý</span>
             </div>
-            <div className="flex gap-2">
-              {board.palette.map(color => <div key={color.name} className="flex min-w-0 flex-1 items-center gap-1.5 rounded-lg bg-[#F3EAD7] px-2 py-1.5">
+            <div className="grid grid-cols-3 gap-2">
+              {board.palette.map(color => <div key={color.name} className="flex min-h-11 min-w-0 items-center gap-1.5 rounded-lg bg-[#F3EAD7] px-2 py-2 sm:min-h-0 sm:py-1.5">
                 <span aria-hidden="true" className="h-4 w-4 shrink-0 rounded-full border border-black/10" style={{ backgroundColor: color.color }} />
-                <span className="truncate text-[10px] font-medium text-[#554D43]">{color.name}</span>
+                <span className="break-words text-[11px] font-medium leading-tight text-[#554D43] sm:truncate sm:text-[10px]">{color.name}</span>
               </div>)}
             </div>
           </div>
@@ -120,20 +122,25 @@ export const MapStyleCategoryBrowser = ({ categories, selectedCategory, onSelect
               <h4 className="text-sm font-bold text-[#2C2621]">Ba khung hình thử ngay</h4>
               <span className="font-mono-spec text-[9px] font-bold text-[#C76B3C]">01 — 03</span>
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              {board.frames.map((frame, index) => <article key={frame.label} className={`rounded-xl border border-[#E2D8C6] bg-white/70 p-2.5 ${index === 2 ? 'col-span-2' : ''}`}>
-                <p className="font-mono-spec text-[9px] font-bold tracking-wide text-[#C76B3C]">{frame.label}</p>
-                <h5 className="mt-1 text-xs font-bold text-[#2C2621]">{frame.title}</h5>
-                <p className="mt-1 text-[10px] leading-relaxed text-[#6E655B]">{frame.direction}</p>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {board.frames.map((frame, index) => <article key={frame.label} className={`min-w-0 rounded-xl border border-[#E2D8C6] bg-white/70 p-3 sm:p-2.5 ${index === 2 ? 'sm:col-span-2' : ''}`}>
+                <p className="font-mono-spec text-[10px] font-bold tracking-wide text-[#C76B3C] sm:text-[9px]">{frame.label}</p>
+                <h5 className="mt-1 text-sm font-bold leading-snug text-[#2C2621] sm:text-xs">{frame.title}</h5>
+                <p className="mt-1 text-xs leading-relaxed text-[#6E655B] sm:text-[10px]">{frame.direction}</p>
               </article>)}
             </div>
           </div>
 
-          <button type="button" onClick={changeMood} aria-label={`Đổi mood cho ${selectedLabel}`} className="inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-xl border border-[#D8CFBD] bg-[#ECE4D0] px-3 py-2 text-xs font-semibold text-[#554D43] transition-colors hover:bg-[#E0D5BE]">
+          <button type="button" onClick={changeMood} aria-label={`Đổi mood cho ${selectedLabel}`} className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-[#D8CFBD] bg-[#ECE4D0] px-3 py-2 text-sm font-semibold text-[#554D43] transition-colors hover:bg-[#E0D5BE] sm:min-h-10 sm:text-xs">
             <RefreshCw aria-hidden="true" className="h-3.5 w-3.5" />Đổi mood cho nhóm này<Sparkles aria-hidden="true" className="h-3.5 w-3.5 text-[#C76B3C]" />
           </button>
         </div>
       </section>
+      <footer className="border-t border-[#D8CFBD] pt-4 text-center">
+        <a href="/chup-gi/" className="inline-flex min-h-11 items-center justify-center rounded-xl px-3 text-sm font-semibold text-[#8F3F23] underline decoration-[#C76B3C]/60 underline-offset-4 hover:text-[#6F2D18]">
+          Chưa biết chụp gì hôm nay? Xem gợi ý chụp ảnh
+        </a>
+      </footer>
     </section>
   );
 };

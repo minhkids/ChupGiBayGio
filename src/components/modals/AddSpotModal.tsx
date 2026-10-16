@@ -9,7 +9,7 @@ import {
   ImagePlus
 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import type { Spot, ConceptTag } from '../../types';
+import type { Spot, ConceptTag, PlaceCategory } from '../../types';
 import { CONCEPT_METADATA } from '../../utils/season';
 import type { LocationData } from '../../hooks/useMapLocationPicker';
 import { REGIONS } from '../../data/regions';
@@ -27,6 +27,7 @@ export interface AddSpotModalProps {
   onCancelMapPick: () => void;
   onClearLocation: () => void;
   isGeocoding?: boolean;
+  placeCategories: PlaceCategory[];
 }
 
 export const AddSpotModal: React.FC<AddSpotModalProps> = ({
@@ -38,11 +39,13 @@ export const AddSpotModal: React.FC<AddSpotModalProps> = ({
   onStartMapPick,
   onCancelMapPick,
   onClearLocation,
+  placeCategories,
 }) => {
   const [spotName, setSpotName] = useState('');
   const [spotDescription, setSpotDescription] = useState('');
   const [regionId, setRegionId] = useState('hanoi');
   const [selectedConcepts, setSelectedConcepts] = useState<ConceptTag[]>(['HOA_CO']);
+  const [selectedPlaceCategories, setSelectedPlaceCategories] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
   const [spotStatus, setSpotStatus] = useState<'PEAK' | 'ENDING_SOON' | 'ACTIVE'>('ACTIVE');
@@ -56,7 +59,7 @@ export const AddSpotModal: React.FC<AddSpotModalProps> = ({
 
   const handleFinalSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isSubmitting || !selectedLocation || !spotName.trim()) return;
+    if (isSubmitting || !selectedLocation || !spotName.trim() || selectedPlaceCategories.length === 0) return;
     setUploadError('');
 
     setIsSubmitting(true);
@@ -118,6 +121,7 @@ export const AddSpotModal: React.FC<AddSpotModalProps> = ({
         ...(spotStatus !== 'ACTIVE' ? { statusValidUntil } : {}),
         bloomPercentage: 90,
         conceptTags: selectedConcepts,
+        placeCategories: selectedPlaceCategories,
         isTrending: spotStatus === 'PEAK',
         trendScore: spotStatus === 'PEAK' ? 85 : spotStatus === 'ENDING_SOON' ? 50 : 0
       }
@@ -211,10 +215,10 @@ export const AddSpotModal: React.FC<AddSpotModalProps> = ({
             <CheckCircle2 className="w-8 h-8" />
           </div>
           <h3 className="text-xl font-bold font-editorial text-slateInk">
-            Thêm Điểm Thành Công
+            Đã gửi địa điểm
           </h3>
           <p className="text-sm text-slateInk-muted font-sans">
-            <strong className="text-slateInk">{spotName}</strong> đã được lưu lên bản đồ.
+            <strong className="text-slateInk">{spotName}</strong> đã được gửi và đang chờ quản trị viên duyệt. Địa điểm sẽ xuất hiện trên bản đồ sau khi được duyệt.
           </p>
           <div className="pt-4">
             <button
@@ -366,6 +370,26 @@ export const AddSpotModal: React.FC<AddSpotModalProps> = ({
             )}
           </div>
 
+          <fieldset className="space-y-2">
+            <legend className="font-mono-spec font-bold text-slateInk mb-2">NHÓM ĐỊA ĐIỂM: * <span className="font-normal normal-case">(có thể chọn nhiều)</span></legend>
+            <div className="flex flex-wrap gap-2">
+              {placeCategories.map(({ id, label }) => {
+                const selected = selectedPlaceCategories.includes(id);
+                return <label key={id} className={`inline-flex min-h-10 cursor-pointer items-center gap-2 border px-3 py-2 text-xs transition-colors ${selected ? 'border-terracotta bg-terracotta text-white' : 'border-slateInk/40 bg-paper-warm text-slateInk hover:border-slateInk'}`}>
+                  <input
+                    type="checkbox"
+                    aria-label={`Nhóm địa điểm: ${label}`}
+                    checked={selected}
+                    onChange={event => setSelectedPlaceCategories(current => event.target.checked ? [...current, id] : current.filter(category => category !== id))}
+                    className="accent-terracotta"
+                  />
+                  {label}
+                </label>;
+              })}
+            </div>
+            <p className="text-[11px] text-slateInk-muted">Chọn ít nhất một nhóm để quản trị viên phân loại địa điểm.</p>
+          </fieldset>
+
           <div>
             <label className="font-mono-spec font-bold text-slateInk block mb-2">ẢNH MINH HỌA:</label>
             <input
@@ -426,7 +450,7 @@ export const AddSpotModal: React.FC<AddSpotModalProps> = ({
             </button>
             <button
               type="submit"
-              disabled={isSubmitting || !spotName.trim() || !selectedLocation}
+              disabled={isSubmitting || !spotName.trim() || !selectedLocation || selectedPlaceCategories.length === 0}
               className="px-5 py-2 border border-slateInk bg-terracotta hover:bg-terracotta-dark disabled:opacity-50 text-white font-bold shadow-hard transition-colors flex items-center gap-2"
             >
               {isSubmitting ? 'ĐANG LƯU...' : (

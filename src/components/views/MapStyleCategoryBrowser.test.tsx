@@ -19,7 +19,10 @@ describe('MapStyleCategoryBrowser', () => {
     expect(screen.getByRole('button', { name: 'Hoàng hôn' })).toBeTruthy();
     expect(screen.getByRole('heading', { name: 'Một khoảng chậm giữa phố' })).toBeTruthy();
     expect(screen.getByText('Ba khung hình thử ngay')).toBeTruthy();
-    expect(screen.getByRole('link', { name: /Chưa biết chụp gì hôm nay/ }).getAttribute('href')).toBe('/chup-gi/');
+    const guideLink = screen.getByRole('link', { name: /Chưa biết chụp gì hôm nay/ });
+    const moodCycleButton = screen.getByRole('button', { name: /Đổi mood/ });
+    expect(guideLink.getAttribute('href')).toBe('/chup-gi/');
+    expect(Boolean(moodCycleButton.compareDocumentPosition(guideLink) & Node.DOCUMENT_POSITION_FOLLOWING)).toBe(true);
     expect(screen.queryByText(/Xem trên bản đồ|Chưa có địa điểm trong nhóm/)).toBeNull();
     expect(screen.getByRole('button', { name: /Đổi mood/ })).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Hoàng hôn' }));
@@ -35,5 +38,21 @@ describe('MapStyleCategoryBrowser', () => {
     />);
     fireEvent.click(screen.getByRole('button', { name: /Đổi mood/ }));
     expect(screen.getByRole('heading', { name: 'Tách cà phê trong khung cửa' })).toBeTruthy();
+  });
+
+  it('toggles film lab markers independently from the selected place style', () => {
+    const onToggleFilmLabs = vi.fn();
+    render(<MapStyleCategoryBrowser
+      categories={[{ id: 'CAFE', label: 'Quán cà phê', sortOrder: 1 }]}
+      selectedCategory="CAFE"
+      onSelectCategory={vi.fn()}
+      showFilmLabs
+      onToggleFilmLabs={onToggleFilmLabs}
+    />);
+    const toggle = screen.getByRole('button', { name: 'Lab film' });
+    expect(toggle.getAttribute('aria-pressed')).toBe('true');
+    fireEvent.click(toggle);
+    expect(onToggleFilmLabs).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole('button', { name: 'Quán cà phê' }).getAttribute('aria-pressed')).toBe('true');
   });
 });

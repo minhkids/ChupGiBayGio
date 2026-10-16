@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ArrowLeft, LogOut, Pencil, Plus, Save, Trash2 } from 'lucide-react';
+import { ArrowLeft, BellRing, CircleCheck, ExternalLink, LogOut, MapPin, Pencil, Plus, Save, Trash2 } from 'lucide-react';
 import { serviceHubApi, type ServiceCategory, type ServiceListing } from '../../services/serviceHubApi';
 import { AdminImageField, type AdminHotspot } from './AdminImageField';
 import { LeafletCoordinatePicker } from './LeafletCoordinatePicker';
@@ -46,6 +46,9 @@ const summary = (record: ServiceListing) => {
     : minimum ? `${minimum.toLocaleString('vi-VN')}đ/cuộn` : 'Chưa nhập giá';
   return [record.cheapestRollName || 'Chưa khai báo cuộn rẻ nhất', rollPrice, record.ward, record.district].filter(Boolean).join(' · ');
 };
+const isPendingCommunitySpot = (record: ServiceListing) => record.category === 'spot'
+  && record.slug?.startsWith('community-') === true
+  && record.isActive === false;
 
 interface Props { onBack: () => void }
 
@@ -63,6 +66,7 @@ export const ServicesHubAdminView: React.FC<Props> = ({ onBack }) => {
     updateDraft(next);
   };
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
   const [loading, setLoading] = useState(false);
   const [trendArticlesOpen, setTrendArticlesOpen] = useState(false);
   const [placeCategoriesOpen, setPlaceCategoriesOpen] = useState(false);
@@ -76,8 +80,9 @@ export const ServicesHubAdminView: React.FC<Props> = ({ onBack }) => {
     setPlaceCategories(next);
     if (placeFilter !== 'all' && placeFilter !== 'unassigned' && !next.some(item => item.id === placeFilter)) setPlaceFilter('all');
   };
-  const spots = records.filter(record => record.category === 'spot');
-  const visibleRecords = records.filter(record => record.category === category && (category !== 'spot' || placeFilter === 'all' || (placeFilter === 'unassigned' ? !record.placeCategories?.length : record.placeCategories?.includes(placeFilter))));
+  const pendingCommunitySpots = records.filter(isPendingCommunitySpot);
+  const spots = records.filter(record => record.category === 'spot' && !isPendingCommunitySpot(record));
+  const visibleRecords = records.filter(record => record.category === category && !isPendingCommunitySpot(record) && (category !== 'spot' || placeFilter === 'all' || (placeFilter === 'unassigned' ? !record.placeCategories?.length : record.placeCategories?.includes(placeFilter))));
 
   const load = async () => {
     setLoading(true);
@@ -109,6 +114,22 @@ export const ServicesHubAdminView: React.FC<Props> = ({ onBack }) => {
     return () => { active = false; };
   }, [tokenValid]);
 
+  useEffect(() => {
+    if (!tokenValid) return;
+    let active = true;
+    const refreshSubmissions = () => {
+      if (document.visibilityState === 'hidden') return;
+      serviceHubApi.adminList().then(items => { if (active) setRecords(items); }).catch(() => undefined);
+    };
+    const interval = window.setInterval(refreshSubmissions, 45_000);
+    window.addEventListener('focus', refreshSubmissions);
+    return () => {
+      active = false;
+      window.clearInterval(interval);
+      window.removeEventListener('focus', refreshSubmissions);
+    };
+  }, [tokenValid]);
+
   const login = async (event: React.FormEvent) => {
     event.preventDefault();
     setLoading(true);
@@ -138,6 +159,21 @@ export const ServicesHubAdminView: React.FC<Props> = ({ onBack }) => {
     try { await serviceHubApi.remove(id, category); await load(); }
     catch (err) { setError(err instanceof Error ? err.message : 'Không xóa được mục dịch vụ.'); }
     finally { setLoading(false); }
+  };
+
+  const reviewCommunitySpot = async (record: ServiceListing, approve: boolean) => {
+    if (!approve && !window.confirm(`Từ chối và xóa địa điểm “${record.name}” khỏi hàng chờ?`)) return;
+    setLoading(true);
+    setError('');
+    setNotice('');
+    try {
+      if (approve) await serviceHubApi.approveCommunitySpot(record.id);
+      else await serviceHubApi.rejectCommunitySpot(record.id);
+      setRecords(await serviceHubApi.adminList());
+      setNotice(approve ? `Đã duyệt và xuất bản “${record.name}”.` : `Đã từ chối “${record.name}”.`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Không xử lý được địa điểm chờ duyệt.');
+    } finally { setLoading(false); }
   };
 
   const importRecords = async (items: BulkRecord[]) => {
@@ -232,6 +268,7 @@ export const ServicesHubAdminView: React.FC<Props> = ({ onBack }) => {
       <header className="flex flex-wrap items-center justify-between gap-3 border-b border-[#D8CFBD] bg-[#FAF8F4] px-4 py-3 sm:px-8">
         <div><p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#C76B3C]">Bảng quản trị</p><h1 className="text-xl font-bold">Quản lý thông tin dịch vụ</h1></div>
         <div className="flex flex-wrap gap-2">
+          {tokenValid && pendingCommunitySpots.length > 0 && <button type="button" onClick={() => { setCategory('spot'); setDraft(blank('spot')); }} className="inline-flex items-center gap-1.5 rounded-full bg-[#F4D2A9] px-3 py-2 text-xs font-bold text-[#713719]"><BellRing className="h-4 w-4" />{pendingCommunitySpots.length} địa điểm chờ duyệt</button>}
           {tokenValid && <button type="button" onClick={() => setTrendArticlesOpen(true)} className="rounded-full bg-[#ECE4D0] px-3 py-2 text-xs font-semibold">Bài viết xu hướng</button>}
           {tokenValid && <button type="button" aria-expanded={placeCategoriesOpen && category === 'spot'} onClick={() => { if (category !== 'spot') { setCategory('spot'); setDraft(blank('spot')); } setPlaceCategoriesOpen(current => !current || category !== 'spot'); }} className="rounded-full bg-[#ECE4D0] px-3 py-2 text-xs font-semibold">Quản lý nhóm địa điểm</button>}
           {tokenValid && <button type="button" onClick={() => { serviceHubApi.logout(); setTokenValid(false); setRecords([]); }} className="rounded-full bg-[#ECE4D0] px-3 py-2 text-xs font-semibold"><LogOut className="mr-1 inline h-4 w-4" />Đăng xuất</button>}
@@ -240,6 +277,7 @@ export const ServicesHubAdminView: React.FC<Props> = ({ onBack }) => {
       </header>
       <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-8">
         {error && <p role="alert" className="mx-auto mb-4 max-w-5xl rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">{error}</p>}
+        {notice && <p role="status" className="mx-auto mb-4 max-w-5xl rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900">{notice}</p>}
         {!tokenValid ? (
           <form onSubmit={login} className="mx-auto mt-12 max-w-md rounded-2xl border border-[#D8CFBD] bg-[#FAF8F4] p-6">
             <h2 className="text-lg font-bold">Đăng nhập quản trị</h2><p className="mb-5 mt-1 text-sm text-[#6E655B]">Nhập mật khẩu quản trị để quản lý nội dung dịch vụ.</p>
@@ -249,9 +287,33 @@ export const ServicesHubAdminView: React.FC<Props> = ({ onBack }) => {
         ) : (
           <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(320px,0.8fr)]">
             <section className="rounded-2xl border border-[#D8CFBD] bg-[#FAF8F4] p-4 sm:p-6">
-              <div className="mb-5 flex flex-wrap gap-2">{categories.map((item) => <button key={item.id} type="button" onClick={() => { setCategory(item.id); setDraft(blank(item.id)); }} className={`rounded-full px-3 py-2 text-xs font-semibold ${category === item.id ? 'bg-[#2C2621] text-white' : 'bg-[#ECE4D0] text-[#554D43]'}`}>{item.label} ({records.filter((record) => record.category === item.id).length})</button>)}</div>
+              <div className="mb-5 flex flex-wrap gap-2">{categories.map((item) => <button key={item.id} type="button" onClick={() => { setCategory(item.id); setDraft(blank(item.id)); }} className={`rounded-full px-3 py-2 text-xs font-semibold ${category === item.id ? 'bg-[#2C2621] text-white' : 'bg-[#ECE4D0] text-[#554D43]'}`}>{item.label} ({item.id === 'spot' ? spots.length : records.filter((record) => record.category === item.id).length})</button>)}</div>
               <h2 className="mb-3 font-bold">{categories.find((item) => item.id === category)?.label}</h2>
               {category === 'spot' && <p className="mb-3 text-xs leading-relaxed text-[#6E655B]">Chọn nhóm để sửa trực tiếp địa điểm trên bản đồ. Một địa điểm có thể thuộc nhiều nhóm; bài viết biên tập vẫn quản lý riêng tại “Bài viết xu hướng”.</p>}
+              {category === 'spot' && pendingCommunitySpots.length > 0 && <section role="region" aria-label="Địa điểm cộng đồng chờ duyệt" className="mb-5 space-y-3 rounded-2xl border border-[#E4A566] bg-[#FFF7EB] p-4">
+                <header className="flex items-start gap-3">
+                  <BellRing className="mt-0.5 h-5 w-5 shrink-0 text-[#A64B22]" />
+                  <div><h3 className="font-bold text-[#713719]">Có {pendingCommunitySpots.length} địa điểm mới chờ bạn duyệt</h3><p className="mt-1 text-xs text-[#765A47]">Yêu cầu mới được kiểm tra lại khi trang admin mở hoặc đang hoạt động.</p></div>
+                </header>
+                <div className="space-y-2">
+                  {pendingCommunitySpots.map(record => <article key={record.id} className="rounded-xl border border-[#EAD3B6] bg-white p-3">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="min-w-0 space-y-1.5">
+                        <h4 className="text-sm font-bold">{record.name}</h4>
+                        <p className="text-xs text-[#6E655B]">{record.address} · {record.regionId === 'hanoi' ? 'Hà Nội' : record.regionId}</p>
+                        <p className="text-xs text-[#8A4A2C]">Nhóm: {(record.placeCategories || []).map(id => placeCategories.find(item => item.id === id)?.label || id).join(', ') || 'Chưa gán'}</p>
+                        {record.description && <p className="text-sm leading-relaxed text-[#554D43]">{record.description}</p>}
+                        {typeof record.lat === 'number' && typeof record.lng === 'number' && <a href={`https://www.google.com/maps?q=${record.lat},${record.lng}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs font-semibold text-[#8A4A2C] underline"><MapPin className="h-3.5 w-3.5" />Xem vị trí trên bản đồ<ExternalLink className="h-3 w-3" /></a>}
+                        {record.coverImageUrl && record.coverImageUrl !== '/spot-image-pending.svg' && <img src={record.coverImageUrl} alt={`Ảnh gửi kèm: ${record.name}`} className="mt-2 max-h-40 rounded-lg object-contain" />}
+                      </div>
+                      <div className="flex shrink-0 flex-wrap gap-2 sm:flex-col">
+                        <button type="button" disabled={loading} aria-label={`Duyệt và xuất bản ${record.name}`} onClick={() => void reviewCommunitySpot(record, true)} className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg bg-[#38734A] px-3 py-2 text-xs font-bold text-white disabled:opacity-60"><CircleCheck className="h-4 w-4" />Duyệt và xuất bản</button>
+                        <button type="button" disabled={loading} aria-label={`Từ chối ${record.name}`} onClick={() => void reviewCommunitySpot(record, false)} className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-800 disabled:opacity-60"><Trash2 className="h-4 w-4" />Từ chối</button>
+                      </div>
+                    </div>
+                  </article>)}
+                </div>
+              </section>}
               {category === 'spot' && placeCategoriesOpen && <PlaceCategoriesAdminPanel embedded categories={placeCategories} onCategoriesChange={changePlaceCategories} onBack={() => setPlaceCategoriesOpen(false)} />}
               {category === 'spot' && <nav aria-label="Lọc nhóm địa điểm" className="mb-4 grid gap-2 sm:grid-cols-2">
                 {[{ id: 'all', label: 'Tất cả', count: spots.length }, { id: 'unassigned', label: 'Chưa phân nhóm', count: spots.filter(spot => !spot.placeCategories?.length).length }, ...placeCategories.map(item => ({ ...item, count: spots.filter(spot => spot.placeCategories?.includes(item.id)).length }))].map(item => <button key={item.id} type="button" aria-pressed={placeFilter === item.id} onClick={() => setPlaceFilter(item.id)} className={`min-h-11 rounded-xl border px-3 py-2 text-left text-xs font-semibold ${placeFilter === item.id ? 'border-[#2C2621] bg-[#2C2621] text-white' : 'border-[#D8CFBD] bg-white text-[#554D43]'}`}>{item.label} ({item.count})</button>)}
