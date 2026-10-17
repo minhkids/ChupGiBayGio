@@ -15,22 +15,43 @@ vi.mock('./BulkImportPanel', () => ({ BulkImportPanel: () => null }));
 vi.mock('./LeafletCoordinatePicker', () => ({ LeafletCoordinatePicker: () => null }));
 afterEach(() => { cleanup(); sessionStorage.clear(); vi.clearAllMocks(); });
 
-it('preserves typed commas and spaces in list fields, saves arrays, and clears the new draft', async () => {
+it('preserves typed commas and spaces in the new service tags field', async () => {
+  sessionStorage.setItem('service_admin_token', 'test-only');
+  window.history.replaceState({}, '', '/admin/rentals');
+  render(<ServicesHubAdminView onBack={vi.fn()} />);
+  await waitFor(() => expect(serviceHubApi.adminList).toHaveBeenCalled());
+  fireEvent.change(screen.getByLabelText('Tên hiển thị *'), { target: { value: 'Test service' } });
+  const field = screen.getByLabelText('Hashtag / phong cách') as HTMLTextAreaElement;
+  for (const value of ['C41', 'C41,', 'C41, ', 'C41, Kodak 200, ']) {
+    fireEvent.change(field, { target: { value } });
+    expect(field.value).toBe(value);
+  }
+  fireEvent.click(screen.getByRole('button', { name: 'Thêm mục' }));
+  await waitFor(() => expect(serviceHubApi.create).toHaveBeenCalledWith(expect.objectContaining({ category: 'rental', tags: ['C41', 'Kodak 200'] })));
+  await waitFor(() => expect((screen.getByLabelText('Hashtag / phong cách') as HTMLTextAreaElement).value).toBe(''));
+});
+
+it('keeps the new film lab form to name, location and phone', async () => {
   sessionStorage.setItem('service_admin_token', 'test-only');
   window.history.replaceState({}, '', '/admin/labs');
   render(<ServicesHubAdminView onBack={vi.fn()} />);
   await waitFor(() => expect(serviceHubApi.adminList).toHaveBeenCalled());
-  fireEvent.change(screen.getByLabelText('Tên hiển thị *'), { target: { value: 'Test lab' } });
-  for (const label of ['Film đang có', 'Dịch vụ', 'Hashtag / phong cách']) {
-    const field = screen.getByLabelText(label) as HTMLTextAreaElement;
-    for (const value of ['C41', 'C41,', 'C41, ', 'C41, Kodak 200, ']) {
-      fireEvent.change(field, { target: { value } });
-      expect(field.value).toBe(value);
-    }
+
+  expect(screen.getByLabelText('Tên hiển thị *')).toBeTruthy();
+  expect(screen.getByLabelText('Địa điểm *')).toBeTruthy();
+  expect(screen.getByLabelText('Số điện thoại')).toBeTruthy();
+  for (const label of ['Slogan', 'Giờ mở cửa', 'Vĩ độ', 'Kinh độ', 'Film đang có', 'Dịch vụ', 'Liên kết chính', 'Liên kết phụ / chỉ đường', 'Hashtag / phong cách']) {
+    expect(screen.queryByLabelText(label)).toBeNull();
   }
+
+  fireEvent.change(screen.getByLabelText('Tên hiển thị *'), { target: { value: 'Lab thử nghiệm' } });
+  fireEvent.change(screen.getByLabelText('Địa điểm *'), { target: { value: '25 P. Vạn Bảo, Ngọc Hà, Hà Nội' } });
+  fireEvent.change(screen.getByLabelText('Số điện thoại'), { target: { value: '0123456789' } });
   fireEvent.click(screen.getByRole('button', { name: 'Thêm mục' }));
-  await waitFor(() => expect(serviceHubApi.create).toHaveBeenCalledWith(expect.objectContaining({ category: 'filmLab', filmStocks: ['C41', 'Kodak 200'], services: ['C41', 'Kodak 200'], tags: ['C41', 'Kodak 200'] })));
-  await waitFor(() => expect((screen.getByLabelText('Film đang có') as HTMLTextAreaElement).value).toBe(''));
+
+  await waitFor(() => expect(serviceHubApi.create).toHaveBeenCalledWith(expect.objectContaining({
+    category: 'filmLab', name: 'Lab thử nghiệm', address: '25 P. Vạn Bảo, Ngọc Hà, Hà Nội', phone: '0123456789',
+  })));
 });
 
 it('manages film shops separately from processing labs with category-specific fields', async () => {
@@ -55,7 +76,7 @@ it('manages film shops separately from processing labs with category-specific fi
   fireEvent.click(screen.getByRole('button', { name: 'Lab (1)' }));
   expect(screen.getByText('Crolab')).toBeTruthy();
   expect(screen.queryByText('Tiệm Film')).toBeNull();
-  expect(screen.getByLabelText('Dịch vụ')).toBeTruthy();
+  expect(screen.queryByLabelText('Dịch vụ')).toBeNull();
   expect(screen.queryByLabelText('Giá cuộn rẻ nhất (VNĐ)')).toBeNull();
 });
 
