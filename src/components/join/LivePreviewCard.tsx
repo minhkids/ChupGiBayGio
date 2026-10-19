@@ -32,11 +32,8 @@ export function LivePreviewCard({ data }: { data: PartnerPreview }) {
   const lab = data.kind === 'lab';
   const thumbnail = (lab ? data.image : data.portfolio?.[0] || data.image);
   const branches = lab ? data.locations?.filter((item) => item.ward.trim() || item.district.trim()) || [] : [];
-  const location = lab
-    ? [data.ward, data.district, 'Hà Nội'].filter(Boolean).join(', ')
-    : data.address
-    ? `${data.address}${data.district && !data.address.toLocaleLowerCase('vi').includes(data.district.toLocaleLowerCase('vi')) ? `, ${data.district}` : ''}`
-    : data.district;
+  const location = lab ? [data.ward, data.district, 'Hà Nội'].filter(Boolean).join(', ') : '';
+  const startingPrice = Number(data.packagePrice);
   const highlights = lab ? data.filmStocks : data.styles;
   return <article data-testid="partner-preview" className="mx-auto w-full max-w-sm rounded-2xl border border-[#D8CFBD] bg-[#FAF8F4] p-4 text-[#2C2621] shadow-sm">
     <div className="flex items-start gap-3">
@@ -49,7 +46,7 @@ export function LivePreviewCard({ data }: { data: PartnerPreview }) {
         {lab && data.slogan && <p className="mt-1 break-words text-xs leading-snug text-[#675D52]">{data.slogan}</p>}
         {lab && data.minRollPrice && <p className="mt-2 text-sm font-bold leading-snug text-[#8B4828]">{data.maxRollPrice ? `${Number(data.minRollPrice).toLocaleString('vi-VN')}–${Number(data.maxRollPrice).toLocaleString('vi-VN')}đ/cuộn` : `Từ ${Number(data.minRollPrice).toLocaleString('vi-VN')}đ/cuộn`}</p>}
         {lab && data.cheapestRollName && data.minRollPrice && <p className="mt-1 text-xs font-semibold leading-snug text-[#8B4828]">Rẻ nhất: {data.cheapestRollName} · {Number(data.minRollPrice).toLocaleString('vi-VN')}đ/cuộn</p>}
-        {!lab && data.packagePrice && <p className="mt-2 text-sm font-bold text-[#8B4828]">Từ {Number(data.packagePrice).toLocaleString('vi-VN')}đ/gói</p>}
+        {!lab && <p className="mt-2 rounded-xl border border-[#C76B3C] bg-[#F3E6D6] px-3 py-2 text-sm font-bold text-[#8B4828]">Giá từ {startingPrice > 0 ? `${startingPrice.toLocaleString('vi-VN')}đ` : 'chưa nhập'}</p>}
       </div>
     </div>
     {lab && data.expressDelivery2h && <ExpressDeliveryBadge className="mt-3" />}

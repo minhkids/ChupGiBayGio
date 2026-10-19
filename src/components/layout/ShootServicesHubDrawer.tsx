@@ -103,9 +103,10 @@ export const ShootServicesHubDrawer: React.FC<ShootServicesHubDrawerProps> = ({
   const filteredPhotographers = useMemo(() => {
     const photographers: Photographer[] = directoryItems.filter((entry) => entry.category === 'photographer').map((entry) => {
       const price = Number((entry.price || '').replace(/[^\d]/g, '')) || 0;
+      const priceLabel = price > 0 ? `Giá từ ${price.toLocaleString('vi-VN')}đ` : entry.price || 'Liên hệ';
       const packages = (entry.packages || []).map((pkg, index) => ({ id: `${entry.id}-package-${index}`, name: pkg.name, price: pkg.price, priceFormatted: `${pkg.price.toLocaleString('vi-VN')}đ`, duration: pkg.duration, deliverables: { totalOriginalPhotos: String(pkg.deliveredPhotos), retouchedPhotos: String(pkg.deliveredPhotos), turnaroundTime: '' } }));
       return { id: entry.id, name: entry.name, avatarUrl: entry.imageUrl || '', bio: entry.description || '', rating: Number(entry.rating) || 0, reviewCount: Number(entry.reviewCount) || 0,
-        startingPrice: price, startingPriceFormatted: entry.price || 'Liên hệ', budgetCategory: price < 500000 ? 'student' : price <= 1000000 ? 'standard' : 'premium',
+        startingPrice: price, startingPriceFormatted: priceLabel, budgetCategory: price < 500000 ? 'student' : price <= 1000000 ? 'standard' : 'premium',
         vibes: (entry.tags || []) as Photographer['vibes'], specialtySpots: [], gear: [entry.gearBody, entry.gearLens].filter(Boolean).join(' / '),
         contact: { zaloPhone: entry.phone || '', zaloUrl: entry.phone ? `https://zalo.me/${entry.phone.replace(/\D/g, '')}` : '', phone: entry.phone || '', instagram: entry.link || '' },
         featuredPhotos: entry.portfolioPhotos?.length ? entry.portfolioPhotos : entry.imageUrl ? [entry.imageUrl] : [], packages, albums: [] };

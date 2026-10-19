@@ -275,6 +275,20 @@ describe('ServicesHubView', () => {
     expect(detail.textContent).toContain('10:00–20:00');
   });
 
+  it('highlights the photographer starting price without exposing address details', async () => {
+    window.history.replaceState(null, '', '/?services=photographers');
+    vi.mocked(serviceHubApi.list).mockResolvedValueOnce([{
+      id: 'photographer-1', category: 'photographer', name: 'Minh Studio', price: '400000',
+      address: 'Địa chỉ riêng', district: 'Long Biên',
+    }]);
+    renderView();
+    fireEvent.click(screen.getByRole('button', { name: /Nhiếp ảnh gia/i }));
+    const card = (await screen.findByText('Minh Studio')).closest('article');
+    expect(card?.textContent).toContain('Giá từ 400.000đ');
+    expect(card?.textContent).not.toContain('Địa chỉ riêng');
+    expect(card?.textContent).not.toContain('Long Biên');
+  });
+
   it('starts the directories empty and uses equal-width navigation tabs', async () => {
     renderView();
     expect(screen.getByRole('heading', { name: 'Chuẩn bị cho buổi chụp' })).toBeDefined();

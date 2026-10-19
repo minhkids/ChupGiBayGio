@@ -57,7 +57,8 @@ async function photos(form: FormData, min: number, max: number, field = 'photos'
   const files = form.getAll(field);
   const limitError = field === 'productPhoto'
     ? 'Ảnh bảng giá phải là JPG, PNG hoặc WebP, tối đa 3 MB.'
-    : 'Cần 3–6 ảnh portfolio (JPG, PNG, WebP; tối đa 3 MB/ảnh).';
+    : min === 1 ? 'Cần ít nhất 1 ảnh portfolio (JPG, PNG hoặc WebP; tối đa 3 MB/ảnh).'
+      : 'Cần từ 3 đến 6 ảnh portfolio (JPG, PNG hoặc WebP; tối đa 3 MB/ảnh).';
   if (files.length < min || files.length > max || files.some((file) => !(file instanceof File) || file.size < 1 || file.size > 3 * 1024 * 1024)) return { error: limitError };
   const uploads: { bytes: Uint8Array; ext: string; type: string }[] = [];
   for (const file of files as File[]) {
@@ -94,7 +95,7 @@ async function registration(c: Context<{ Bindings: Bindings }>, kind: 'lab' | 'p
   const social = link(body.socialUrl);
   const imageUrl = link(body.imageUrl);
   if (!name || !number || social === null || imageUrl === null) return c.json({ error: 'Kiểm tra tên, số Zalo và đường dẫn HTTPS.' }, 400);
-  const images = await photos(form, kind === 'lab' ? 0 : 3, kind === 'lab' ? 1 : 6);
+  const images = await photos(form, kind === 'lab' ? 0 : 1, kind === 'lab' ? 1 : 6);
   if ('error' in images) return c.json({ error: images.error }, images.error?.includes('định dạng') ? 415 : 400);
   const productImages = kind === 'lab' ? await photos(form, 0, 1, 'productPhoto') : { uploads: [] as { bytes: Uint8Array; ext: string; type: string }[] };
   if ('error' in productImages) return c.json({ error: productImages.error }, productImages.error?.includes('định dạng') ? 415 : 400);
@@ -132,15 +133,12 @@ async function registration(c: Context<{ Bindings: Bindings }>, kind: 'lab' | 'p
       return c.json({ error: 'Vui lòng nhập phường/xã, quận/huyện, cuộn film rẻ nhất và giá hợp lệ.' }, 400);
     }
   } else {
-    address = text(body.address, 300);
-    district = text(body.district, 80);
-    if ((body.address && !address) || (body.district && !districts.has(district)) || (district && !address)) return c.json({ error: 'Địa chỉ studio hoặc quận/huyện không hợp lệ.' }, 400);
     styles = list(body.styles, 12) ?? [];
     shootSpots = list(body.shootSpots, 20) ?? [];
     const pack = body.package as Record<string, unknown> | null;
     const price = Number(pack?.price);
-    if (!list(body.styles, 12) || !list(body.shootSpots, 20) || !pack || !text(pack.name, 160) || !Number.isSafeInteger(price) || price < 0 || price > 100000000 || !text(pack.duration, 120) || !text(pack.deliveredPhotos, 120)) return c.json({ error: 'Gói chụp hoặc thông tin phong cách không hợp lệ.' }, 400);
-    pkg = { name: text(pack.name, 160), price, duration: text(pack.duration, 120), deliveredPhotos: text(pack.deliveredPhotos, 120) };
+    if (!list(body.styles, 12) || !list(body.shootSpots, 20) || !pack || !Number.isSafeInteger(price) || price < 1 || price > 100000000) return c.json({ error: 'Vui lòng nhập giá khởi điểm hợp lệ và kiểm tra thông tin phong cách.' }, 400);
+    pkg = { name: text(pack.name, 160) || 'Giá khởi điểm', price, duration: text(pack.duration, 120), deliveredPhotos: text(pack.deliveredPhotos, 120) };
   }
   const id = crypto.randomUUID();
   const keys: string[] = [];

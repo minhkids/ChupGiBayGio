@@ -351,8 +351,9 @@ app.get('/api/services', async (c) => {
     ...rows(rentalRows.results).map((row) => ({ ...mapFields(row, { address: 'address', phone: 'hotline', link: 'fanpage_url', price: 'daily_price' }), id: row.id, name: row.name, category: 'rental' })),
     ...rows(outfitRows.results).map((row) => ({ ...mapFields(row, { description: 'description', price: 'estimated_price', imageUrl: 'image_url', link: 'shopee_url', secondaryLink: 'tiktok_url', material: 'material' }), id: row.id, name: row.name, category: 'outfit', hotspots: parseJsonField(String(row.hotspots || '[]'), []) })),
     ...rows(photographerRows.results).map((row) => {
-      const firstPackage = packages.find((pkg) => pkg.photographer_id === row.id);
-      return { ...mapFields(row, { description: 'bio', address: 'address', district: 'district', imageUrl: 'avatar_url', phone: 'phone', link: 'instagram', gearBody: 'gear_body', gearLens: 'gear_lens' }), id: row.id, name: row.name, category: 'photographer', price: firstPackage?.price ? String(firstPackage.price) : '', tags: parseJsonField(String(row.styles || '[]'), []), shootSpots: parseJsonField(String(row.preferred_spots || '[]'), []), portfolioPhotos: parseJsonField(String(row.portfolio_photos || '[]'), []), packages: packages.filter((pkg) => pkg.photographer_id === row.id).map((pkg) => ({ id: pkg.id, name: pkg.name, price: pkg.price, duration: pkg.duration, deliveredPhotos: pkg.delivered_photos, deliveredPhotosText: pkg.delivered_photos_text })) };
+      const photographerPackages = packages.filter((pkg) => pkg.photographer_id === row.id);
+      const startingPackage = photographerPackages.reduce<Record<string, unknown> | undefined>((lowest, pkg) => !lowest || Number(pkg.price) < Number(lowest.price) ? pkg : lowest, undefined);
+      return { ...mapFields(row, { description: 'bio', imageUrl: 'avatar_url', phone: 'phone', link: 'instagram', gearBody: 'gear_body', gearLens: 'gear_lens' }), id: row.id, name: row.name, category: 'photographer', price: startingPackage?.price ? String(startingPackage.price) : '', tags: parseJsonField(String(row.styles || '[]'), []), shootSpots: parseJsonField(String(row.preferred_spots || '[]'), []), portfolioPhotos: parseJsonField(String(row.portfolio_photos || '[]'), []), packages: photographerPackages.map((pkg) => ({ id: pkg.id, name: pkg.name, price: pkg.price, duration: pkg.duration, deliveredPhotos: pkg.delivered_photos, deliveredPhotosText: pkg.delivered_photos_text })) };
     }),
     ...rows(filmRows.results).map((row) => ({ ...mapFields(row, { iso: 'iso', recommendedTime: 'tone', filmImageUrl: 'package_image_url', imageUrl: 'sample_image_url' }), id: row.id, name: row.name, category: 'filmColor', tags: parseJsonField(String(row.suitable_seasons || '[]'), []) })),
     ...[
@@ -414,7 +415,10 @@ app.get('/api/photographers', async (c) => {
   const packages = (packageRows.results || []) as Record<string, unknown>[];
   return c.json((people.results || []).map((row) => {
     const person = row as Record<string, unknown>;
-    return { ...person, avatarUrl: person.avatar_url, gearBody: person.gear_body, gearLens: person.gear_lens,
+    const publicPerson = { ...person };
+    delete publicPerson.address;
+    delete publicPerson.district;
+    return { ...publicPerson, avatarUrl: person.avatar_url, gearBody: person.gear_body, gearLens: person.gear_lens,
       styles: parseJsonField(String(person.styles || '[]'), []), portfolioPhotos: parseJsonField(String(person.portfolio_photos || '[]'), []),
       packages: packages.filter((item) => item.photographer_id === person.id) };
   }));

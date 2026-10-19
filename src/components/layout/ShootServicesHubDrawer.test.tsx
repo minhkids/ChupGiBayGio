@@ -51,6 +51,17 @@ describe('ShootServicesHubDrawer', () => {
     expect(onClose).toHaveBeenCalled();
   });
 
+  it('shows the formatted starting price on photographer cards', async () => {
+    const fetcher = vi.fn(async (input: RequestInfo | URL) => String(input) === '/api/services'
+      ? Response.json([{ id: 'photographer-1', category: 'photographer', name: 'Minh Studio', price: '400000' }])
+      : Response.json([]));
+    vi.stubGlobal('fetch', fetcher);
+    render(<ShootPlanProvider><ShootServicesHubDrawer isOpen initialTab="photographers" onClose={() => undefined} /></ShootPlanProvider>);
+
+    expect(await screen.findByText('Minh Studio')).toBeTruthy();
+    expect(document.body.textContent).toContain('Giá từ 400.000đ');
+  });
+
   it('shows area-only shops and the same compact express badge in the mobile Mua film tab', async () => {
     const fetcher = vi.fn(async (url: string) => Response.json(url === '/api/film-shops' ? [{
       id: 'mapped-mobile-shop', name: 'Shop có ghim', ward: 'Bồ Đề', district: 'Long Biên',

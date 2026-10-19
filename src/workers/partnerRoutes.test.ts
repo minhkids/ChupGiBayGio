@@ -69,19 +69,26 @@ describe('public partner registration', () => {
     } finally { provider.mockRestore(); }
   });
 
-  it('stores an optional public studio address without affecting photographers without studios', async () => {
+  it('publishes a photographer with only a starting price and no address', async () => {
     const env = environment();
-    const response = await submit('/api/partner/register-photographer', { ...photographer, address: '15 Ngọc Thụy, Long Biên, Hà Nội', district: 'Long Biên' }, [jpg(), jpg(), jpg()], env);
+    const response = await submit('/api/partner/register-photographer', {
+      name: 'Minh Studio', phone: '0912345678', address: 'Private home address', district: 'Long Biên',
+      package: { price: 350000 }, styles: [], shootSpots: []
+    }, [jpg()], env);
     expect(response.status).toBe(201);
     const written = env.writes.find(({ sql }) => sql.includes('INSERT INTO photographers'));
-    expect(written?.sql).toContain('address');
-    expect(written?.values).toContain('15 Ngọc Thụy, Long Biên, Hà Nội');
-    expect(written?.values).toContain('Long Biên');
+    expect(written?.values.slice(-2)).toEqual(['', '']);
+    const packageWrite = env.writes.find(({ sql }) => sql.includes('INSERT INTO photographer_packages'));
+    expect(packageWrite?.values.slice(2)).toEqual(['Giá khởi điểm', 350000, '', 0, '']);
+    expect(env.bucket.put).toHaveBeenCalledOnce();
   });
   it('reads published partner records through the live directory and photographer API', async () => {
     const env = environment({
       photographers: [{ id: 'p-1', name: 'Minh Studio', status: 'published', address: '15 Ngọc Thụy, Hà Nội', district: 'Long Biên', styles: '["MàuFilm"]', preferred_spots: '["Hồ Tây"]', portfolio_photos: '["https://example.com/a.jpg"]' }],
-      photographer_packages: [{ id: 'pkg-1', photographer_id: 'p-1', name: 'Ngoại cảnh', price: 600000 }],
+      photographer_packages: [
+        { id: 'pkg-1', photographer_id: 'p-1', name: 'Ngoại cảnh', price: 600000 },
+        { id: 'pkg-2', photographer_id: 'p-1', name: 'Chân dung', price: 450000 },
+      ],
       film_shops: [
         { id: 'lab-1', name: 'Film Shop', slogan: 'Film đẹp cho mọi khoảnh khắc', address: '36 Lý Quốc Sư', ward: 'Cửa Nam', district: 'Hoàn Kiếm', status: 'published', in_stock_films: '["Kodak Gold 200"]', product_image_url: 'https://example.com/product.jpg', cheapest_roll_name: 'Kodak Gold 200', min_roll_price: 125000, max_roll_price: 350000, express_delivery_2h: 1 },
         { id: 'lab-min-only', name: 'Shop chỉ biết giá rẻ nhất', ward: 'Cửa Nam', district: 'Hoàn Kiếm', status: 'published', in_stock_films: '["Kodak Gold 200"]', cheapest_roll_name: 'Kodak Gold 200', min_roll_price: 50000, max_roll_price: 0 },
@@ -89,11 +96,17 @@ describe('public partner registration', () => {
     });
     const people = await worker.request('/api/photographers', {}, env);
     expect(people.status).toBe(200);
-    expect(await people.json()).toMatchObject([{ id: 'p-1', styles: ['MàuFilm'], portfolioPhotos: ['https://example.com/a.jpg'] }]);
+    const peopleData = await people.json() as Record<string, unknown>[];
+    expect(peopleData).toMatchObject([{ id: 'p-1', styles: ['MàuFilm'], portfolioPhotos: ['https://example.com/a.jpg'] }]);
+    expect(peopleData[0]).not.toHaveProperty('address');
+    expect(peopleData[0]).not.toHaveProperty('district');
     const directory = await worker.request('/api/services', {}, env);
     expect(directory.status).toBe(200);
     const directoryData = await directory.json();
-    expect(directoryData).toContainEqual(expect.objectContaining({ id: 'p-1', category: 'photographer', shootSpots: ['Hồ Tây'], address: '15 Ngọc Thụy, Hà Nội', district: 'Long Biên' }));
+    expect(directoryData).toContainEqual(expect.objectContaining({ id: 'p-1', category: 'photographer', shootSpots: ['Hồ Tây'], price: '450000' }));
+    const publicPhotographer = directoryData.find((item: { id: string }) => item.id === 'p-1');
+    expect(publicPhotographer).not.toHaveProperty('address');
+    expect(publicPhotographer).not.toHaveProperty('district');
     expect(directoryData).toContainEqual(expect.objectContaining({ id: 'lab-1', category: 'filmShop', slogan: 'Film đẹp cho mọi khoảnh khắc', address: 'Cửa Nam, Hoàn Kiếm, Hà Nội', ward: 'Cửa Nam', district: 'Hoàn Kiếm', productImageUrl: 'https://example.com/product.jpg', cheapestRollName: 'Kodak Gold 200', minRollPrice: 125000, maxRollPrice: 350000, price: '125.000đ – 350.000đ/cuộn', expressDelivery2h: true }));
     expect(directoryData).toContainEqual(expect.objectContaining({ id: 'lab-min-only', minRollPrice: 50000, maxRollPrice: 0, price: 'Từ 50.000đ/cuộn' }));
     const shops = await worker.request('/api/film-shops', {}, env);
@@ -114,9 +127,9 @@ describe('public partner registration', () => {
     expect(fetched.status).toBe(200);
   });
 
-  it('rejects too few portfolio images without persisting anything', async () => {
+  it('rejects photographers with no portfolio images without persisting anything', async () => {
     const env = environment();
-    const response = await submit('/api/partner/register-photographer', photographer, [jpg()], env);
+    const response = await submit('/api/partner/register-photographer', photographer, [], env);
     expect(response.status).toBe(400);
     expect(env.writes).toHaveLength(0);
     expect(env.bucket.put).not.toHaveBeenCalled();
