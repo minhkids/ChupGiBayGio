@@ -28,6 +28,7 @@ export interface SeasonalTrend {
   trendTitle: string;
   startMonth: number; // 1 - 12
   endMonth: number;   // 1 - 12
+  bestMonths?: number[]; // Exact admin-selected months; avoids widening disjoint seasons into a range.
   peakStartWeek?: number; // 1 - 52
   peakEndWeek?: number;   // 1 - 52
   status: SpotStatus;

@@ -15,6 +15,13 @@ describe('upcoming seasonal candidates', () => {
     expect(candidate.seasonalTrend.placeCategories).toContain('CAFE');
   });
 
+  it('filters legacy seasonal spots by the exact months selected in admin', () => {
+    const trend = { ...candidate.seasonalTrend, upcoming: false, startMonth: 1, endMonth: 12, bestMonths: [3, 9] };
+    expect(matchesSpotMonth(trend, 3)).toBe(true);
+    expect(matchesSpotMonth(trend, 9)).toBe(true);
+    expect(matchesSpotMonth(trend, 6)).toBe(false);
+  });
+
   it('looks three months ahead and wraps the year without dropping next-season spots', () => {
     expect(getUpcomingMonths(10)).toEqual([11, 12, 1]);
     expect(matchesSpotMonth(candidate.seasonalTrend, 10)).toBe(true);

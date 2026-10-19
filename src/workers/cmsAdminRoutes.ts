@@ -62,8 +62,8 @@ cms.post('/api/admin/upload', async (c) => {
   if ((file.type === 'image/jpeg' && !jpeg) || (file.type === 'image/png' && !png) || (file.type === 'image/webp' && !webp)) return c.json({ error: 'Nội dung tệp không khớp định dạng ảnh.' }, 415);
   const key = `admin/${String(entity)}/${crypto.randomUUID()}.${extension}`;
   await c.env.R2_BUCKET.put(key, bytes, { httpMetadata: { contentType: file.type }, customMetadata: { entity: String(entity) } });
-  const baseUrl = c.env.R2_PUBLIC_BASE_URL?.replace(/\/$/, '') || `https://pub-${c.env.R2_BUCKET.name}.r2.dev`;
-  return c.json({ key, url: `${baseUrl}/${key}` }, 201);
+  const imageName = key.split('/').at(-1)!;
+  return c.json({ key, url: new URL(`/api/admin-images/${String(entity)}/${imageName}`, c.req.url).toString() }, 201);
 });
 
 const text = (value: unknown, max = 5000): string => typeof value === 'string' ? value.trim().slice(0, max) : '';
@@ -131,11 +131,11 @@ function rollPriceFields(body: Record<string, unknown>, films: unknown[], isShop
   return { minRollPrice, maxRollPrice, cheapestRollName };
 }
 
-function shopLocations(body: Record<string, unknown>) {
+function shopLocations(body: Record<string, unknown>, allowEmpty = false) {
   const submitted = body.locations === undefined
     ? body.ward || body.district ? [{ ward: body.ward, district: body.district, openingHours: body.openingHours }] : []
     : body.locations;
-  if (!Array.isArray(submitted) || submitted.length > 3 || body.locations !== undefined && submitted.length < 1) return null;
+  if (!Array.isArray(submitted) || submitted.length > 3 || body.locations !== undefined && submitted.length < 1 && !allowEmpty) return null;
   const locations = submitted.map((value) => {
     const item = value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {};
     return { ward: text(item.ward, 80), district: text(item.district, 80), openingHours: text(item.openingHours, 120) };
@@ -218,14 +218,17 @@ cms.post('/api/admin/spots', async (c) => {
   const monthNumbers = bestMonths.map(Number);
   const candidate = candidateFields(body);
   if (!candidate) return c.json({ error: 'Dự kiến mùa tới cần cờ bật/tắt và tháng dự kiến 1–12.' }, 400);
-  const seasonalTrend = JSON.stringify({ id, trendTitle: text(body.goldenHour, 300), startMonth: monthNumbers.length ? Math.min(...monthNumbers) : 1, endMonth: monthNumbers.length ? Math.max(...monthNumbers) : 12, status: spotStatus, ...(spotStatus !== 'ACTIVE' ? { statusValidUntil } : {}), bloomPercentage, conceptTags, placeCategories, isTrending: false, trendScore: 0, ...candidate });
+  const entryFee = text(body.entryFee, 200);
+  const ticketPriceRange = text(body.ticketPriceRange, 200) || entryFee;
+  const costType = ticketPriceRange && !/miễn phí|\bfree\b/i.test(ticketPriceRange) ? 'TICKET' : 'FREE';
+  const seasonalTrend = JSON.stringify({ id, trendTitle: text(body.goldenHour, 300), startMonth: monthNumbers.length ? Math.min(...monthNumbers) : 1, endMonth: monthNumbers.length ? Math.max(...monthNumbers) : 12, bestMonths: monthNumbers, status: spotStatus, ...(spotStatus !== 'ACTIVE' ? { statusValidUntil } : {}), bloomPercentage, conceptTags, placeCategories, isTrending: false, trendScore: 0, ...candidate });
   const bestTimeDescription = body.bestTimeDescription === undefined ? text(body.goldenHour, 300) : text(body.bestTimeDescription, 1000);
   await getD1(c.env).prepare(`INSERT INTO spots (id, region_id, name, slug, address, lat, lng, best_time_of_day,
-    best_time_description, recommended_lenses, cost_type, cover_image_url, description, district, best_months, golden_hour, entry_fee, parking_fee, source_url, seasonal_trend)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+    best_time_description, recommended_lenses, cost_type, ticket_price_range, cover_image_url, description, district, best_months, golden_hour, entry_fee, parking_fee, source_url, seasonal_trend)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
     .bind(id, text(body.regionId, 80) || 'hanoi', text(body.name, 160), text(body.slug, 180), text(body.address), lat, lng,
-      text(body.bestTimeOfDay, 40) || 'afternoon', bestTimeDescription, jsonText(recommendedLenses), text(body.costType, 40) || 'FREE', text(body.coverImageUrl, 2000),
-      text(body.description), text(body.district, 120), jsonText(bestMonths), text(body.goldenHour, 300), text(body.entryFee, 200), text(body.parkingFee, 200), text(body.sourceUrl, 2000), seasonalTrend).run();
+      text(body.bestTimeOfDay, 40) || 'afternoon', bestTimeDescription, jsonText(recommendedLenses), costType, ticketPriceRange, text(body.coverImageUrl, 2000),
+      text(body.description), text(body.district, 120), jsonText(bestMonths), text(body.goldenHour, 300), entryFee, text(body.parkingFee, 200), text(body.sourceUrl, 2000), seasonalTrend).run();
   return c.json({ ...body, id, bestMonths }, 201);
 });
 
@@ -285,8 +288,8 @@ for (const [path, table] of [['/api/admin/labs', 'film_labs'], ['/api/admin/film
     if ((lat !== null && !Number.isFinite(lat)) || (lng !== null && !Number.isFinite(lng))) return c.json({ error: 'Tọa độ không hợp lệ.' }, 400);
     const id = crypto.randomUUID(); const films = array(body.inStockFilms); const rollPrices = rollPriceFields(body, films, table === 'film_shops');
     if (!rollPrices) return c.json({ error: 'Cuộn film và khoảng giá bán chưa hợp lệ.' }, 400);
-    const locations = shopLocations(body);
-    if (!locations || rollPrices.minRollPrice > 0 && !locations.length) return c.json({ error: 'Shop cần khai báo 1–3 địa chỉ Hà Nội hợp lệ.' }, 400);
+    const locations = shopLocations(body, table === 'film_labs');
+    if (!locations || table === 'film_shops' && rollPrices.minRollPrice > 0 && !locations.length) return c.json({ error: 'Shop cần khai báo 1–3 địa chỉ Hà Nội hợp lệ.' }, 400);
     const mainLocation = locations[0] || { ward: text(body.ward, 80), district: text(body.district, 80), openingHours: text(body.openingHours, 120) };
     const services = body.services === undefined ? [] : Array.isArray(body.services) ? boundedStringArray(body.services, 20, 120) : null;
     if (!services) return c.json({ error: 'Danh sách dịch vụ không hợp lệ.' }, 400);
@@ -363,11 +366,15 @@ cms.put('/api/admin/cms/:table/:id', async (c) => {
     }
     const candidate = candidateFields(body);
     if (!candidate) return c.json({ error: 'Dự kiến mùa tới cần cờ bật/tắt và tháng dự kiến 1–12.' }, 400);
+    const entryFee = text(body.entryFee, 200);
+    const ticketPriceRange = text(body.ticketPriceRange, 200) || entryFee;
+    const costType = ticketPriceRange && !/miễn phí|\bfree\b/i.test(ticketPriceRange) ? 'TICKET' : 'FREE';
     const seasonalPatch = JSON.stringify({
       ...candidate,
       trendTitle: text(body.goldenHour, 300),
       startMonth: months.length ? Math.min(...months.map(Number)) : 1,
       endMonth: months.length ? Math.max(...months.map(Number)) : 12,
+      bestMonths: months.map(Number),
       ...(body.spotStatus !== undefined ? { status: spotStatus, statusValidUntil: spotStatus === 'ACTIVE' ? null : statusValidUntil } : {}),
       ...(conceptTags !== undefined ? { conceptTags } : {}),
       ...(placeCategories !== undefined ? { placeCategories } : {}),
@@ -375,8 +382,8 @@ cms.put('/api/admin/cms/:table/:id', async (c) => {
     });
     const bestTimeDescription = body.bestTimeDescription === undefined ? text(body.goldenHour, 300) : text(body.bestTimeDescription, 1000);
     // Patch only admin-owned fields; retain concept tags and other map metadata.
-    result = await db.prepare(`UPDATE spots SET name = ?, slug = ?, region_id = ?, address = ?, district = ?, lat = ?, lng = ?, best_time_of_day = ?, golden_hour = ?, best_months = ?, entry_fee = ?, parking_fee = ?, source_url = ?, cover_image_url = ?, description = ?, best_time_description = ?, recommended_lenses = COALESCE(?, recommended_lenses), seasonal_trend = json_patch(CASE WHEN json_valid(seasonal_trend) THEN seasonal_trend ELSE '{}' END, ?), updated_at = CURRENT_TIMESTAMP WHERE id = ?`)
-      .bind(text(body.name, 160), text(body.slug, 180), text(body.regionId, 80) || 'hanoi', text(body.address), text(body.district, 120), lat, lng, text(body.bestTimeOfDay, 40) || 'afternoon', text(body.goldenHour, 300), jsonText(months), text(body.entryFee, 200), text(body.parkingFee, 200), text(body.sourceUrl, 2000), text(body.coverImageUrl, 2000), text(body.description), bestTimeDescription, recommendedLenses === undefined ? null : jsonText(recommendedLenses), seasonalPatch, id).run();
+    result = await db.prepare(`UPDATE spots SET name = ?, slug = ?, region_id = ?, address = ?, district = ?, lat = ?, lng = ?, best_time_of_day = ?, golden_hour = ?, best_months = ?, cost_type = ?, ticket_price_range = ?, entry_fee = ?, parking_fee = ?, source_url = ?, cover_image_url = ?, description = ?, best_time_description = ?, recommended_lenses = COALESCE(?, recommended_lenses), seasonal_trend = json_patch(CASE WHEN json_valid(seasonal_trend) THEN seasonal_trend ELSE '{}' END, ?), updated_at = CURRENT_TIMESTAMP WHERE id = ?`)
+      .bind(text(body.name, 160), text(body.slug, 180), text(body.regionId, 80) || 'hanoi', text(body.address), text(body.district, 120), lat, lng, text(body.bestTimeOfDay, 40) || 'afternoon', text(body.goldenHour, 300), jsonText(months), costType, ticketPriceRange, entryFee, text(body.parkingFee, 200), text(body.sourceUrl, 2000), text(body.coverImageUrl, 2000), text(body.description), bestTimeDescription, recommendedLenses === undefined ? null : jsonText(recommendedLenses), seasonalPatch, id).run();
   } else if (table === 'trendArticles') {
     if (!trendSection(body.section)) return c.json({ error: 'Tab bài viết không hợp lệ.' }, 400);
     result = await db.prepare('UPDATE trend_articles SET section = ?, title = ?, content = ?, image_url = ?, location = ?, region_id = ?, source_url = ?, is_published = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
@@ -406,8 +413,8 @@ cms.put('/api/admin/cms/:table/:id', async (c) => {
     if ((lat !== null && !Number.isFinite(lat)) || (lng !== null && !Number.isFinite(lng))) return c.json({ error: 'Tọa độ không hợp lệ.' }, 400);
     const films = array(body.inStockFilms); const rollPrices = rollPriceFields(body, films, table === 'filmShops');
     if (!rollPrices) return c.json({ error: 'Cuộn film và khoảng giá bán chưa hợp lệ.' }, 400);
-    const locations = shopLocations(body);
-    if (!locations || rollPrices.minRollPrice > 0 && !locations.length) return c.json({ error: 'Shop cần khai báo 1–3 địa chỉ Hà Nội hợp lệ.' }, 400);
+    const locations = shopLocations(body, table === 'labs');
+    if (!locations || table === 'filmShops' && rollPrices.minRollPrice > 0 && !locations.length) return c.json({ error: 'Shop cần khai báo 1–3 địa chỉ Hà Nội hợp lệ.' }, 400);
     const mainLocation = locations[0] || { ward: text(body.ward, 80), district: text(body.district, 80), openingHours: text(body.openingHours, 120) };
     const services = body.services === undefined ? undefined : Array.isArray(body.services) ? boundedStringArray(body.services, 20, 120) : null;
     if (body.services !== undefined && !services) return c.json({ error: 'Danh sách dịch vụ không hợp lệ.' }, 400);

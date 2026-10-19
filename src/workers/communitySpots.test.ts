@@ -89,6 +89,17 @@ describe('community spot persistence', () => {
     expect((await worker.request(`/api/admin/community-spots/${rejected.id}`, { method: 'DELETE', headers }, env)).status).toBe(200);
     expect(await env.DB.prepare('SELECT id FROM spots WHERE id = ?').bind(rejected.id).first()).toBeNull();
   });
+  it('hides pending community spots from the public detail endpoint', async () => {
+    const env = environment();
+    const response = await post(env);
+    expect(response.status).toBe(201);
+    const { id } = await response.json() as { id: string };
+
+    const detail = await worker.request(`/api/spots/${id}`, {}, env);
+    expect(detail.status).toBe(404);
+    expect(await detail.json()).toEqual({ error: 'Not found' });
+  });
+
   it('keeps new submissions out of public results even when the map already has 50 records', async () => {
     const env = environment();
     for (let index = 0; index < 50; index++) {

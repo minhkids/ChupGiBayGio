@@ -53,6 +53,21 @@ async function adminHeaders(env: ReturnType<typeof makeEnv>) {
 const validShop = { name: 'New shop', locations: [{ ward: 'Cửa Nam', district: 'Hoàn Kiếm', openingHours: '10:00–20:00' }], inStockFilms: ['Kodak Gold 200'], cheapestRollName: 'Kodak Gold 200', minRollPrice: 50000, maxRollPrice: 150000 };
 
 describe('independent film directories', () => {
+  it('allows editing a legacy lab with no shop branch locations', async () => {
+    const env = makeEnv();
+    await seedPair(env);
+    const headers = await adminHeaders(env);
+    const response = await worker.request('/api/admin/cms/labs/same-id', {
+      method: 'PUT', headers,
+      body: JSON.stringify({ adminCategory: 'filmLab', name: 'Independent lab updated', locations: [], inStockFilms: [], minRollPrice: 0, maxRollPrice: 0 }),
+    }, env);
+
+    expect(response.status).toBe(200);
+    expect(await env.DB.prepare('SELECT name, address, min_roll_price, locations FROM film_labs WHERE id = ?').bind('same-id').first()).toMatchObject({
+      name: 'Independent lab updated', address: '', min_roll_price: 0, locations: '[]',
+    });
+  });
+
   it('accepts minimum-only shop prices in admin create and update like partner onboarding', async () => {
     const env = makeEnv();
     const headers = await adminHeaders(env);

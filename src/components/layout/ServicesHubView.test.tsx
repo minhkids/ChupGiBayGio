@@ -24,6 +24,54 @@ afterEach(() => { cleanup(); sessionStorage.clear(); window.history.replaceState
 const renderView = () => render(<ShootPlanProvider><ServicesHubView onClose={() => undefined} /></ShootPlanProvider>);
 
 describe('ServicesHubView', () => {
+  it('shows an in-development notice when the user tries the outfit image search', async () => {
+    renderView();
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Tìm Shopee' }));
+
+    const dialog = await screen.findByRole('dialog', { name: /Admin đang phát triển tính năng này/ });
+    expect(dialog.textContent).toContain('Bạn vui lòng đợi thêm một chút nhé.');
+    const icon = within(dialog).getByRole('img', { name: 'Mặt buồn dễ thương' });
+    expect(icon.getAttribute('src')).toMatch(/pleading-face\.svg/);
+    fireEvent.keyDown(window, { key: 'Escape' });
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: /Admin đang phát triển tính năng này/ })).toBeNull());
+  });
+
+  it('shows the same in-development notice when users try to upload a reference outfit', async () => {
+    renderView();
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Tải ảnh trang phục mẫu' }));
+
+    expect(await screen.findByText('Admin đang phát triển tính năng này.')).toBeTruthy();
+    expect(screen.getByText('Bạn vui lòng đợi thêm một chút nhé.')).toBeTruthy();
+  });
+
+  it('does not show empty states when rental and outfit records exist', async () => {
+    vi.mocked(serviceHubApi.list).mockResolvedValueOnce([
+      { id: 'rental-1', category: 'rental', name: 'Thuê áo dài' },
+      { id: 'outfit-1', category: 'outfit', name: 'Áo dài trắng' },
+    ]);
+    renderView();
+
+    expect(await screen.findByText('Thuê áo dài')).toBeTruthy();
+    expect(screen.getByText('Áo dài trắng')).toBeTruthy();
+    expect(screen.queryByText('Chưa có tiệm thuê nào. Quản trị viên có thể thêm thông tin.')).toBeNull();
+    expect(screen.queryByText('Chưa có trang phục nào. Quản trị viên có thể thêm thông tin.')).toBeNull();
+  });
+
+  it('reloads the mounted service catalogue after an admin update event', async () => {
+    vi.mocked(serviceHubApi.list)
+      .mockResolvedValueOnce([{ id: 'rental-old', category: 'rental', name: 'Cửa hàng cũ' }])
+      .mockResolvedValueOnce([{ id: 'rental-new', category: 'rental', name: 'Cửa hàng mới' }]);
+    renderView();
+    expect(await screen.findByText('Cửa hàng cũ')).toBeTruthy();
+
+    fireEvent(window, new Event('chupgi:catalog-updated'));
+
+    expect(await screen.findByText('Cửa hàng mới')).toBeTruthy();
+    expect(serviceHubApi.list).toHaveBeenCalledTimes(2);
+  });
+
   it('shows the shop slogan instead of a contact action on the outer card', async () => {
     window.history.replaceState(null, '', '/?services=film&partner=film-shop-1');
     Element.prototype.scrollIntoView = vi.fn();
@@ -275,20 +323,6 @@ describe('ServicesHubView', () => {
     expect(detail.textContent).toContain('10:00–20:00');
   });
 
-  it('highlights the photographer starting price without exposing address details', async () => {
-    window.history.replaceState(null, '', '/?services=photographers');
-    vi.mocked(serviceHubApi.list).mockResolvedValueOnce([{
-      id: 'photographer-1', category: 'photographer', name: 'Minh Studio', price: '400000',
-      address: 'Địa chỉ riêng', district: 'Long Biên',
-    }]);
-    renderView();
-    fireEvent.click(screen.getByRole('button', { name: /Nhiếp ảnh gia/i }));
-    const card = (await screen.findByText('Minh Studio')).closest('article');
-    expect(card?.textContent).toContain('Giá từ 400.000đ');
-    expect(card?.textContent).not.toContain('Địa chỉ riêng');
-    expect(card?.textContent).not.toContain('Long Biên');
-  });
-
   it('starts the directories empty and uses equal-width navigation tabs', async () => {
     renderView();
     expect(screen.getByRole('heading', { name: 'Chuẩn bị cho buổi chụp' })).toBeDefined();
@@ -310,6 +344,7 @@ describe('ServicesHubView', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Mua film' }));
     expect(await screen.findByText('Chưa có shop bán film nào.')).toBeDefined();
     expect(screen.queryByText('Nadar Club')).toBeNull();
+    expect(screen.queryByRole('dialog', { name: /Admin đang phát triển tính năng này/ })).toBeNull();
   });
 
   it('opens the admin screen and prompts for the admin password', async () => {
@@ -330,6 +365,19 @@ describe('ServicesHubView', () => {
     fireEvent.change(screen.getByLabelText(/Tên hiển thị/), { target: { value: 'Tiệm mới' } });
     fireEvent.click(screen.getByRole('button', { name: 'Thêm mục' }));
     expect(serviceHubApi.create).toHaveBeenCalledWith(expect.objectContaining({ category: 'rental', name: 'Tiệm mới' }));
+  });
+
+  it('highlights a photographer starting price without showing address details', async () => {
+    vi.mocked(serviceHubApi.list).mockResolvedValueOnce([{
+      id: 'photographer-1', category: 'photographer', name: 'Minh Studio', price: '400000',
+      address: 'Địa chỉ riêng', district: 'Long Biên',
+    }]);
+    renderView();
+    fireEvent.click(await screen.findByRole('button', { name: /Nhiếp ảnh gia/i }));
+    const card = screen.getByText('Minh Studio').closest('article');
+    expect(card?.textContent).toContain('Giá từ 400.000đ');
+    expect(card?.textContent).not.toContain('Địa chỉ riêng');
+    expect(card?.textContent).not.toContain('Long Biên');
   });
 
   it('does not expose an admin entry point in the public service directory', async () => {

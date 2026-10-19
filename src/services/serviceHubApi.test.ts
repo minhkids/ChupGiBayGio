@@ -104,6 +104,23 @@ describe('serviceHubApi.request', () => {
     });
   });
 
+  it('routes legacy service listings back to the legacy update and delete endpoints', async () => {
+    const legacy = { id: 'legacy-audit', category: 'rental', name: 'Legacy rental', address: 'Hà Nội', data: '{}' };
+    vi.stubGlobal('fetch', vi.fn((url: string) => Promise.resolve(Response.json(url === '/api/admin/services' ? [legacy] : []))));
+    const [record] = await serviceHubApi.adminList();
+    expect(record.isLegacy).toBe(true);
+
+    const fetchMock = vi.fn((_url: string, _init?: RequestInit) => Promise.resolve(Response.json({ id: 'legacy-audit' })));
+    vi.stubGlobal('fetch', fetchMock);
+    await serviceHubApi.update(record);
+    await serviceHubApi.remove(record.id, record.category, record.isLegacy);
+
+    expect(JSON.parse(fetchMock.mock.calls[0]?.[1]?.body as string)).toMatchObject({ category: 'rental', name: 'Legacy rental' });
+    expect(fetchMock.mock.calls.map(([url, init]) => [url, init?.method])).toEqual([
+      ['/api/admin/services/legacy-audit', 'PUT'], ['/api/admin/services/legacy-audit', 'DELETE'],
+    ]);
+  });
+
   it('routes film-shop creation independently and preserves the category and prices', async () => {
     const fetchMock = vi.fn().mockResolvedValue(Response.json({ id: 'shop-2' }));
     vi.stubGlobal('fetch', fetchMock);

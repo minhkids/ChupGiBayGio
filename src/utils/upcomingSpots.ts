@@ -19,6 +19,7 @@ export function matchesSpotMonth(trend: SeasonalTrend, month: number | null): bo
   if (isUpcomingCandidate(trend)) {
     return trend.expectedMonths!.some(expected => expected === month || getUpcomingMonths(month).includes(expected));
   }
+  if (trend.bestMonths?.length) return trend.bestMonths.includes(month);
   return isSpotActiveInMonth(trend.startMonth, trend.endMonth, month);
 }
 

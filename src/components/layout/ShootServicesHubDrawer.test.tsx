@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, it, expect, vi } from 'vitest';
-import { cleanup, render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { cleanup, render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { ShootServicesHubDrawer } from './ShootServicesHubDrawer';
 import { ShootPlanProvider } from '../../context/ShootPlanContext';
 
@@ -51,15 +51,36 @@ describe('ShootServicesHubDrawer', () => {
     expect(onClose).toHaveBeenCalled();
   });
 
-  it('shows the formatted starting price on photographer cards', async () => {
-    const fetcher = vi.fn(async (input: RequestInfo | URL) => String(input) === '/api/services'
-      ? Response.json([{ id: 'photographer-1', category: 'photographer', name: 'Minh Studio', price: '400000' }])
-      : Response.json([]));
+  it('shows the in-development notice when the outfit search is used from the map drawer', async () => {
+    render(<ShootPlanProvider><ShootServicesHubDrawer isOpen onClose={() => undefined} /></ShootPlanProvider>);
+
+    fireEvent.click(screen.getByRole('button', { name: /Tìm Shopee/i }));
+
+    const dialog = await screen.findByRole('dialog', { name: /Admin đang phát triển tính năng này/ });
+    expect(dialog.textContent).toContain('Bạn vui lòng đợi thêm một chút nhé.');
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Đã hiểu' }));
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: /Admin đang phát triển tính năng này/ })).toBeNull());
+  });
+
+  it('reloads the mounted drawer catalogue after an admin update event', async () => {
+    let serviceCalls = 0;
+    const fetcher = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url === '/api/services') {
+        serviceCalls += 1;
+        return Response.json(serviceCalls === 1 ? [] : [{ id: 'photographer-1', category: 'photographer', name: 'Nhiếp ảnh gia mới', price: '400000' }]);
+      }
+      return Response.json([]);
+    });
     vi.stubGlobal('fetch', fetcher);
     render(<ShootPlanProvider><ShootServicesHubDrawer isOpen initialTab="photographers" onClose={() => undefined} /></ShootPlanProvider>);
+    await waitFor(() => expect(fetcher.mock.calls.filter(([url]) => url === '/api/services')).toHaveLength(1));
 
-    expect(await screen.findByText('Minh Studio')).toBeTruthy();
+    fireEvent(window, new Event('chupgi:catalog-updated'));
+
+    expect(await screen.findByText('Nhiếp ảnh gia mới')).toBeTruthy();
     expect(document.body.textContent).toContain('Giá từ 400.000đ');
+    expect(fetcher.mock.calls.filter(([url]) => url === '/api/services')).toHaveLength(2);
   });
 
   it('shows area-only shops and the same compact express badge in the mobile Mua film tab', async () => {

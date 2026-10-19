@@ -1,4 +1,4 @@
-import { Hono } from 'hono';
+import { Hono, type Context } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 import { secureHeaders } from 'hono/secure-headers';
@@ -107,7 +107,7 @@ app.get('/api/spots', async (c) => {
 
 app.get('/api/spots/:id', async (c) => {
   const id = c.req.param('id');
-  const spot = await c.env.DB.prepare('SELECT * FROM spots WHERE id = ?').bind(id).first();
+  const spot = await c.env.DB.prepare('SELECT * FROM spots WHERE id = ? AND is_active = 1').bind(id).first();
   if (!spot) return c.json({ error: 'Not found' }, 404);
   return c.json(spot);
 });
@@ -175,6 +175,22 @@ app.get('/api/spot-images/:spotId/:imageName', async (c) => {
   }
 
   const object = await c.env.R2_BUCKET.get(`spots/${spotId}/${imageName}`);
+  if (!object) return c.json({ error: 'Không tìm thấy ảnh.' }, 404);
+  return new Response(object.body, {
+    headers: {
+      'Content-Type': object.httpMetadata?.contentType || 'application/octet-stream',
+      'Cache-Control': 'public, max-age=31536000, immutable',
+      'X-Content-Type-Options': 'nosniff'
+    }
+  });
+});
+
+app.get('/api/admin-images/:entity/:imageName', async (c) => {
+  const entity = c.req.param('entity');
+  const imageName = c.req.param('imageName');
+  if (!['spots', 'outfits', 'photographers', 'films', 'trendArticles'].includes(entity)
+    || !/^[0-9a-f-]{36}\.(jpg|png|webp)$/i.test(imageName)) return c.json({ error: 'Đường dẫn ảnh không hợp lệ.' }, 400);
+  const object = await c.env.R2_BUCKET.get(`admin/${entity}/${imageName}`);
   if (!object) return c.json({ error: 'Không tìm thấy ảnh.' }, 404);
   return new Response(object.body, {
     headers: {
@@ -433,6 +449,12 @@ app.get('/api/rental-shops', async (c) => {
 app.post('/api/admin/login', async (c) => {
   const { ADMIN_PASSWORD, ADMIN_SESSION_SECRET } = c.env;
   if (!ADMIN_PASSWORD || !ADMIN_SESSION_SECRET) return c.json({ error: 'Quản trị chưa được cấu hình trên máy chủ.' }, 503);
+  const cache = c.env.CACHE;
+  const ip = c.req.header('CF-Connecting-IP') || 'unknown';
+  const ipDigest = await crypto.subtle.digest('SHA-256', encoder.encode(ip));
+  const rateKey = `admin-login:${Array.from(new Uint8Array(ipDigest), byte => byte.toString(16).padStart(2, '0')).join('')}`;
+  const failedAttempts = cache ? Number(await cache.get(rateKey)) || 0 : 0;
+  if (failedAttempts >= 5) return c.json({ error: 'Quá nhiều lần đăng nhập thất bại. Vui lòng thử lại sau 15 phút.' }, 429, { 'Retry-After': '900' });
   const body = await c.req.json().catch(() => ({})) as { password?: unknown };
   if (typeof body.password !== 'string' || body.password.length > 256) return c.json({ error: 'Mật khẩu không hợp lệ.' }, 400);
   const providedHash = await crypto.subtle.digest('SHA-256', encoder.encode(body.password));
@@ -441,12 +463,16 @@ app.post('/api/admin/login', async (c) => {
   const expected = new Uint8Array(expectedHash);
   let mismatch = 0;
   for (let i = 0; i < provided.length; i++) mismatch |= provided[i] ^ expected[i];
-  if (mismatch !== 0) return c.json({ error: 'Mật khẩu không đúng.' }, 401);
+  if (mismatch !== 0) {
+    if (cache) await cache.put(rateKey, String(failedAttempts + 1), { expirationTtl: 15 * 60 });
+    return c.json({ error: 'Mật khẩu không đúng.' }, 401);
+  }
+  if (cache && failedAttempts) await cache.delete(rateKey);
   const expiresAt = Math.floor(Date.now() / 1000) + 60 * 60 * 8;
   return c.json({ token: await signAdminToken(ADMIN_SESSION_SECRET, expiresAt), expiresAt });
 });
 
-async function requireAdmin(c: Parameters<Parameters<typeof app.use>[1]>[0]) {
+async function requireAdmin(c: Context<{ Bindings: Bindings; Variables: Variables }>) {
   const secret = c.env.ADMIN_SESSION_SECRET;
   const token = c.req.header('Authorization')?.replace(/^Bearer\s+/i, '');
   return Boolean(secret && token && await isValidAdminToken(token, secret));

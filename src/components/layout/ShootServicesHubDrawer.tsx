@@ -20,8 +20,8 @@ import {
   Phone
 } from 'lucide-react';
 import { useNearestLabs } from '../../hooks/useNearestLabs';
+import { useCatalogRevision } from '../../hooks/useCatalogRevision';
 import { type FilmLab } from '../../data/filmLabsData';
-import { buildShopeeSearchUrl, buildTikTokShopSearchUrl } from '../../data/mockOutfits';
 import { useShootPlan } from '../../context/ShootPlanContext';
 import type { Photographer } from '../../types';
 import { serviceHubApi, type ServiceListing } from '../../services/serviceHubApi';
@@ -29,6 +29,7 @@ import type { RentalShop } from '../../types';
 import { ExpressDeliveryBadge } from './ExpressDeliveryBadge';
 import { FilmShopCard } from './FilmShopCard';
 import { FilmShopDetailDialog } from './FilmShopDetailDialog';
+import { FeatureInDevelopmentDialog } from './FeatureInDevelopmentDialog';
 
 export type ServicesTab = 'outfit' | 'photographers' | 'film';
 
@@ -63,11 +64,11 @@ export const ShootServicesHubDrawer: React.FC<ShootServicesHubDrawerProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<ServicesTab>(initialTab);
   const shootPlan = useShootPlan();
+  const catalogRevision = useCatalogRevision();
 
   // Tab 1 (Outfit) State
-  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [outfitSearchKeyword, setOutfitSearchKeyword] = useState('áo dài trắng dáng suông');
-  const [isOutfitCopied, setIsOutfitCopied] = useState(false);
+  const [isFeatureNoticeOpen, setIsFeatureNoticeOpen] = useState(false);
 
   // Tab 2 (Photographers) State
   const [budgetFilter, setBudgetFilter] = useState<'all' | 'under500' | '500to1000' | 'above1000'>('all');
@@ -90,7 +91,7 @@ export const ShootServicesHubDrawer: React.FC<ShootServicesHubDrawerProps> = ({
     serviceHubApi.list().then((items) => { if (active) setDirectoryItems(items); })
       .catch((error: unknown) => { console.warn('Không tải được marketplace từ D1.', error); if (active) setDirectoryItems([]); });
     return () => { active = false; };
-  }, [isOpen]);
+  }, [isOpen, catalogRevision]);
 
   // Keep active tab in sync if initialTab changes when opening
   React.useEffect(() => {
@@ -142,31 +143,6 @@ export const ShootServicesHubDrawer: React.FC<ShootServicesHubDrawerProps> = ({
     xPercent: 50, yPercent: 50, searchQuery: item.name, priceEstimate: item.price || '', shopeeUrl: item.link || '',
     tiktokUrl: item.secondaryLink || '', similarItems: []
   })), [directoryItems]);
-
-  // Handle image upload for bóc đồ
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const result = event.target?.result as string;
-        setUploadedImage(result);
-        setOutfitSearchKeyword('Áo dài lụa tơ tằm trắng cách tân');
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handlePinUploadedOutfit = () => {
-    if (!uploadedImage) return;
-    shootPlan?.addReferencePhoto({
-      imageUrl: uploadedImage,
-      label: 'Trang phục bóc từ ảnh',
-      note: outfitSearchKeyword
-    });
-    setIsOutfitCopied(true);
-    setTimeout(() => setIsOutfitCopied(false), 2000);
-  };
 
   if (!isOpen) return null;
 
@@ -287,66 +263,22 @@ export const ShootServicesHubDrawer: React.FC<ShootServicesHubDrawerProps> = ({
                     </span>
                   </div>
 
-                  {/* Upload Dropzone */}
-                  {!uploadedImage ? (
-                    <label className="border-2 border-dashed border-[#D8CFBD] hover:border-[#C76B3C] rounded-xl p-5 flex flex-col items-center justify-center gap-2 cursor-pointer transition-colors bg-white group">
-                      <div className="w-10 h-10 rounded-full bg-[#ECE4D0]/80 group-hover:bg-[#F3EAD7] text-[#6E655B] group-hover:text-[#C76B3C] flex items-center justify-center transition-colors">
-                        <Upload className="w-5 h-5" />
-                      </div>
-                      <div className="text-center">
-                        <p className="text-xs font-semibold text-[#554D43] group-hover:text-[#2C2621]">
-                          Chọn hoặc kéo thả ảnh để bóc đồ
-                        </p>
-                        <p className="text-[10px] text-[#8C8377] mt-0.5">Hỗ trợ JPG, PNG, WebP (Ảnh mẫu, outfit)</p>
-                      </div>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={handleImageUpload}
-                      />
-                    </label>
-                  ) : (
-                    <div className="space-y-3">
-                      <div className="relative rounded-xl overflow-hidden border border-neutral-700 max-h-48 bg-black flex items-center justify-center">
-                        <img
-                          src={uploadedImage}
-                          alt="Ảnh tham khảo"
-                          className="w-full h-48 object-cover opacity-90"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setUploadedImage(null)}
-                          className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/70 hover:bg-black text-white flex items-center justify-center text-xs"
-                          title="Chọn ảnh khác"
-                        >
-                          ✕
-                        </button>
-                        <span className="absolute bottom-2 left-2 px-2 py-0.5 rounded bg-black/70 text-[10px] text-amber-300 font-mono-spec border border-amber-500/30">
-                          ✓ Đã quét mẫu đồ
-                        </span>
-                      </div>
-
-                      {/* Pin to shoot plan button */}
-                      <button
-                        type="button"
-                        onClick={handlePinUploadedOutfit}
-                        className="w-full py-2 px-3 rounded-xl bg-[#ECE4D0] hover:bg-neutral-700 text-xs font-semibold text-[#2C2621] flex items-center justify-center space-x-1.5 transition-colors border border-neutral-700"
-                      >
-                        {isOutfitCopied ? (
-                          <>
-                            <Check className="w-3.5 h-3.5 text-emerald-400" />
-                            <span className="text-emerald-400 font-bold">Đã ghim vào Kế hoạch!</span>
-                          </>
-                        ) : (
-                          <>
-                            <span>📌</span>
-                            <span>Ghim ảnh này vào Kế hoạch chụp</span>
-                          </>
-                        )}
-                      </button>
+                  {/* Upload Dropzone — the outfit finder is still under development. */}
+                  <button
+                    type="button"
+                    aria-label="Tải ảnh trang phục mẫu"
+                    aria-haspopup="dialog"
+                    onClick={() => setIsFeatureNoticeOpen(true)}
+                    onDragOver={(event) => event.preventDefault()}
+                    onDrop={(event) => { event.preventDefault(); setIsFeatureNoticeOpen(true); }}
+                    className="group flex w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-[#D8CFBD] bg-white p-5 transition-colors hover:border-[#C76B3C]"
+                  >
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#ECE4D0]/80 text-[#6E655B] transition-colors group-hover:bg-[#F3EAD7] group-hover:text-[#C76B3C]">
+                      <Upload className="h-5 w-5" />
                     </div>
-                  )}
+                    <span className="text-center text-xs font-semibold text-[#554D43] group-hover:text-[#2C2621]">Chọn hoặc kéo thả ảnh để bóc đồ</span>
+                    <span className="mt-0.5 text-[10px] text-[#8C8377]">Hỗ trợ JPG, PNG, WebP (Ảnh mẫu, outfit)</span>
+                  </button>
 
                   {/* Keyword Quick Tags */}
                   <div className="space-y-1.5 pt-1">
@@ -373,24 +305,22 @@ export const ShootServicesHubDrawer: React.FC<ShootServicesHubDrawerProps> = ({
 
                   {/* Direct Shopee & TikTok Shop Action Buttons */}
                   <div className="grid grid-cols-2 gap-2 pt-1">
-                    <a
-                      href={buildShopeeSearchUrl(outfitSearchKeyword)}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    <button
+                      type="button"
+                      onClick={() => setIsFeatureNoticeOpen(true)}
                       className="py-2.5 px-3 rounded-xl bg-[#EE4D2D] hover:bg-[#d63f20] text-white text-xs font-bold flex items-center justify-center space-x-1.5 shadow-md transition-colors"
                     >
                       <ShoppingBag className="w-3.5 h-3.5" />
                       <span>Tìm Shopee →</span>
-                    </a>
-                    <a
-                      href={buildTikTokShopSearchUrl(outfitSearchKeyword)}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setIsFeatureNoticeOpen(true)}
                       className="py-2.5 px-3 rounded-xl bg-[#2C2621] hover:bg-[#443A32] border border-[#2C2621] text-white text-xs font-bold flex items-center justify-center space-x-1.5 transition-colors"
                     >
                       <span>🎵</span>
                       <span>TikTok Shop →</span>
-                    </a>
+                    </button>
                   </div>
                 </div>
 
@@ -927,6 +857,7 @@ export const ShootServicesHubDrawer: React.FC<ShootServicesHubDrawerProps> = ({
           </div>
         </motion.aside>
         <AnimatePresence>{selectedAreaOnlyShop && <FilmShopDetailDialog key={selectedAreaOnlyShop.id} shop={selectedAreaOnlyShop} onClose={() => setSelectedAreaOnlyShop(null)} />}</AnimatePresence>
+        {isFeatureNoticeOpen && <FeatureInDevelopmentDialog onClose={() => setIsFeatureNoticeOpen(false)} />}
       </div>
     </AnimatePresence>
   );

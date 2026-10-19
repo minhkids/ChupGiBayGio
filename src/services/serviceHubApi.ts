@@ -17,6 +17,7 @@ export interface ServiceListing {
   id: string;
   category: ServiceCategory;
   name: string;
+  isLegacy?: boolean;
   slogan?: string;
   cheapestRollName?: string;
   locations?: FilmShopLocation[];
@@ -133,7 +134,7 @@ function mapFilmBusiness(row: Record<string, unknown>, category: 'filmLab' | 'fi
 }
 
 function adminPayload(listing: ServiceListing) {
-  if (listing.category === 'spot') return { name: listing.name, slug: listing.slug, regionId: listing.regionId, address: listing.address, district: listing.district, lat: listing.lat, lng: listing.lng, bestTimeOfDay: listing.bestTimeOfDay, bestTimeDescription: listing.bestTimeDescription, recommendedLenses: listing.recommendedLenses, conceptTags: listing.conceptTags, placeCategories: listing.placeCategories, bloomPercentage: listing.bloomPercentage, goldenHour: listing.goldenHour, bestMonths: listing.bestMonths, entryFee: listing.entryFee, parkingFee: listing.parkingFee, sourceUrl: listing.sourceUrl, coverImageUrl: listing.coverImageUrl, description: listing.description, spotStatus: listing.spotStatus, statusValidUntil: listing.statusValidUntil, upcoming: listing.upcoming, expectedMonths: listing.expectedMonths };
+  if (listing.category === 'spot') return { name: listing.name, slug: listing.slug, regionId: listing.regionId, address: listing.address, district: listing.district, lat: listing.lat, lng: listing.lng, bestTimeOfDay: listing.bestTimeOfDay, bestTimeDescription: listing.bestTimeDescription, recommendedLenses: listing.recommendedLenses, conceptTags: listing.conceptTags, placeCategories: listing.placeCategories, bloomPercentage: listing.bloomPercentage, goldenHour: listing.goldenHour, bestMonths: listing.bestMonths, entryFee: listing.entryFee, ticketPriceRange: listing.entryFee || '', costType: listing.entryFee && !/miễn phí|\bfree\b/i.test(listing.entryFee) ? 'TICKET' : 'FREE', parkingFee: listing.parkingFee, sourceUrl: listing.sourceUrl, coverImageUrl: listing.coverImageUrl, description: listing.description, spotStatus: listing.spotStatus, statusValidUntil: listing.statusValidUntil, upcoming: listing.upcoming, expectedMonths: listing.expectedMonths };
   if (listing.category === 'rental') return { name: listing.name, address: listing.address, hotline: listing.phone, fanpageUrl: listing.link, dailyPrice: listing.price };
   if (listing.category === 'outfit') return { spotId: listing.spotId, name: listing.name, description: listing.description, material: listing.material, estimatedPrice: listing.price, imageUrl: listing.imageUrl, hotspots: listing.hotspots, shopeeUrl: listing.link, tiktokUrl: listing.secondaryLink };
   if (listing.category === 'photographer') return { name: listing.name, avatarUrl: listing.imageUrl, bio: listing.description, phone: listing.phone, instagram: listing.link, gearBody: listing.gearBody, gearLens: listing.gearLens, styles: listing.tags, portfolioPhotos: listing.portfolioPhotos, packages: listing.packages };
@@ -196,7 +197,7 @@ export const serviceHubApi = {
           bestMonths: parseList(row.best_months).map(Number),
           upcoming: trend.upcoming === true,
           expectedMonths: parseList(trend.expectedMonths).map(Number),
-          entryFee: String(row.entry_fee || ''),
+          entryFee: String(row.entry_fee || row.ticket_price_range || ''),
           parkingFee: String(row.parking_fee || ''),
           sourceUrl: String(row.source_url || ''),
           coverImageUrl: String(row.cover_image_url || ''),
@@ -211,7 +212,7 @@ export const serviceHubApi = {
       ...films.map((row) => ({ ...row, id: String(row.id), category: 'filmColor' as const, name: String(row.name || ''), iso: String(row.iso || ''), recommendedTime: String(row.tone || ''), filmImageUrl: String(row.package_image_url || ''), imageUrl: String(row.sample_image_url || ''), suitableSeasons: parseList(row.suitable_seasons) })),
       ...labs.map((row) => mapFilmBusiness(row, 'filmLab')),
       ...filmShops.map((row) => mapFilmBusiness(row, 'filmShop')),
-      ...legacy
+      ...legacy.map((record) => ({ ...record, isLegacy: true }))
     ] as ServiceListing[];
   },
   listPlaceCategories: () => request<PlaceCategory[]>('/api/place-categories'),
@@ -246,10 +247,16 @@ export const serviceHubApi = {
   create: (listing: Omit<ServiceListing, 'id'>) => request<ServiceListing>(`/api/admin/${listing.category === 'spot' ? 'spots' : listing.category === 'rental' ? 'rental-shops' : listing.category === 'outfit' ? 'outfits' : listing.category === 'photographer' ? 'photographers' : listing.category === 'filmLab' ? 'labs' : listing.category === 'filmShop' ? 'film-shops' : 'films'}`, {
     method: 'POST', body: JSON.stringify(adminPayload(listing as ServiceListing))
   }),
-  update: (listing: ServiceListing) => request<ServiceListing>(`/api/admin/cms/${tableFor[listing.category]}/${encodeURIComponent(listing.id)}`, {
-    method: 'PUT', body: JSON.stringify(adminPayload(listing))
+  update: (listing: ServiceListing) => request<ServiceListing>(listing.isLegacy
+    ? `/api/admin/services/${encodeURIComponent(listing.id)}`
+    : `/api/admin/cms/${tableFor[listing.category]}/${encodeURIComponent(listing.id)}`, {
+    method: 'PUT', body: JSON.stringify(listing.isLegacy
+      ? { ...adminPayload(listing), category: listing.category, name: listing.name }
+      : adminPayload(listing))
   }),
-  remove: (id: string, category?: ServiceCategory) => category
+  remove: (id: string, category?: ServiceCategory, isLegacy = false) => isLegacy
+    ? request<{ success: boolean }>(`/api/admin/services/${encodeURIComponent(id)}`, { method: 'DELETE' })
+    : category
     ? request<{ success: boolean }>(`/api/admin/cms/${tableFor[category]}/${encodeURIComponent(id)}`, { method: 'DELETE' })
     : request<{ success: boolean }>(`/api/admin/services/${encodeURIComponent(id)}`, { method: 'DELETE' })
 };

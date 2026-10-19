@@ -26,6 +26,22 @@ function parseJsonField<T>(field: any, defaultValue: T): T {
 }
 
 function mapSpotFromAPI(row: any): Spot {
+  const seasonalTrend: Spot['seasonalTrend'] = {
+    id: '',
+    trendTitle: '',
+    startMonth: 1,
+    endMonth: 12,
+    status: 'ACTIVE',
+    conceptTags: [],
+    placeCategories: [],
+    isTrending: false,
+    trendScore: 0,
+    // Forecast/legacy rows may provide only part of the nested JSON object.
+    ...parseJsonField<Partial<Spot['seasonalTrend']>>(row.seasonal_trend, {}),
+  };
+  seasonalTrend.bestMonths ??= parseJsonField<number[]>(row.best_months, []);
+  const entryFee = String(row.entry_fee || '');
+  const ticketPriceRange = String(row.ticket_price_range || entryFee);
   return {
     id: row.id,
     regionId: row.region_id,
@@ -38,8 +54,8 @@ function mapSpotFromAPI(row: any): Spot {
     bestTimeDescription: row.best_time_description,
     lightingNotes: row.lighting_notes,
     sunOrientation: row.sun_orientation,
-    costType: row.cost_type,
-    ticketPriceRange: row.ticket_price_range || '',
+    costType: ticketPriceRange && !/miễn phí|\bfree\b/i.test(ticketPriceRange) ? 'TICKET' : (row.cost_type || 'FREE'),
+    ticketPriceRange,
     cameraFeePolicy: row.camera_fee_policy || '',
     recommendedLenses: parseJsonField<string[]>(row.recommended_lenses, []),
     recommendedOutfits: parseJsonField<string[]>(row.recommended_outfits, []),
@@ -55,19 +71,7 @@ function mapSpotFromAPI(row: any): Spot {
     description: row.description,
     photographyTips: parseJsonField<string[]>(row.photography_tips, []),
     poseTip: row.pose_tip,
-    seasonalTrend: {
-      id: '',
-      trendTitle: '',
-      startMonth: 1,
-      endMonth: 12,
-      status: 'ACTIVE',
-      conceptTags: [],
-      placeCategories: [],
-      isTrending: false,
-      trendScore: 0,
-      // Forecast/legacy rows may provide only part of the nested JSON object.
-      ...parseJsonField<Partial<Spot['seasonalTrend']>>(row.seasonal_trend, {}),
-    },
+    seasonalTrend,
     inspirationPosts: parseJsonField(row.inspiration_posts, []),
     recentReports: [], // Typically fetched separately or not stored directly in spots table
     savesCount: row.saves_count || 0,

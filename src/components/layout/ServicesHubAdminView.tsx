@@ -60,9 +60,13 @@ export const ServicesHubAdminView: React.FC<Props> = () => {
   const [placeCategories, setPlaceCategories] = useState<PlaceCategory[]>(DEFAULT_PLACE_CATEGORIES);
   const [draft, updateDraft] = useState<ServiceListing>(() => blank(initialCategory()));
   const [listText, setListText] = useState<Partial<Record<keyof ServiceListing, string>>>({});
+  const [packagesText, setPackagesText] = useState('[]');
   const setDraft: React.Dispatch<React.SetStateAction<ServiceListing>> = (next) => {
     // Replacing a record starts a fresh editing session; field updates keep raw input.
-    if (typeof next !== 'function') setListText({});
+    if (typeof next !== 'function') {
+      setListText({});
+      setPackagesText(JSON.stringify(next.packages || []));
+    }
     updateDraft(next);
   };
   const [error, setError] = useState('');
@@ -141,22 +145,33 @@ export const ServicesHubAdminView: React.FC<Props> = () => {
 
   const save = async (event: React.FormEvent) => {
     event.preventDefault();
+    let payload = draft;
+    if (category === 'photographer') {
+      try {
+        const packages: unknown = JSON.parse(packagesText);
+        if (!Array.isArray(packages)) throw new Error('invalid');
+        payload = { ...draft, packages: packages as ServiceListing['packages'] };
+      } catch {
+        setError('Gói chụp phải là mảng JSON hợp lệ.');
+        return;
+      }
+    }
     setLoading(true);
     setError('');
     try {
-      if (draft.id) await serviceHubApi.update(draft);
-      else await serviceHubApi.create(draft);
+      if (payload.id) await serviceHubApi.update(payload);
+      else await serviceHubApi.create(payload);
       setDraft(blank(category));
       await load();
     } catch (err) { setError(err instanceof Error ? err.message : 'Không lưu được mục dịch vụ.'); }
     finally { setLoading(false); }
   };
 
-  const remove = async (id: string) => {
+  const remove = async (id: string, isLegacy = false) => {
     if (!window.confirm('Xóa mục dịch vụ này?')) return;
     setLoading(true);
     setError('');
-    try { await serviceHubApi.remove(id, category); await load(); }
+    try { await serviceHubApi.remove(id, category, isLegacy); await load(); }
     catch (err) { setError(err instanceof Error ? err.message : 'Không xóa được mục dịch vụ.'); }
     finally { setLoading(false); }
   };
@@ -320,7 +335,7 @@ export const ServicesHubAdminView: React.FC<Props> = () => {
               </nav>}
               {loading && <p className="mb-3 text-xs text-[#6E655B]">Đang tải…</p>}
               <div className="space-y-2">
-                {visibleRecords.map((record) => <article key={record.id} className="flex items-center justify-between gap-3 rounded-xl border border-[#E2DAD0] p-3"><div className="min-w-0"><h3 className="truncate text-sm font-bold">{record.name}</h3><p className="truncate text-xs text-[#6E655B]">{summary(record)}</p></div><div className="flex shrink-0 gap-1"><button type="button" aria-label={`Sửa ${record.name}`} onClick={() => editRecord(record)} className="rounded-lg p-2 hover:bg-[#EFE9DF]"><Pencil className="h-4 w-4" /></button><button type="button" aria-label={`Xóa ${record.name}`} onClick={() => void remove(record.id)} className="rounded-lg p-2 text-red-700 hover:bg-red-50"><Trash2 className="h-4 w-4" /></button></div></article>)}
+                {visibleRecords.map((record) => <article key={record.id} className="flex items-center justify-between gap-3 rounded-xl border border-[#E2DAD0] p-3"><div className="min-w-0"><h3 className="truncate text-sm font-bold">{record.name}</h3><p className="truncate text-xs text-[#6E655B]">{summary(record)}</p></div><div className="flex shrink-0 gap-1"><button type="button" aria-label={`Sửa ${record.name}`} onClick={() => editRecord(record)} className="rounded-lg p-2 hover:bg-[#EFE9DF]"><Pencil className="h-4 w-4" /></button><button type="button" aria-label={`Xóa ${record.name}`} onClick={() => void remove(record.id, record.isLegacy)} className="rounded-lg p-2 text-red-700 hover:bg-red-50"><Trash2 className="h-4 w-4" /></button></div></article>)}
                 {!loading && visibleRecords.length === 0 && <p className="rounded-xl bg-white p-5 text-sm text-[#6E655B]">Chưa có thông tin trong nhóm này. Thêm mục mới hoặc chọn nhóm khác.</p>}
               </div>
               <div className="mt-5"><BulkImportPanel key={category} category={category} onImport={importRecords} /></div>
@@ -330,7 +345,7 @@ export const ServicesHubAdminView: React.FC<Props> = () => {
               {textField('Tên hiển thị *', 'name', category === 'filmLab' ? 'Tên lab film' : 'Tên tiệm / nhiếp ảnh gia / sản phẩm', true)}
               {category === 'spot' ? <>{textField('Slug *', 'slug')}{textField('Khu vực / tỉnh thành', 'regionId', 'hanoi')}{textField('Quận / huyện', 'district')}{textField('Địa chỉ *', 'address')}{textField('Vĩ độ', 'lat')}{textField('Kinh độ', 'lng')}<div className="space-y-2"><p className="text-xs font-semibold text-[#554D43]">Chọn vị trí trên bản đồ</p><LeafletCoordinatePicker value={mapLat !== undefined && mapLng !== undefined && Number.isFinite(mapLat) && Number.isFinite(mapLng) ? { lat: mapLat, lng: mapLng } : undefined} onChange={({ lat, lng }) => setDraft((current) => ({ ...current, lat, lng }))} /><p className="text-[11px] text-[#6E655B]">Bấm vào bản đồ để ghim tọa độ; bạn cũng có thể sửa số ở hai ô phía trên.</p></div>{percentageField}{textField('Giờ vàng', 'goldenHour')}{textField('Thời điểm chụp (mã)', 'bestTimeOfDay', 'morning / afternoon / evening')}{textareaField('Khung giờ đẹp (mô tả)', 'bestTimeDescription')}{listField('Ống kính khuyên dùng', 'recommendedLenses')}<label className="block space-y-1.5 text-xs font-semibold text-[#554D43]">Trạng thái mùa<select className={inputClass} value={draft.spotStatus || 'ACTIVE'} onChange={(event) => setField('spotStatus', event.target.value as 'PEAK' | 'ACTIVE' | 'ENDING_SOON')}><option value="ACTIVE">Quanh năm (ACTIVE)</option><option value="PEAK">Đang rộ nhất (PEAK)</option><option value="ENDING_SOON">Sắp hết mùa (ENDING_SOON)</option></select></label>{draft.spotStatus && draft.spotStatus !== 'ACTIVE' && textField('Hạn kiểm chứng (YYYY-MM-DD) *', 'statusValidUntil', '2026-10-19')}{textField('Phí vé', 'entryFee')}{textField('Phí gửi xe', 'parkingFee')}{textareaField('Mô tả tình trạng hoa / phong cảnh', 'description')}{conceptTagPicker}{placeCategoryPicker}{textField('Link nguồn Facebook / TikTok', 'sourceUrl')}<div><p className="mb-2 text-xs font-semibold text-[#554D43]">Tháng đẹp nhất</p><div className="grid grid-cols-6 gap-1.5">{Array.from({ length: 12 }, (_, index) => index + 1).map((month) => { const selected = (draft.bestMonths || []).includes(month); return <button key={month} type="button" aria-pressed={selected} onClick={() => setDraft((current) => ({ ...current, bestMonths: selected ? (current.bestMonths || []).filter((item) => item !== month) : [...(current.bestMonths || []), month] }))} className={`rounded-lg border px-2 py-2 text-xs ${selected ? 'border-[#C76B3C] bg-[#C76B3C] text-white' : 'border-[#D8CFBD] bg-white'}`}>T{month}</button>; })}</div></div></> : category === 'filmShop' ? <>{textField('Mô tả', 'description')}{textField('Địa chỉ khu vực', 'address')}{textField('Phường / xã', 'ward')}{textField('Quận / huyện', 'district')}</> : category !== 'filmLab' ? <>{textField('Mô tả', 'description')}{textField('Địa chỉ', 'address')}{textField('Giá tham khảo', 'price')}</> : null}
               {category === 'outfit' && <>{textField('ID địa điểm liên kết (tùy chọn)', 'spotId')}{textField('Chất liệu', 'material')}</>}
-              {category === 'photographer' && <>{textField('Thiết bị — Body', 'gearBody')}{textField('Thiết bị — Lens', 'gearLens')}{textField('Đánh giá', 'rating', 'Ví dụ: 4.9 / 5')}{textField('Số lượt đánh giá', 'reviewCount')}{listField('URL ảnh portfolio', 'portfolioPhotos')}<label className="block space-y-1.5 text-xs font-semibold text-[#554D43]">Gói chụp (JSON)<textarea className={`${inputClass} min-h-24`} placeholder='[{"name":"Gói cơ bản","price":1500000,"duration":"2 giờ","deliveredPhotos":20}]' value={JSON.stringify(draft.packages || [])} onChange={(event) => { try { const parsed: unknown = JSON.parse(event.target.value); if (Array.isArray(parsed)) setDraft((current) => ({ ...current, packages: parsed })); } catch { /* Keep last valid package list until JSON is valid. */ } }} /></label></>}
+              {category === 'photographer' && <>{textField('Thiết bị — Body', 'gearBody')}{textField('Thiết bị — Lens', 'gearLens')}{textField('Đánh giá', 'rating', 'Ví dụ: 4.9 / 5')}{textField('Số lượt đánh giá', 'reviewCount')}{listField('URL ảnh portfolio', 'portfolioPhotos')}<label className="block space-y-1.5 text-xs font-semibold text-[#554D43]">Gói chụp (JSON)<textarea className={`${inputClass} min-h-24`} placeholder='[{"name":"Gói cơ bản","price":1500000,"duration":"2 giờ","deliveredPhotos":20}]' value={packagesText} onChange={(event) => { const value = event.target.value; setPackagesText(value); try { const parsed: unknown = JSON.parse(value); if (Array.isArray(parsed)) setDraft((current) => ({ ...current, packages: parsed })); } catch { /* Preserve partial JSON while typing. */ } }} /></label></>}
               {category === 'spot' && <>
                 <fieldset className="space-y-3 rounded-xl border border-[#D8CFBD] p-3">
                   <legend className="text-xs font-bold">Dự kiến mùa tới</legend>

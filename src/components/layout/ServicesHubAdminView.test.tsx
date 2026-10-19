@@ -146,6 +146,26 @@ it('opens category configuration from the authenticated admin screen', async () 
   expect(await screen.findByRole('heading', { name: 'Quản lý nhóm địa điểm' })).toBeTruthy();
 });
 
+it('keeps partially typed photographer package JSON in the controlled field', async () => {
+  sessionStorage.setItem('service_admin_token', 'test-only');
+  window.history.replaceState({}, '', '/admin/photographers');
+  render(<ServicesHubAdminView onBack={vi.fn()} />);
+  await waitFor(() => expect(serviceHubApi.adminList).toHaveBeenCalled());
+  fireEvent.change(screen.getByLabelText('Tên hiển thị *'), { target: { value: 'Nhiếp ảnh gia thử' } });
+
+  const field = screen.getByLabelText('Gói chụp (JSON)') as HTMLTextAreaElement;
+  fireEvent.change(field, { target: { value: '[{"name":"Gói mới"' } });
+  expect(field.value).toBe('[{"name":"Gói mới"');
+  fireEvent.click(screen.getByRole('button', { name: 'Thêm mục' }));
+  expect(serviceHubApi.create).not.toHaveBeenCalled();
+  expect(screen.getByRole('alert').textContent).toContain('Gói chụp phải là mảng JSON hợp lệ.');
+  fireEvent.change(field, { target: { value: '[{"name":"Gói mới","price":1500000,"duration":"2 giờ","deliveredPhotos":20}]' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Thêm mục' }));
+  await waitFor(() => expect(serviceHubApi.create).toHaveBeenCalledWith(expect.objectContaining({
+    category: 'photographer', packages: [{ name: 'Gói mới', price: 1500000, duration: '2 giờ', deliveredPhotos: 20 }],
+  })));
+});
+
 it('notifies the admin about community submissions and publishes only after approval', async () => {
   sessionStorage.setItem('service_admin_token', 'test-only');
   window.history.replaceState({}, '', '/admin/spots');

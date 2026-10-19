@@ -102,8 +102,18 @@ describe('admin spot edits read back by the map', () => {
     expect(response.status).toBe(200);
     const row = await publicSpot(env, id);
     expect(row).toMatchObject({ name: 'Updated spot', lat: 22, lng: 106, best_months: '[10,11]' });
-    expect(JSON.parse(String(row.seasonal_trend))).toMatchObject({ status: 'PEAK', statusValidUntil: '2026-11-30', startMonth: 10, endMonth: 11, trendTitle: 'New light', conceptTags: ['SUNSET'], trendScore: 88 });
+    expect(JSON.parse(String(row.seasonal_trend))).toMatchObject({ status: 'PEAK', statusValidUntil: '2026-11-30', startMonth: 10, endMonth: 11, bestMonths: [10, 11], trendTitle: 'New light', conceptTags: ['SUNSET'], trendScore: 88 });
     expect(row.best_time_description).toBe('New light');
+  });
+
+  it('keeps the admin entry fee in sync with public ticket price fields on edit', async () => {
+    const { env, headers, body, id } = await fixture();
+    const response = await worker.request(`/api/admin/cms/spots/${id}`, {
+      method: 'PUT', headers, body: JSON.stringify({ ...body, entryFee: '100.000đ' }),
+    }, env);
+
+    expect(response.status).toBe(200);
+    expect(await publicSpot(env, id)).toMatchObject({ cost_type: 'TICKET', ticket_price_range: '100.000đ', entry_fee: '100.000đ' });
   });
 
   it('saves flower status and photography guide fields to the public spot record', async () => {
