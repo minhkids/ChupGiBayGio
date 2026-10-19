@@ -30,7 +30,7 @@ export interface PartnerPreview {
 
 export function LivePreviewCard({ data }: { data: PartnerPreview }) {
   const lab = data.kind === 'lab';
-  const thumbnail = (lab ? data.image : data.portfolio?.[0] || data.image);
+  const thumbnail = data.image;
   const branches = lab ? data.locations?.filter((item) => item.ward.trim() || item.district.trim()) || [] : [];
   const location = lab ? [data.ward, data.district, 'Hà Nội'].filter(Boolean).join(', ') : '';
   const startingPrice = Number(data.packagePrice);
@@ -38,7 +38,7 @@ export function LivePreviewCard({ data }: { data: PartnerPreview }) {
   return <article data-testid="partner-preview" className="mx-auto w-full max-w-sm rounded-2xl border border-[#D8CFBD] bg-[#FAF8F4] p-4 text-[#2C2621] shadow-sm">
     <div className="flex items-start gap-3">
       <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#EAE1D1] sm:h-24 sm:w-24">
-        {thumbnail ? <img src={thumbnail} alt={lab ? `Ảnh shop ${data.name || ''}` : `Ảnh của ${data.name || 'nhiếp ảnh gia'}`} className="h-full w-full object-cover" /> : (lab ? <Film aria-hidden="true" className="h-7 w-7 text-[#B28B72]" /> : <Camera aria-hidden="true" className="h-7 w-7 text-[#B28B72]" />)}
+        {thumbnail ? <img src={thumbnail} alt={lab ? `Ảnh shop ${data.name || ''}` : `Ảnh đại diện ${data.name || 'nhiếp ảnh gia'}`} className="h-full w-full object-cover" /> : (lab ? <Film aria-hidden="true" className="h-7 w-7 text-[#B28B72]" /> : <Camera aria-hidden="true" className="h-7 w-7 text-[#B28B72]" />)}
       </div>
       <div className="min-w-0 flex-1">
         <p className="text-[10px] font-bold uppercase tracking-wide text-[#9A4F29]">{lab ? 'Shop bán film' : 'Nhiếp ảnh gia'}</p>

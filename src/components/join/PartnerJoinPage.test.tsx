@@ -123,4 +123,28 @@ describe('partner onboarding pages', () => {
     expect(payload).not.toHaveProperty('district');
     expect(screen.getByRole('link', { name: /Xem thẻ trên website/i }).getAttribute('href')).toContain('partner=test-id');
   });
+
+  it('uploads a separate avatar and keeps portfolio photos out of the outer-card preview', async () => {
+    vi.spyOn(URL, 'createObjectURL').mockImplementation((file) => `blob:${(file as File).name}`);
+    vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined);
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ id: 'test-id', status: 'published', url: 'https://chupgibaygio.com/?services=photographers&partner=test-id' }) });
+    vi.stubGlobal('fetch', fetchMock);
+    render(<PartnerJoinPage kind="photographer" />);
+    fireEvent.change(screen.getByLabelText('Tên thợ ảnh / Nghệ danh *'), { target: { value: 'Minh Studio' } });
+    fireEvent.change(screen.getByLabelText('Số điện thoại / Zalo *'), { target: { value: '0912345678' } });
+    fireEvent.change(screen.getByLabelText(/Giá khởi điểm \(VNĐ\)/), { target: { value: '400000' } });
+    const avatar = new File(['avatar'], 'avatar.jpg', { type: 'image/jpeg' });
+    const portfolio = new File(['portfolio'], 'portfolio.jpg', { type: 'image/jpeg' });
+    fireEvent.change(screen.getByLabelText('Tải ảnh đại diện / Avatar (tùy chọn)'), { target: { files: [avatar] } });
+    fireEvent.change(screen.getByLabelText('Ảnh portfolio (ít nhất 1) *'), { target: { files: [portfolio] } });
+
+    expect(screen.getByRole('img', { name: 'Ảnh đại diện Minh Studio' }).getAttribute('src')).toBe('blob:avatar.jpg');
+    expect(screen.queryByRole('img', { name: /Ảnh portfolio/ })).toBeNull();
+    fireEvent.submit(screen.getByRole('button', { name: 'Hoàn tất đăng ký' }).closest('form')!);
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+
+    const form = fetchMock.mock.calls[0][1].body as FormData;
+    expect(form.get('avatarPhoto')).toBe(avatar);
+    expect(form.getAll('photos')).toEqual([portfolio]);
+  });
 });

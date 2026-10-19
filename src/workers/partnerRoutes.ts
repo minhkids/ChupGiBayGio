@@ -57,8 +57,10 @@ async function photos(form: FormData, min: number, max: number, field = 'photos'
   const files = form.getAll(field);
   const limitError = field === 'productPhoto'
     ? 'Ảnh bảng giá phải là JPG, PNG hoặc WebP, tối đa 3 MB.'
-    : min === 1 ? 'Cần ít nhất 1 ảnh portfolio (JPG, PNG hoặc WebP; tối đa 3 MB/ảnh).'
-      : 'Cần từ 3 đến 6 ảnh portfolio (JPG, PNG hoặc WebP; tối đa 3 MB/ảnh).';
+    : field === 'avatarPhoto' ? 'Ảnh đại diện phải là JPG, PNG hoặc WebP, tối đa 3 MB.'
+      : min === 1 ? 'Cần ít nhất 1 ảnh portfolio (JPG, PNG hoặc WebP; tối đa 3 MB/ảnh).'
+        : max === 1 ? 'Chỉ nhận tối đa 1 ảnh tiệm (JPG, PNG hoặc WebP; tối đa 3 MB).'
+          : 'Cần từ 3 đến 6 ảnh portfolio (JPG, PNG hoặc WebP; tối đa 3 MB/ảnh).';
   if (files.length < min || files.length > max || files.some((file) => !(file instanceof File) || file.size < 1 || file.size > 3 * 1024 * 1024)) return { error: limitError };
   const uploads: { bytes: Uint8Array; ext: string; type: string }[] = [];
   for (const file of files as File[]) {
@@ -97,6 +99,8 @@ async function registration(c: Context<{ Bindings: Bindings }>, kind: 'lab' | 'p
   if (!name || !number || social === null || imageUrl === null) return c.json({ error: 'Kiểm tra tên, số Zalo và đường dẫn HTTPS.' }, 400);
   const images = await photos(form, kind === 'lab' ? 0 : 1, kind === 'lab' ? 1 : 6);
   if ('error' in images) return c.json({ error: images.error }, images.error?.includes('định dạng') ? 415 : 400);
+  const avatarPhotos = kind === 'photographer' ? await photos(form, 0, 1, 'avatarPhoto') : { uploads: [] as { bytes: Uint8Array; ext: string; type: string }[] };
+  if ('error' in avatarPhotos) return c.json({ error: avatarPhotos.error }, avatarPhotos.error?.includes('định dạng') ? 415 : 400);
   const productImages = kind === 'lab' ? await photos(form, 0, 1, 'productPhoto') : { uploads: [] as { bytes: Uint8Array; ext: string; type: string }[] };
   if ('error' in productImages) return c.json({ error: productImages.error }, productImages.error?.includes('định dạng') ? 415 : 400);
   let district = '';
@@ -163,9 +167,17 @@ async function registration(c: Context<{ Bindings: Bindings }>, kind: 'lab' | 'p
       await c.env.DB.prepare(`INSERT INTO film_shops (id, name, slogan, address, district, ward, lat, lng, opening_hours, hotline, fast_2h, in_stock_films, fanpage_url, image_url, product_image_url, cheapest_roll_name, min_roll_price, max_roll_price, locations, express_delivery_2h, status)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(id, name, slogan, address, district, ward, null, null, locations[0].openingHours, number, 0, JSON.stringify(stocks), social || '', urls[0] || imageUrl || '', productImageUrl, cheapestRollName, minRollPrice, maxRollPrice, JSON.stringify(locations), body.expressDelivery2h === true ? 1 : 0, 'published').run();
     } else {
+      let avatarUrl = imageUrl || '';
+      const avatarUpload = avatarPhotos.uploads?.[0];
+      if (avatarUpload) {
+        const key = `partner/photographer/${id}/${crypto.randomUUID()}.${avatarUpload.ext}`;
+        await c.env.R2_BUCKET.put(key, avatarUpload.bytes, { httpMetadata: { contentType: avatarUpload.type } });
+        keys.push(key);
+        avatarUrl = `${base}/api/partner/images/${key}`;
+      }
       await c.env.DB.batch([
         c.env.DB.prepare(`INSERT INTO photographers (id, name, avatar_url, bio, phone, instagram, gear_body, gear_lens, styles, portfolio_photos, preferred_spots, facebook_url, status, address, district)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(id, name, imageUrl || urls[0], text(body.bio, 500), number, social || '', text(body.gear, 200), '', JSON.stringify(styles), JSON.stringify(urls), JSON.stringify(shootSpots), social || '', 'published', address, district),
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(id, name, avatarUrl, text(body.bio, 500), number, social || '', text(body.gear, 200), '', JSON.stringify(styles), JSON.stringify(urls), JSON.stringify(shootSpots), social || '', 'published', address, district),
         c.env.DB.prepare('INSERT INTO photographer_packages (id, photographer_id, name, price, duration, delivered_photos, delivered_photos_text) VALUES (?, ?, ?, ?, ?, ?, ?)')
           .bind(crypto.randomUUID(), id, pkg!.name, pkg!.price, pkg!.duration, 0, pkg!.deliveredPhotos)
       ]);

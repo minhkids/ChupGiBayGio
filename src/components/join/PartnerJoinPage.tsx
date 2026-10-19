@@ -37,14 +37,18 @@ export function PartnerJoinPage({ kind }: { kind: Kind }) {
   const [deliveredPhotos, setDeliveredPhotos] = useState('');
   const [files, setFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
+  const [avatarPhoto, setAvatarPhoto] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
   const [copied, setCopied] = useState(false);
   const urlsRef = useRef<string[]>([]);
+  const avatarPhotoUrlRef = useRef('');
   const productPhotoUrlRef = useRef('');
   useEffect(() => () => {
     urlsRef.current.forEach((url) => URL.revokeObjectURL(url));
+    if (avatarPhotoUrlRef.current) URL.revokeObjectURL(avatarPhotoUrlRef.current);
     if (productPhotoUrlRef.current) URL.revokeObjectURL(productPhotoUrlRef.current);
   }, []);
 
@@ -66,6 +70,20 @@ export function PartnerJoinPage({ kind }: { kind: Kind }) {
     urlsRef.current = urls;
     setPreviews(urls);
     setFiles(next);
+    setError('');
+  };
+  const handleAvatarPhoto = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] || null;
+    if (file && (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size < 1 || file.size > 3 * 1024 * 1024)) {
+      setError('Ảnh đại diện phải là JPG, PNG hoặc WebP, tối đa 3 MB.');
+      event.target.value = '';
+      return;
+    }
+    if (avatarPhotoUrlRef.current) URL.revokeObjectURL(avatarPhotoUrlRef.current);
+    const url = file && typeof URL.createObjectURL === 'function' ? URL.createObjectURL(file) : '';
+    avatarPhotoUrlRef.current = url;
+    setAvatarPhoto(file);
+    setAvatarPreview(url);
     setError('');
   };
   const addFilm = () => {
@@ -102,6 +120,7 @@ export function PartnerJoinPage({ kind }: { kind: Kind }) {
     const body = new FormData();
     body.set('payload', JSON.stringify(payload));
     files.forEach((file) => body.append('photos', file));
+    if (!lab && avatarPhoto) body.set('avatarPhoto', avatarPhoto);
     if (lab && productPhoto) body.set('productPhoto', productPhoto);
     try {
       const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/partner/register-${lab ? 'lab' : 'photographer'}`, { method: 'POST', body });
@@ -147,13 +166,13 @@ export function PartnerJoinPage({ kind }: { kind: Kind }) {
             <label className={`${label} rounded-2xl border-2 border-[#C76B3C] bg-[#F3E6D6] p-4`}>Giá khởi điểm (VNĐ) *<span className="mt-1 block text-xs font-normal text-[#675D52]">Để khách dễ ước lượng ngân sách; bạn có thể trao đổi chi tiết gói sau.</span><input className={`${input} !border-[#C76B3C] !text-lg !font-bold`} type="number" min="1" max="100000000" value={packagePrice} onChange={(e) => setPackagePrice(e.target.value)} required placeholder="Ví dụ: 400000" /></label>
             <fieldset className="space-y-4 rounded-2xl border border-[#D8CFBD] bg-[#F7F5F0] p-4"><legend className="px-2 font-bold">Chi tiết gói chụp (tùy chọn)</legend><label className={label}>Tên gói (tùy chọn)<input className={input} value={packageName} onChange={(e) => setPackageName(e.target.value)} maxLength={160} placeholder="Chân dung ngoại cảnh" /></label><div className="grid gap-4 sm:grid-cols-2"><label className={label}>Thời lượng (tùy chọn)<input className={input} value={packageDuration} onChange={(e) => setPackageDuration(e.target.value)} maxLength={120} placeholder="1.5 giờ" /></label><label className={label}>Số ảnh trả (tùy chọn)<input className={input} value={deliveredPhotos} onChange={(e) => setDeliveredPhotos(e.target.value)} maxLength={120} placeholder="15 ảnh chỉnh" /></label></div></fieldset>
           </>}
-          <div className="space-y-3"><label className={label}>Ảnh đại diện {lab ? 'tiệm' : '/ Avatar'} (link HTTPS, tùy chọn)<input className={input} type="url" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://…" /></label><label className={label}><span className="flex items-center gap-2"><ImagePlus className="h-4 w-4 text-[#C76B3C]" />{lab ? 'Hoặc tải ảnh tiệm' : 'Ảnh portfolio (ít nhất 1) *'}</span><input className="mt-2 block w-full rounded-xl border border-dashed border-[#B6A88F] bg-white p-3 text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-[#EFE5D4] file:px-3 file:py-2" type="file" accept="image/jpeg,image/png,image/webp" multiple={!lab} onChange={handleFiles} required={!lab} /></label>{lab && <label className={label}>Bảng giá của shop<input aria-label="Ảnh bảng giá" className="mt-2 block w-full rounded-xl border border-dashed border-[#B6A88F] bg-white p-3 text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-[#EFE5D4] file:px-3 file:py-2" type="file" accept="image/jpeg,image/png,image/webp" onChange={handleProductPhoto} /><span className="mt-1 block text-xs font-normal text-[#675D52]">Tùy chọn · tải ảnh bảng giá để khách xem chi tiết · JPG, PNG hoặc WebP · tối đa 3 MB</span></label>}{(lab ? productPhotoPreview : '').length > 0 && <img src={productPhotoPreview} alt="Xem trước bảng giá của shop" className="max-h-48 w-full rounded-xl border border-[#D8CFBD] object-contain bg-white" />}<p className="text-xs text-[#675D52]">JPG, PNG hoặc WebP; tối đa 3 MB/ảnh.</p></div>
+          <div className="space-y-3"><label className={label}>Ảnh đại diện {lab ? 'tiệm' : '/ Avatar'} (link HTTPS, tùy chọn)<input className={input} type="url" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://…" /></label>{!lab && <label className={label}>Tải ảnh đại diện / Avatar (tùy chọn)<input aria-label="Tải ảnh đại diện / Avatar (tùy chọn)" className="mt-2 block w-full rounded-xl border border-dashed border-[#B6A88F] bg-white p-3 text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-[#EFE5D4] file:px-3 file:py-2" type="file" accept="image/jpeg,image/png,image/webp" onChange={handleAvatarPhoto} /><span className="mt-1 block text-xs font-normal text-[#675D52]">JPG, PNG hoặc WebP; tối đa 3 MB. Nếu chọn file, file sẽ thay link avatar.</span></label>}<label className={label}><span className="flex items-center gap-2"><ImagePlus className="h-4 w-4 text-[#C76B3C]" />{lab ? 'Hoặc tải ảnh tiệm' : 'Ảnh portfolio (ít nhất 1) *'}</span><input className="mt-2 block w-full rounded-xl border border-dashed border-[#B6A88F] bg-white p-3 text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-[#EFE5D4] file:px-3 file:py-2" type="file" accept="image/jpeg,image/png,image/webp" multiple={!lab} onChange={handleFiles} required={!lab} /></label>{lab && <label className={label}>Bảng giá của shop<input aria-label="Ảnh bảng giá" className="mt-2 block w-full rounded-xl border border-dashed border-[#B6A88F] bg-white p-3 text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-[#EFE5D4] file:px-3 file:py-2" type="file" accept="image/jpeg,image/png,image/webp" onChange={handleProductPhoto} /><span className="mt-1 block text-xs font-normal text-[#675D52]">Tùy chọn · tải ảnh bảng giá để khách xem chi tiết · JPG, PNG hoặc WebP · tối đa 3 MB</span></label>}{(lab ? productPhotoPreview : '').length > 0 && <img src={productPhotoPreview} alt="Xem trước bảng giá của shop" className="max-h-48 w-full rounded-xl border border-[#D8CFBD] object-contain bg-white" />}<p className="text-xs text-[#675D52]">JPG, PNG hoặc WebP; tối đa 3 MB/ảnh.</p></div>
           <div aria-hidden="true" className="absolute h-0 w-0 overflow-hidden"><label>Website<input name="website" tabIndex={-1} autoComplete="off" /></label></div>
           {error && <p role="alert" className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">{error}</p>}
           <button type="submit" disabled={busy} className="min-h-13 w-full rounded-xl bg-[#C76B3C] px-5 py-3.5 text-base font-bold text-white transition-colors hover:bg-[#AA542D] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#C76B3C] disabled:opacity-60">{busy ? 'Đang lưu thông tin…' : 'Hoàn tất đăng ký'}</button>
           <p className="text-center text-xs leading-relaxed text-[#675D52]">Bằng cách đăng ký, bạn đồng ý công khai thông tin liên hệ và ảnh đã gửi trên website.</p>
         </form>
-        <aside className="lg:sticky lg:top-8"><div className="mb-3 flex items-center justify-between"><h2 className="font-bold">Xem trước thẻ của bạn</h2><span className="text-xs text-[#8B4828]">Cập nhật trực tiếp</span></div><LivePreviewCard data={{ kind, name, slogan: lab ? slogan : undefined, image: previews[0] || imageUrl, productImage: productPhotoPreview, cheapestRollName: lab ? cheapestRollName : undefined, minRollPrice, ward: undefined, locations: lab ? locations : undefined, phone, filmStocks, expressDelivery2h: lab ? expressDelivery2h : undefined, styles: selectedStyles, shootSpots, packageName, packagePrice, packageDuration, packageDeliverables: deliveredPhotos, portfolio: previews }} /><p className="mt-3 text-xs leading-relaxed text-[#675D52]">{lab ? 'Thẻ hiển thị nhiều địa chỉ chi nhánh; khách có thể lọc shop theo quận/huyện.' : 'Khách sẽ thấy mức giá khởi điểm và portfolio; không hiển thị địa chỉ.'}</p></aside>
+        <aside className="lg:sticky lg:top-8"><div className="mb-3 flex items-center justify-between"><h2 className="font-bold">Xem trước thẻ của bạn</h2><span className="text-xs text-[#8B4828]">Cập nhật trực tiếp</span></div><LivePreviewCard data={{ kind, name, slogan: lab ? slogan : undefined, image: lab ? previews[0] || imageUrl : avatarPreview || imageUrl, productImage: productPhotoPreview, cheapestRollName: lab ? cheapestRollName : undefined, minRollPrice, ward: undefined, locations: lab ? locations : undefined, phone, filmStocks, expressDelivery2h: lab ? expressDelivery2h : undefined, styles: selectedStyles, shootSpots, packageName, packagePrice, packageDuration, packageDeliverables: deliveredPhotos, portfolio: previews }} /><p className="mt-3 text-xs leading-relaxed text-[#675D52]">{lab ? 'Thẻ hiển thị nhiều địa chỉ chi nhánh; khách có thể lọc shop theo quận/huyện.' : 'Khách sẽ thấy mức giá khởi điểm và portfolio; không hiển thị địa chỉ.'}</p></aside>
       </div>}
       <footer className="mt-12 border-t border-[#D8CFBD] pt-5 text-xs text-[#675D52]">© Chụp Gì Bây Giờ · Kết nối trực tiếp với cộng đồng nhiếp ảnh Hà Nội</footer>
     </div>

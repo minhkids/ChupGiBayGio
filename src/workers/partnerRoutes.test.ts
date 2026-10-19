@@ -30,10 +30,11 @@ function environment(seed: Record<string, Record<string, unknown>[]> = {}) {
 }
 
 const jpg = () => new File([new Uint8Array([0xff, 0xd8, 0xff, 0x00])], 'photo.jpg', { type: 'image/jpeg' });
-const submit = (path: string, payload: Record<string, unknown>, images: File[] = [], env = environment()) => {
+const submit = (path: string, payload: Record<string, unknown>, images: File[] = [], env = environment(), avatarPhoto?: File) => {
   const form = new FormData();
   form.set('payload', JSON.stringify(payload));
   images.forEach((image) => form.append('photos', image));
+  if (avatarPhoto) form.set('avatarPhoto', avatarPhoto);
   return worker.request(path, { method: 'POST', headers: { Origin: 'https://chupgibaygio.com' }, body: form }, env);
 };
 
@@ -122,9 +123,31 @@ describe('public partner registration', () => {
     expect(env.writes.some(({ sql, values }) => sql.includes('INSERT INTO photographers') && values.includes('Minh Studio') && values.includes('published'))).toBe(true);
     expect(env.writes.some(({ sql, values }) => sql.includes('INSERT INTO photographer_packages') && values.includes(600000))).toBe(true);
     expect(env.bucket.put).toHaveBeenCalledTimes(3);
+    const photographerWrite = env.writes.find(({ sql }) => sql.includes('INSERT INTO photographers'));
+    expect(photographerWrite?.values[2]).toBe('');
     const photo = env.bucket.put.mock.calls[0][0];
     const fetched = await worker.request(`/api/partner/images/${photo}`, {}, env);
     expect(fetched.status).toBe(200);
+  });
+
+  it('stores an uploaded avatar separately from portfolio images', async () => {
+    const env = environment();
+    const avatar = jpg();
+    const portfolio = jpg();
+    const response = await submit('/api/partner/register-photographer', {
+      ...photographer, imageUrl: 'https://example.com/avatar-url.jpg',
+    }, [portfolio], env, avatar);
+
+    expect(response.status).toBe(201);
+    const write = env.writes.find(({ sql }) => sql.includes('INSERT INTO photographers'));
+    const avatarUrl = String(write?.values[2]);
+    const portfolioUrls = JSON.parse(String(write?.values[9])) as string[];
+    const avatarKey = env.bucket.put.mock.calls[1][0];
+    expect(avatarUrl).toContain(avatarKey);
+    expect(avatarUrl).not.toBe('https://example.com/avatar-url.jpg');
+    expect(avatarUrl).not.toBe(portfolioUrls[0]);
+    expect(portfolioUrls).toHaveLength(1);
+    expect(env.bucket.put).toHaveBeenCalledTimes(2);
   });
 
   it('rejects photographers with no portfolio images without persisting anything', async () => {

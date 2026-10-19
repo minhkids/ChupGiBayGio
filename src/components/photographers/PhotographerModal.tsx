@@ -41,6 +41,7 @@ export const PhotographerModal: React.FC<PhotographerModalProps> = ({
   const [activeTab, setActiveTab] = useState<'packages' | 'portfolio'>('packages');
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
   const shootPlan = useShootPlan();
+  const portfolioCount = photographer?.albums.length || photographer?.featuredPhotos.length || 0;
 
   // Close on Escape key
   useEffect(() => {
@@ -200,7 +201,7 @@ export const PhotographerModal: React.FC<PhotographerModalProps> = ({
                   }`}
                 >
                   <ImageIcon className="w-4 h-4" />
-                  <span>Bộ Ảnh Thực Tế ({photographer.albums.length})</span>
+                  <span>Bộ Ảnh Thực Tế ({portfolioCount})</span>
                 </button>
               </div>
             </div>
@@ -320,7 +321,7 @@ export const PhotographerModal: React.FC<PhotographerModalProps> = ({
               ) : (
                 /* PORTFOLIO MASONRY GRID TAB */
                 <div className="space-y-6">
-                  {photographer.albums.map((album: PortfolioAlbum) => (
+                  {photographer.albums.length > 0 ? photographer.albums.map((album: PortfolioAlbum) => (
                     <div key={album.id} className="space-y-3">
                       {/* Album Header */}
                       <div className="flex items-center justify-between">
@@ -362,7 +363,19 @@ export const PhotographerModal: React.FC<PhotographerModalProps> = ({
                         ))}
                       </div>
                     </div>
-                  ))}
+                  )) : photographer.featuredPhotos.length > 0 ? (
+                    <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+                      {photographer.featuredPhotos.map((url, pIdx) => (
+                        <div key={`${url}-${pIdx}`} onClick={() => setSelectedPhoto(url)} className="group relative aspect-4/5 cursor-pointer overflow-hidden rounded-xl border border-neutral-800 bg-neutral-950 shadow-md transition-all hover:border-amber-400/80">
+                          <img src={url} alt={`Ảnh portfolio ${photographer.name} ${pIdx + 1}`} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" />
+                          <PinReferenceButton imageUrl={url} label={`Ảnh portfolio ${photographer.name} ${pIdx + 1}`} />
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100"><span className="rounded-full border border-white/20 bg-black/70 px-2.5 py-1 text-[11px] font-bold text-white">Xem phóng to</span></div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="rounded-xl border border-neutral-800 bg-neutral-950/70 p-5 text-sm text-neutral-400">Chưa có ảnh portfolio.</p>
+                  )}
                 </div>
               )}
             </div>

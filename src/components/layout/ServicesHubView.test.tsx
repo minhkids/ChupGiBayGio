@@ -380,6 +380,26 @@ describe('ServicesHubView', () => {
     expect(card?.textContent).not.toContain('Long Biên');
   });
 
+  it('shows the avatar on the directory card and portfolio only after opening details', async () => {
+    const avatarUrl = 'https://example.com/minh-avatar.jpg';
+    const portfolioUrl = 'https://example.com/minh-portfolio.jpg';
+    vi.mocked(serviceHubApi.list).mockResolvedValueOnce([{
+      id: 'photographer-detail', category: 'photographer', name: 'Minh Studio', imageUrl: avatarUrl,
+      portfolioPhotos: [portfolioUrl], price: '400000', packages: [{ name: 'Chân dung', price: 400000, duration: '', deliveredPhotos: 0 }],
+    }]);
+    renderView();
+    fireEvent.click(await screen.findByRole('button', { name: /Nhiếp ảnh gia/i }));
+
+    const card = (await screen.findByText('Minh Studio')).closest('article');
+    expect(within(card!).getByRole('img', { name: 'Ảnh đại diện Minh Studio' }).getAttribute('src')).toBe(avatarUrl);
+    expect(within(card!).queryByRole('img', { name: /Ảnh portfolio/ })).toBeNull();
+    fireEvent.click(within(card!).getByRole('button', { name: 'Xem chi tiết Minh Studio' }));
+
+    const detail = await screen.findByRole('dialog', { name: 'Minh Studio' });
+    expect(within(detail).getByRole('img', { name: 'Ảnh đại diện Minh Studio' }).getAttribute('src')).toBe(avatarUrl);
+    expect(within(detail).getByRole('img', { name: 'Ảnh portfolio Minh Studio 1' }).getAttribute('src')).toBe(portfolioUrl);
+  });
+
   it('does not expose an admin entry point in the public service directory', async () => {
     renderView();
     expect(await screen.findByRole('heading', { name: 'Chuẩn bị cho buổi chụp' })).toBeDefined();

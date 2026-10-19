@@ -83,6 +83,24 @@ describe('ShootServicesHubDrawer', () => {
     expect(fetcher.mock.calls.filter(([url]) => url === '/api/services')).toHaveLength(2);
   });
 
+  it('keeps portfolio images inside photographer details in the map service drawer', async () => {
+    const avatarUrl = 'https://example.com/drawer-avatar.jpg';
+    const portfolioUrl = 'https://example.com/drawer-portfolio.jpg';
+    const fetcher = vi.fn(async (input: RequestInfo | URL) => String(input) === '/api/services'
+      ? Response.json([{ id: 'drawer-photographer', category: 'photographer', name: 'Minh Studio', imageUrl: avatarUrl, portfolioPhotos: [portfolioUrl], price: '400000' }])
+      : Response.json([]));
+    vi.stubGlobal('fetch', fetcher);
+    render(<ShootPlanProvider><ShootServicesHubDrawer isOpen initialTab="photographers" onClose={() => undefined} /></ShootPlanProvider>);
+
+    const card = await screen.findByTestId('photographer-card');
+    expect(within(card).getByRole('img', { name: 'Ảnh đại diện Minh Studio' }).getAttribute('src')).toBe(avatarUrl);
+    expect(within(card).queryByRole('img', { name: /Ảnh portfolio/ })).toBeNull();
+    fireEvent.click(within(card).getByRole('button', { name: 'Xem chi tiết Minh Studio' }));
+
+    const detail = await screen.findByRole('dialog', { name: 'Minh Studio' });
+    expect(within(detail).getByRole('img', { name: 'Ảnh portfolio Minh Studio 1' }).getAttribute('src')).toBe(portfolioUrl);
+  });
+
   it('shows area-only shops and the same compact express badge in the mobile Mua film tab', async () => {
     const fetcher = vi.fn(async (url: string) => Response.json(url === '/api/film-shops' ? [{
       id: 'mapped-mobile-shop', name: 'Shop có ghim', ward: 'Bồ Đề', district: 'Long Biên',

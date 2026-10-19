@@ -29,6 +29,7 @@ import type { RentalShop } from '../../types';
 import { ExpressDeliveryBadge } from './ExpressDeliveryBadge';
 import { FilmShopCard } from './FilmShopCard';
 import { FilmShopDetailDialog } from './FilmShopDetailDialog';
+import { PhotographerDetailDialog } from './PhotographerDetailDialog';
 import { FeatureInDevelopmentDialog } from './FeatureInDevelopmentDialog';
 
 export type ServicesTab = 'outfit' | 'photographers' | 'film';
@@ -75,6 +76,7 @@ export const ShootServicesHubDrawer: React.FC<ShootServicesHubDrawerProps> = ({
   const [photographerSearch, setPhotographerSearch] = useState('');
   const [directoryItems, setDirectoryItems] = useState<ServiceListing[]>([]);
   const [selectedAreaOnlyShop, setSelectedAreaOnlyShop] = useState<ServiceListing | null>(null);
+  const [selectedPhotographerDetails, setSelectedPhotographerDetails] = useState<ServiceListing | null>(null);
 
   // Tab 3 (Film Labs) State
   const [filmSearch, setFilmSearch] = useState('');
@@ -110,7 +112,7 @@ export const ShootServicesHubDrawer: React.FC<ShootServicesHubDrawerProps> = ({
         startingPrice: price, startingPriceFormatted: priceLabel, budgetCategory: price < 500000 ? 'student' : price <= 1000000 ? 'standard' : 'premium',
         vibes: (entry.tags || []) as Photographer['vibes'], specialtySpots: [], gear: [entry.gearBody, entry.gearLens].filter(Boolean).join(' / '),
         contact: { zaloPhone: entry.phone || '', zaloUrl: entry.phone ? `https://zalo.me/${entry.phone.replace(/\D/g, '')}` : '', phone: entry.phone || '', instagram: entry.link || '' },
-        featuredPhotos: entry.portfolioPhotos?.length ? entry.portfolioPhotos : entry.imageUrl ? [entry.imageUrl] : [], packages, albums: [] };
+        featuredPhotos: entry.portfolioPhotos || [], packages, albums: [] };
     });
     return photographers.filter((p) => {
       // Search matching
@@ -129,6 +131,14 @@ export const ShootServicesHubDrawer: React.FC<ShootServicesHubDrawerProps> = ({
       return true;
     });
   }, [directoryItems, budgetFilter, photographerSearch]);
+
+  const openPhotographerDetails = (photographer: Photographer) => {
+    if (onSelectPhotographer) {
+      onSelectPhotographer(photographer);
+      return;
+    }
+    setSelectedPhotographerDetails(directoryItems.find((item) => item.id === photographer.id) || null);
+  };
 
   // Outfit rental shops
   const outfitShops = useMemo(() => {
@@ -558,8 +568,9 @@ export const ShootServicesHubDrawer: React.FC<ShootServicesHubDrawerProps> = ({
                     filteredPhotographers.map((photographer) => {
                       const isChosen = shootPlan?.photographer?.id === photographer.id;
                       return (
-                        <div
+                        <article
                           key={photographer.id}
+                          data-testid="photographer-card"
                           className="p-4 rounded-2xl bg-[#FAF8F4] border border-neutral-800 hover:border-amber-500/50 transition-all flex flex-col gap-3 shadow-md"
                         >
                           {/* Header: Avatar, Name, Badge, Starting Price */}
@@ -568,7 +579,7 @@ export const ShootServicesHubDrawer: React.FC<ShootServicesHubDrawerProps> = ({
                               <div className="relative shrink-0">
                                 <img
                                   src={photographer.avatarUrl}
-                                  alt={photographer.name}
+                                  alt={`Ảnh đại diện ${photographer.name}`}
                                   className="w-12 h-12 rounded-full object-cover border-2 border-neutral-700"
                                 />
                                 <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-neutral-900 rounded-full" />
@@ -612,21 +623,7 @@ export const ShootServicesHubDrawer: React.FC<ShootServicesHubDrawerProps> = ({
                             ))}
                           </div>
 
-                          {/* Portfolio Thumbnails Row */}
-                          {photographer.featuredPhotos && photographer.featuredPhotos.length > 0 && (
-                            <div className="grid grid-cols-4 gap-1.5 rounded-xl overflow-hidden">
-                              {photographer.featuredPhotos.slice(0, 4).map((photo, pIdx) => (
-                                <img
-                                  key={pIdx}
-                                  src={photo}
-                                  alt={`Portfolio ${photographer.name}`}
-                                  className="w-full h-16 object-cover rounded-lg border border-neutral-800"
-                                />
-                              ))}
-                            </div>
-                          )}
-
-                          {/* Action Buttons: Chat Zalo, Xem Portfolio, Ghim vào Kế hoạch */}
+                          {/* Action Buttons: contact, details, and plan */}
                           <div className="grid grid-cols-3 gap-2 pt-1 border-t border-neutral-800/80">
                             <a
                               href={photographer.contact?.zaloUrl || `https://zalo.me/${photographer.contact?.zaloPhone}`}
@@ -640,10 +637,11 @@ export const ShootServicesHubDrawer: React.FC<ShootServicesHubDrawerProps> = ({
 
                             <button
                               type="button"
-                              onClick={() => onSelectPhotographer?.(photographer)}
+                              aria-label={`Xem chi tiết ${photographer.name}`}
+                              onClick={() => openPhotographerDetails(photographer)}
                               className="py-2 px-1 rounded-xl bg-[#ECE4D0] hover:bg-neutral-700 text-[#2C2621] text-[11px] font-semibold flex items-center justify-center space-x-1 transition-colors"
                             >
-                              <span>Portfolio</span>
+                              <span>Xem chi tiết</span>
                               <ExternalLink className="w-3 h-3" />
                             </button>
 
@@ -675,7 +673,7 @@ export const ShootServicesHubDrawer: React.FC<ShootServicesHubDrawerProps> = ({
                               )}
                             </button>
                           </div>
-                        </div>
+                        </article>
                       );
                     })
                   )}
@@ -857,6 +855,7 @@ export const ShootServicesHubDrawer: React.FC<ShootServicesHubDrawerProps> = ({
           </div>
         </motion.aside>
         <AnimatePresence>{selectedAreaOnlyShop && <FilmShopDetailDialog key={selectedAreaOnlyShop.id} shop={selectedAreaOnlyShop} onClose={() => setSelectedAreaOnlyShop(null)} />}</AnimatePresence>
+        <AnimatePresence>{selectedPhotographerDetails && <PhotographerDetailDialog key={selectedPhotographerDetails.id} photographer={selectedPhotographerDetails} onClose={() => setSelectedPhotographerDetails(null)} />}</AnimatePresence>
         {isFeatureNoticeOpen && <FeatureInDevelopmentDialog onClose={() => setIsFeatureNoticeOpen(false)} />}
       </div>
     </AnimatePresence>
