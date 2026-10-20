@@ -1,6 +1,6 @@
 import { PinReferenceButton } from '../planner/PinReferenceButton';
 import React from 'react';
-import { Navigation, Share2, Flag, Bookmark, Camera, Clock, Sparkles, ExternalLink } from 'lucide-react';
+import { Navigation, Share2, Bookmark, Camera, Clock, Sparkles, ExternalLink } from 'lucide-react';
 import type { Spot } from '../../types';
 import { getStatusBadgeInfo, getEffectiveSeasonalStatus, CONCEPT_METADATA } from '../../utils/season';
 import { getPlaceCategoryLabel } from '../../utils/placeCategories';
@@ -9,14 +9,14 @@ import { SpotPhotographersSection } from '../photographers/SpotPhotographersSect
 
 interface QuickActionsProps {
   spot: Spot;
-  callbacks: Pick<SpotDetailContentProps['callbacks'], 'onToggleSave' | 'handleOpenDirections' | 'handleShareSpot' | 'onOpenReportModal' | 'onOpenAddPostModal'>;
+  callbacks: Pick<SpotDetailContentProps['callbacks'], 'onToggleSave' | 'handleOpenDirections' | 'handleShareSpot' | 'onOpenAddPostModal'>;
 }
 
 const QuickActions: React.FC<QuickActionsProps> = ({ spot, callbacks }) => {
-  const { handleOpenDirections, handleShareSpot, onOpenReportModal } = callbacks;
+  const { handleOpenDirections, handleShareSpot } = callbacks;
 
   return (
-    <div className="grid grid-cols-3 gap-2 py-1">
+    <div className="grid grid-cols-2 gap-2 py-1">
       <button
         type="button"
         onClick={() => handleOpenDirections(spot)}
@@ -35,47 +35,27 @@ const QuickActions: React.FC<QuickActionsProps> = ({ spot, callbacks }) => {
         <span className="text-[11px] font-semibold mt-1">Chia sẻ</span>
       </button>
 
-      <button
-        type="button"
-        onClick={() => onOpenReportModal(spot)}
-        className="flex flex-col items-center justify-center p-2 rounded-xl bg-neutral-50 dark:bg-neutral-800 hover:bg-neutral-100 text-neutral-800 dark:text-neutral-200 transition-colors group"
-      >
-        <Flag className="w-4 h-4 text-amberFilm group-hover:scale-110 transition-transform" />
-        <span className="text-[11px] font-semibold mt-1">Báo nở</span>
-      </button>
+
     </div>
   );
 };
 
-interface BloomConditionProps {
+interface SpotDescriptionProps {
   spot: Spot;
 }
 
-const BloomCondition: React.FC<BloomConditionProps> = ({ spot }) => {
-  const percentage = spot.seasonalTrend?.bloomPercentage ?? 85;
-
-  return (
+const SpotDescription: React.FC<SpotDescriptionProps> = ({ spot }) => (
     <div className="bg-amber-50/70 dark:bg-neutral-800/70 border border-amber-200/60 dark:border-neutral-700/60 rounded-xl p-3 space-y-1.5">
-      <div className="flex items-center justify-between text-xs font-mono-spec">
+      <div className="text-xs font-mono-spec">
         <span className="font-bold text-neutral-900 dark:text-neutral-100">
-          TÌNH TRẠNG HOA / PHONG CẢNH
+          THÔNG TIN ĐỊA ĐIỂM
         </span>
-        <span className="font-bold text-terracotta">
-          {percentage}% ĐANG NỞ
-        </span>
-      </div>
-      <div className="w-full bg-neutral-200 dark:bg-neutral-700 h-1.5 rounded-full overflow-hidden">
-        <div
-          className="bg-terracotta h-full transition-all duration-500"
-          style={{ width: `${percentage}%` }}
-        />
       </div>
       <p className="text-xs text-neutral-600 dark:text-neutral-300 font-sans leading-relaxed pt-1">
         {spot.description}
       </p>
     </div>
-  );
-};
+);
 
 interface PhotographyTipsProps {
   spot: Spot;
@@ -153,7 +133,7 @@ const SpotDetailInfoTab: React.FC<SpotDetailInfoTabProps> = ({ spot, callbacks }
   return (
     <>
       <QuickActions spot={spot} callbacks={callbacks} />
-      <BloomCondition spot={spot} />
+      <SpotDescription spot={spot} />
       <PhotographyTips spot={spot} />
       {/* Nhiếp ảnh gia chuyên chụp góc này */}
       {callbacks.onSelectPhotographer && (

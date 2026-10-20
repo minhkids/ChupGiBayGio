@@ -58,9 +58,6 @@ export const SpotCard: React.FC<SpotCardProps> = ({
         <div className="absolute top-3 left-3 backdrop-blur-md bg-black/40 border border-white/20 text-white text-xs font-medium px-3 py-1 rounded-full flex items-center gap-1.5 shadow-sm">
           <span className={`w-1.5 h-1.5 rounded-full ${statusInfo.dotColor} animate-pulse`} />
           <span>{statusInfo.label}</span>
-          {spot.seasonalTrend?.bloomPercentage && (
-            <span className="text-xs text-white/80 font-mono-spec">· {spot.seasonalTrend.bloomPercentage}%</span>
-          )}
         </div>
 
         {/* Nút thao tác nổi góc trên bên phải: + Kế hoạch & Lưu */}

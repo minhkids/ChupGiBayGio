@@ -66,7 +66,6 @@ const props = {
   onChangeView: vi.fn(),
   onOpenSubmitSpotModal: vi.fn(),
   onOpenSavedModal: vi.fn(),
-  onOpenReportModal: vi.fn(),
   onOpenAddPostModal: vi.fn(),
   allSpots,
 } as ComponentProps<typeof GoogleMapsLayout>;
@@ -98,6 +97,16 @@ afterEach(() => {
 });
 
 describe('GoogleMapsLayout nearby locations', () => {
+  it('keeps the spot description without claiming an unverified bloom percentage in either detail layout', () => {
+    const selectedSpot = { ...allSpots[0], description: 'Phố cổ và kiến trúc, không có số liệu hoa.', seasonalTrend: { ...allSpots[0].seasonalTrend, bloomPercentage: 85 } };
+    render(<GoogleMapsLayout {...props} selectedSpot={selectedSpot} />);
+    expect(screen.getAllByText(selectedSpot.description)).toHaveLength(2);
+    expect(screen.queryByText(/85% ĐANG NỞ/i)).toBeNull();
+    expect(screen.queryByText(/TÌNH TRẠNG HOA \/ PHONG CẢNH/i)).toBeNull();
+    expect(screen.queryByText('Báo nở')).toBeNull();
+    expect(screen.getAllByText('Chia sẻ')).toHaveLength(2);
+  });
+
   it('shows the five closest spots in distance order after locating the user', async () => {
     render(<TestMap />);
 

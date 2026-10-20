@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { db } from './services/db';
 import { createCommunitySpot } from './services/communitySpots';
-import type { Spot, FilterState, CommunityReport, InspirationPost, PlaceCategory } from './types';
+import type { Spot, FilterState, InspirationPost, PlaceCategory } from './types';
 import { serviceHubApi } from './services/serviceHubApi';
 import {
   FilterBar,
@@ -27,7 +27,7 @@ import type { ViewId } from './components/navigation/viewItems';
 
 // Lazy-loaded heavy components
 const GoogleMapsLayout = lazy(() => import('./components/GoogleMapsLayout').then(m => ({ default: m.GoogleMapsLayout })));
-const CommunityReportModal = lazy(() => import('./components/modals/CommunityReportModal').then(m => ({ default: m.CommunityReportModal })));
+
 const AddSpotModal = lazy(() => import('./components/modals/AddSpotModal').then(m => ({ default: m.AddSpotModal })));
 const SavedSpotsModal = lazy(() => import('./components/modals/SavedSpotsModal').then(m => ({ default: m.SavedSpotsModal })));
 const AddFacebookPostModal = lazy(() => import('./components/modals/AddFacebookPostModal').then(m => ({ default: m.AddFacebookPostModal })));
@@ -75,7 +75,7 @@ export function App() {
 
   // Modals state
   const [selectedSpot, setSelectedSpot] = useState<Spot | null>(null);
-  const [reportSpot, setReportSpot] = useState<Spot | null>(null);
+
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
   const [isSavedModalOpen, setIsSavedModalOpen] = useState(false);
   const [isAddPostModalOpen, setIsAddPostModalOpen] = useState(false);
@@ -153,41 +153,6 @@ export function App() {
   };
 
   // Handle new community report submission
-  const handleSubmitReport = (spotId: string, newReportData: Omit<CommunityReport, 'id' | 'reportedAt'>) => {
-    const report: CommunityReport = {
-      ...newReportData,
-      id: `rep-${Date.now()}`,
-      reportedAt: 'Vừa xong'
-    };
-
-    setSpots(prevSpots =>
-      prevSpots.map(s => {
-        if (s.id === spotId) {
-          return {
-            ...s,
-            seasonalTrend: {
-              ...s.seasonalTrend,
-              bloomPercentage: report.bloomPercentage
-            },
-            recentReports: [report, ...(s.recentReports || [])]
-          };
-        }
-        return s;
-      })
-    );
-
-    // Update selectedSpot if currently viewing
-    if (selectedSpot?.id === spotId) {
-      setSelectedSpot(prev => prev ? {
-        ...prev,
-        seasonalTrend: {
-          ...prev.seasonalTrend,
-          bloomPercentage: report.bloomPercentage
-        },
-        recentReports: [report, ...(prev.recentReports || [])]
-      } : null);
-    }
-  };
 
   // Keep public contributions hidden until an admin approves them.
   const handleAddNewSpot = async (draft: Spot) => {
@@ -320,7 +285,6 @@ export function App() {
           }}
           onOpenSubmitSpotModal={() => setIsSubmitModalOpen(true)}
           onOpenSavedModal={() => setIsSavedModalOpen(true)}
-          onOpenReportModal={(spot) => setReportSpot(spot)}
           onOpenAddPostModal={(spotId) => {
             setAddPostTargetSpotId(spotId);
             setIsAddPostModalOpen(true);
@@ -330,15 +294,6 @@ export function App() {
           isPickingLocation={mapLocationPicker.isPicking}
           pickedLocation={mapLocationPicker.selectedLocation}
           onPickLocation={mapLocationPicker.onSelectMapCoords}
-        />
-        </Suspense>
-
-        {/* Community Report Modal */}
-        <Suspense fallback={null}>
-        <CommunityReportModal
-          spot={reportSpot}
-          onClose={() => setReportSpot(null)}
-          onSubmitReport={handleSubmitReport}
         />
         </Suspense>
 
@@ -516,7 +471,6 @@ export function App() {
             onClose={() => setSelectedSpot(null)}
             isSaved={savedSpotIds.includes(selectedSpot.id)}
             onToggleSave={handleToggleSave}
-            onOpenReportModal={(spot) => setReportSpot(spot)}
             onOpenAddPostModal={(spotId) => {
               setAddPostTargetSpotId(spotId);
               setIsAddPostModalOpen(true);
@@ -525,15 +479,6 @@ export function App() {
           </Suspense>
         )}
       </AnimatePresence>
-
-      {/* Community Report Modal */}
-      <Suspense fallback={null}>
-      <CommunityReportModal
-        spot={reportSpot}
-        onClose={() => setReportSpot(null)}
-        onSubmitReport={handleSubmitReport}
-      />
-      </Suspense>
 
       {/* Add Spot Modal (Zero manual coordinate input, Click-to-Pin & AI Extraction) */}
       <Suspense fallback={null}>

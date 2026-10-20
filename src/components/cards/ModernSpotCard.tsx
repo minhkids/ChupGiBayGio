@@ -46,11 +46,6 @@ export const ModernSpotCard: React.FC<ModernSpotCardProps> = ({
             spot.seasonalTrend.status === 'PEAK' ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'
           }`} />
           <span>{statusInfo.label}</span>
-          {spot.seasonalTrend.bloomPercentage && (
-            <span className="opacity-90 pl-1 border-l border-[#DFCDB2] text-[10px]">
-              {spot.seasonalTrend.bloomPercentage}%
-            </span>
-          )}
         </div>
 
         {/* Save / Bookmark Button */}

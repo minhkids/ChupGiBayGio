@@ -1,7 +1,7 @@
 import { PinReferenceButton } from '../planner/PinReferenceButton';
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Navigation, Bookmark, Share2, Flag, ExternalLink, Camera, Clock, Sparkles, X } from 'lucide-react';
+import { Navigation, Bookmark, Share2, ExternalLink, Camera, Clock, Sparkles, X } from 'lucide-react';
 import type { Spot } from '../../types';
 import { getStatusBadgeInfo } from '../../utils/season';
 import { CONCEPT_METADATA } from '../../utils/season';
@@ -126,7 +126,7 @@ export const MobileSheet: React.FC<MobileSheetProps> = ({
           </div>
 
           {/* Action Buttons Row */}
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-3 gap-2">
             <button
               type="button"
               onClick={() => callbacks.handleOpenDirections(spot)}
@@ -156,31 +156,15 @@ export const MobileSheet: React.FC<MobileSheetProps> = ({
               <span className="text-[11px] font-semibold mt-1">Chia sẻ</span>
             </button>
 
-            <button
-              type="button"
-              onClick={() => callbacks.onOpenReportModal(spot)}
-              className="flex flex-col items-center justify-center p-2.5 rounded-2xl bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200"
-            >
-              <Flag className="w-4 h-4 text-amberFilm" />
-              <span className="text-[11px] font-semibold mt-1">Báo nở</span>
-            </button>
+
           </div>
 
-          {/* Condition Progress Bar */}
+          {/* Spot description */}
           <div className="bg-amber-50/70 dark:bg-neutral-800/70 border border-amber-200/60 dark:border-neutral-700/60 rounded-2xl p-3.5 space-y-1.5">
-            <div className="flex items-center justify-between text-xs font-mono-spec">
+            <div className="text-xs font-mono-spec">
               <span className="font-bold text-neutral-900 dark:text-neutral-100">
-                TÌNH TRẠNG HOA / PHONG CẢNH
+                THÔNG TIN ĐỊA ĐIỂM
               </span>
-              <span className="font-bold text-terracotta">
-                {spot.seasonalTrend?.bloomPercentage || 85}% ĐANG NỞ
-              </span>
-            </div>
-            <div className="w-full bg-neutral-200 dark:bg-neutral-700 h-1.5 rounded-full overflow-hidden">
-              <div
-                className="bg-terracotta h-full transition-all duration-500"
-                style={{ width: `${spot.seasonalTrend?.bloomPercentage || 85}%` }}
-              />
             </div>
             <p className="text-xs text-neutral-600 dark:text-neutral-300 font-sans leading-relaxed pt-1">
               {spot.description}

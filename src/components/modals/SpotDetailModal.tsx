@@ -9,10 +9,8 @@ import {
   ExternalLink, 
   Copy, 
   Check, 
-  Clock, 
   Camera,
   TrendingUp, 
-  MessageSquarePlus, 
   ChevronLeft, 
   ChevronRight,
   PlusCircle,
@@ -37,7 +35,7 @@ interface SpotDetailModalProps {
   onClose: () => void;
   isSaved: boolean;
   onToggleSave: (spotId: string) => void;
-  onOpenReportModal: (spot: Spot) => void;
+
   onOpenAddPostModal?: (spotId: string) => void;
   onSelectPhotographer?: (photographer: Photographer) => void;
   onOpenPhotographerDirectory?: () => void;
@@ -49,7 +47,7 @@ export const SpotDetailModal: React.FC<SpotDetailModalProps> = ({
   onClose,
   isSaved,
   onToggleSave,
-  onOpenReportModal,
+
   onOpenAddPostModal,
   onSelectPhotographer,
   onOpenPhotographerDirectory,
@@ -196,12 +194,6 @@ export const SpotDetailModal: React.FC<SpotDetailModalProps> = ({
               <span className={`px-2.5 py-0.5 text-xs font-mono-spec font-bold uppercase tracking-wider border shadow-hard ${statusInfo.classNames}`}>
                 {upcoming ? `? Có thể hot — dự kiến tháng ${spot.seasonalTrend.expectedMonths?.join(', ')}` : statusInfo.label}
               </span>
-
-              {!upcoming && spot.seasonalTrend.bloomPercentage && (
-                <span className="px-2.5 py-0.5 text-xs font-mono-spec font-bold bg-slateInk text-white border border-slateInk">
-                  Tình trạng hoa nở: {spot.seasonalTrend.bloomPercentage}%
-                </span>
-              )}
 
               {spot.distanceKm !== undefined && (
                 <span className="px-2.5 py-0.5 text-xs font-mono-spec font-semibold bg-paper-warm text-slateInk border border-slateInk">
@@ -467,55 +459,6 @@ export const SpotDetailModal: React.FC<SpotDetailModalProps> = ({
               </div>
             </div>
           )}
-
-          {/* Section: Báo cáo thực tế cộng đồng (Live Community Check-in) */}
-          <div className="border border-slateInk bg-paper-light p-4 shadow-hard space-y-3">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-paper-border pb-2">
-              <div className="flex items-center space-x-2">
-                <Clock className="w-4 h-4 text-olive" />
-                <h3 className="font-mono-spec text-xs font-bold uppercase tracking-wider text-slateInk">
-                  BÁO CÁO TÌNH TRẠNG THỰC TẾ HÔM NAY (CROWDSOURCING)
-                </h3>
-              </div>
-
-              <button
-                onClick={() => onOpenReportModal(spot)}
-                className="px-3 py-1 bg-terracotta text-white font-mono-spec text-xs font-bold flex items-center shadow-hard hover:bg-terracotta-dark self-start sm:self-auto"
-              >
-                <MessageSquarePlus className="w-3.5 h-3.5 mr-1.5" />
-                Gửi Báo Cáo Mới
-              </button>
-            </div>
-
-            {spot.recentReports && spot.recentReports.length > 0 ? (
-              <div className="space-y-2">
-                {spot.recentReports.map((report) => (
-                  <div key={report.id} className="p-3 bg-paper-warm border border-paper-border text-xs space-y-1">
-                    <div className="flex items-center justify-between font-mono-spec text-[11px]">
-                      <div className="flex items-center space-x-2">
-                        <span className="font-bold text-slateInk">{report.authorName}</span>
-                        <span className="text-slateInk-muted">•</span>
-                        <span className="text-slateInk-muted">{report.reportedAt}</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <span className="px-1.5 py-0.2 bg-terracotta/10 text-terracotta border border-terracotta/30 font-semibold">
-                          Hoa nở: {report.bloomPercentage}%
-                        </span>
-                        <span className="px-1.5 py-0.2 bg-paper-light border border-slateInk/30 text-slateInk">
-                          {report.crowdLevel}
-                        </span>
-                      </div>
-                    </div>
-                    <p className="text-slateInk font-sans">{report.notes}</p>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-xs text-slateInk-muted font-sans">
-                Chưa có báo cáo nào trong hôm nay. Bạn đang ở đây? Hãy là người đầu tiên cập nhật tình trạng!
-              </p>
-            )}
-          </div>
 
         </motion.div>
 

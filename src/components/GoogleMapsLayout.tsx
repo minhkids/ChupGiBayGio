@@ -7,7 +7,7 @@ import {
   Navigation,
   Bookmark,
   Share2,
-  Flag,
+
   Camera,
   Clock,
   Sparkles,
@@ -61,7 +61,7 @@ interface GoogleMapsLayoutProps {
   onChangeView: (view: ViewId) => void;
   onOpenSubmitSpotModal: () => void;
   onOpenSavedModal: () => void;
-  onOpenReportModal: (spot: Spot) => void;
+
   onOpenAddPostModal: (spotId?: string) => void;
   uiTheme?: 'modern' | 'editorial';
   onToggleUiTheme?: () => void;
@@ -87,7 +87,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
   onChangeView,
   onOpenSubmitSpotModal,
   onOpenSavedModal,
-  onOpenReportModal,
+
   onOpenAddPostModal,
   uiTheme = 'modern',
   onToggleUiTheme,
@@ -696,7 +696,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
               {detailTab === 'info' ? (
                 <>
                   {/* Quick Action Row */}
-                  <div className="grid grid-cols-3 gap-2 py-1">
+                  <div className="grid grid-cols-2 gap-2 py-1">
                     <button
                       type="button"
                       onClick={() => handleOpenDirections(selectedSpot)}
@@ -715,31 +715,15 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                       <span className="text-xs font-semibold mt-1.5">Chia sẻ</span>
                     </button>
 
-                    <button
-                      type="button"
-                      onClick={() => onOpenReportModal(selectedSpot)}
-                      className="flex flex-col items-center justify-center p-3 rounded-xl bg-[#F3EAD7] hover:bg-[#ECE4D0] text-[#2C2621] transition-colors group"
-                    >
-                      <Flag className="w-4 h-4 text-amberFilm group-hover:scale-110 transition-transform" />
-                      <span className="text-xs font-semibold mt-1.5">Báo nở</span>
-                    </button>
+
                   </div>
 
-                  {/* Bloom Condition Summary */}
+                  {/* Spot description */}
                   <div className="bg-[#F3EAD7] border border-[#D8CFBD] rounded-xl p-4 space-y-2">
-                    <div className="flex items-center justify-between text-xs font-mono-spec">
+                    <div className="text-xs font-mono-spec">
                       <span className="font-bold text-[#2C2621]">
-                        {isUpcomingCandidate(selectedSpot.seasonalTrend) ? 'GỢI Ý STYLE CHỤP' : 'TÌNH TRẠNG HOA / PHONG CẢNH'}
+                        {isUpcomingCandidate(selectedSpot.seasonalTrend) ? 'GỢI Ý STYLE CHỤP' : 'THÔNG TIN ĐỊA ĐIỂM'}
                       </span>
-                      <span className="font-bold text-terracotta">
-                        {isUpcomingCandidate(selectedSpot.seasonalTrend) ? 'ĐỊA ĐIỂM THEO STYLE' : `${selectedSpot.seasonalTrend?.bloomPercentage ?? 85}% ĐANG NỞ`}
-                      </span>
-                    </div>
-                    <div className={`w-full bg-[#E2DAD0] h-1.5 rounded-full overflow-hidden ${isUpcomingCandidate(selectedSpot.seasonalTrend) ? 'hidden' : ''}`}>
-                      <div
-                        className="bg-terracotta h-full transition-all duration-500"
-                        style={{ width: `${selectedSpot.seasonalTrend?.bloomPercentage ?? 85}%` }}
-                      />
                     </div>
                     <p className="text-sm text-[#554D43] font-sans leading-relaxed pt-1">
                       {isUpcomingCandidate(selectedSpot.seasonalTrend) ? 'Khám phá địa điểm này theo nhóm style chụp.' : selectedSpot.description}
@@ -1029,7 +1013,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
               {selectedSpot.seasonalTrend.placeCategories?.length ? <div className="flex flex-wrap gap-1">{selectedSpot.seasonalTrend.placeCategories.map(id => <span key={id} className="rounded-full bg-[#ECE4D0] px-2 py-1 text-[10px] font-semibold text-[#554D43]">{getPlaceCategoryLabel(id, placeCategories)}</span>)}</div> : null}
 
               {/* Action Buttons Row */}
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-3 gap-2">
                 <button
                   type="button"
                   onClick={() => handleOpenDirections(selectedSpot)}
@@ -1059,31 +1043,15 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                   <span className="text-[11px] font-semibold mt-1">Chia sẻ</span>
                 </button>
 
-                <button
-                  type="button"
-                  onClick={() => onOpenReportModal(selectedSpot)}
-                  className="flex flex-col items-center justify-center p-2.5 rounded-2xl bg-[#F3EAD7] text-[#2C2621]"
-                >
-                  <Flag className="w-4 h-4 text-amberFilm" />
-                  <span className="text-[11px] font-semibold mt-1">Báo nở</span>
-                </button>
+
               </div>
 
-              {/* Condition Progress Bar */}
+              {/* Spot description */}
               <div className="bg-[#F3EAD7] border border-[#D8CFBD] rounded-2xl p-3.5 space-y-1.5">
-                <div className="flex items-center justify-between text-xs font-mono-spec">
+                <div className="text-xs font-mono-spec">
                   <span className="font-bold text-[#2C2621]">
-                    {isUpcomingCandidate(selectedSpot.seasonalTrend) ? 'GỢI Ý STYLE CHỤP' : 'TÌNH TRẠNG HOA / PHONG CẢNH'}
+                    {isUpcomingCandidate(selectedSpot.seasonalTrend) ? 'GỢI Ý STYLE CHỤP' : 'THÔNG TIN ĐỊA ĐIỂM'}
                   </span>
-                  <span className="font-bold text-terracotta">
-                    {isUpcomingCandidate(selectedSpot.seasonalTrend) ? 'ĐỊA ĐIỂM THEO STYLE' : `${selectedSpot.seasonalTrend?.bloomPercentage ?? 85}% ĐANG NỞ`}
-                  </span>
-                </div>
-                <div className={`w-full bg-[#E2DAD0] h-1.5 rounded-full overflow-hidden ${isUpcomingCandidate(selectedSpot.seasonalTrend) ? 'hidden' : ''}`}>
-                  <div
-                    className="bg-terracotta h-full transition-all duration-500"
-                    style={{ width: `${selectedSpot.seasonalTrend?.bloomPercentage ?? 85}%` }}
-                  />
                 </div>
                 <p className="text-xs text-[#554D43] font-sans leading-relaxed pt-1">
                   {isUpcomingCandidate(selectedSpot.seasonalTrend) ? 'Khám phá địa điểm này theo nhóm style chụp.' : selectedSpot.description}
