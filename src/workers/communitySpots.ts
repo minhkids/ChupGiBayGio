@@ -4,6 +4,7 @@ import { REGIONS } from '../data/regions';
 import { CONCEPT_METADATA } from '../utils/season';
 
 const routes = new Hono<{ Bindings: { DB: D1Database; CACHE: KVNamespace } }>();
+const MAX_COMMUNITY_SPOT_SUBMISSIONS_PER_24H = 3;
 
 // Public contributions remain hidden until an authenticated admin approves them.
 routes.post('/api/community/spots', bodyLimit({ maxSize: 16000, onError: c => c.json({ error: 'Thông tin quá dài.' }, 413) }), async (c) => {
@@ -35,16 +36,23 @@ routes.post('/api/community/spots', bodyLimit({ maxSize: 16000, onError: c => c.
     } catch { /* Only the placeholder or our uploaded images are accepted. */ }
   }
   if (!imageValid) return c.json({ error: 'Ảnh minh họa không hợp lệ.' }, 400);
-  // Same best-effort KV quota as partner onboarding; fail closed on KV outage.
-  const quota = `community:spot:${c.req.header('CF-Connecting-IP') || 'local'}`;
-  if (await c.env.CACHE.get(quota)) return c.json({ error: 'Vui lòng thử lại sau 24 giờ hoặc liên hệ quản trị viên.' }, 429);
-  await c.env.CACHE.put(quota, '1', { expirationTtl: 86400 });
+  // Anonymous submissions are limited by source IP; carry forward the previous one-per-day key during rollout.
+  const ip = c.req.header('CF-Connecting-IP') || 'local';
+  const quota = `community:spot:daily-count:${ip}`;
+  const previousQuota = `community:spot:${ip}`;
+  const storedCount = await c.env.CACHE.get(quota);
+  const previousSubmission = storedCount === null ? await c.env.CACHE.get(previousQuota) : null;
+  const submissions = storedCount === null ? (previousSubmission ? 1 : 0) : Number(storedCount);
+  if (!Number.isSafeInteger(submissions) || submissions < 0 || submissions >= MAX_COMMUNITY_SPOT_SUBMISSIONS_PER_24H) {
+    return c.json({ error: 'Bạn đã gửi tối đa 3 địa điểm trong 24 giờ. Vui lòng thử lại sau.' }, 429);
+  }
   const id = crypto.randomUUID();
   const trend = { id, trendTitle: String(body.name).trim(), startMonth: 1, endMonth: 12, status: body.spotStatus, ...(body.spotStatus !== 'ACTIVE' ? { statusValidUntil: expiry } : {}), conceptTags: body.conceptTags, placeCategories, isTrending: false, trendScore: 0 };
   await c.env.DB.prepare(`INSERT INTO spots
     (id, name, slug, region_id, address, lat, lng, description, cover_image_url, gallery_urls, seasonal_trend, best_time_of_day, best_time_description, cost_type, is_active, is_featured, saves_count)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
     .bind(id, String(body.name).trim(), `community-${id}`, body.regionId, String(body.address).trim(), body.lat, body.lng, String(body.description).trim(), body.coverImageUrl, JSON.stringify([body.coverImageUrl]), JSON.stringify(trend), 'SUNSET', 'Chưa xác minh khung giờ chụp', 'FREE', 0, 0, 0).run();
+  await c.env.CACHE.put(quota, String(submissions + 1), { expirationTtl: 86400 });
   return c.json({ id, status: 'pending_review' }, 201);
 });
 

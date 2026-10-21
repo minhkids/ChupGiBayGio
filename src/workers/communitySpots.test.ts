@@ -42,10 +42,14 @@ describe('community spot persistence', () => {
     expect((await post(env, payload, { Origin: 'https://evil.example' })).status).toBe(403);
     expect((await post(env, { ...payload, description: 'x'.repeat(17000) })).status).toBe(413);
   });
-  it('throttles contributions without allowing public edits', async () => {
+  it('allows three contributions per IP in 24 hours before throttling, without allowing public edits', async () => {
     const env = environment();
-    expect((await post(env)).status).toBe(201);
-    expect((await post(env)).status).toBe(429);
+    const userOne = { 'CF-Connecting-IP': 'user-one' };
+    for (let index = 0; index < 3; index++) expect((await post(env, payload, userOne)).status).toBe(201);
+    const limited = await post(env, payload, userOne);
+    expect(limited.status).toBe(429);
+    expect(await limited.json()).toEqual({ error: 'Bạn đã gửi tối đa 3 địa điểm trong 24 giờ. Vui lòng thử lại sau.' });
+    expect((await post(env, payload, { 'CF-Connecting-IP': 'user-two' })).status).toBe(201);
     expect((await worker.request('/api/community/spots/existing', { method: 'PUT', body: '{}' }, env)).status).not.toBe(200);
   });
   it('persists seasonal expiry and uploaded image URLs', async () => {
