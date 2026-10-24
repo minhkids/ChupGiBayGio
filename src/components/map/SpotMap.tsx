@@ -71,7 +71,9 @@ export const SpotMap: React.FC<SpotMapProps> = ({
 
   const CARTO_DEFAULT_KEY = 'cb1_469u_1_6a12a7c07d0c9adf82fe0c70';
 
-  const [tileProvider, setTileProvider] = useState<TileProvider>('osm');
+  const initialTileProvider: TileProvider = typeof window !== 'undefined' && window.innerWidth < 640 ? 'esri' : 'osm';
+  const [tileProvider, setTileProvider] = useState<TileProvider>(initialTileProvider);
+  const initialTileProviderRef = useRef(initialTileProvider);
   const [cartoApiKey, setCartoApiKey] = useState<string>(() => {
     try {
       const stored = localStorage.getItem('carto_api_key');
@@ -181,8 +183,8 @@ export const SpotMap: React.FC<SpotMapProps> = ({
       attributionControl: false
     });
 
-    // Default clean OpenStreetMap tile layer (100% free, no watermark)
-    const { url, options } = getTileConfig('osm', '');
+    // Use the viewport-specific default while keeping the selected provider in state.
+    const { url, options } = getTileConfig(initialTileProviderRef.current, '');
     const tileLayer = L.tileLayer(url, options).addTo(map);
     attachTileStatus(tileLayer);
     tileLayerRef.current = tileLayer;
@@ -588,6 +590,9 @@ export const SpotMap: React.FC<SpotMapProps> = ({
           setTileError(false);
           tileLayerRef.current?.redraw();
         }}>Thử tải lại bản đồ</button>
+        <button type="button" className="mt-2 min-h-11 w-full border border-[#D8CFBD] bg-[#ECE4D0] px-3 py-2 font-semibold text-[#2C2621] lg:hidden" onClick={() => handleSwitchProvider(tileProvider === 'osm' ? 'esri' : 'osm')}>
+          Dùng bản đồ khác ({tileProvider === 'osm' ? 'Esri' : 'OSM'})
+        </button>
       </div>}
       {popupReference && createPortal(
         <PinReferenceButton imageUrl={popupReference.spot.coverImageUrl} label={popupReference.spot.name} />,
