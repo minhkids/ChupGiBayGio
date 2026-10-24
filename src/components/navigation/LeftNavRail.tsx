@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import {
   Film,
+  ClipboardList,
   Bookmark,
   Plus,
   Camera,
@@ -32,6 +33,7 @@ interface LeftNavRailProps {
   uiTheme?: 'modern' | 'editorial';
   onToggleUiTheme?: () => void;
   onSelectFilmFilter?: () => void;
+  onOpenPlanner?: () => void;
 
 
 }
@@ -57,6 +59,7 @@ export const LeftNavRail: React.FC<LeftNavRailProps> = ({
   isAtmosphericActive,
   onToggleAtmospheric,
   onSelectFilmFilter,
+  onOpenPlanner,
 
 
 }) => {
@@ -179,6 +182,8 @@ export const LeftNavRail: React.FC<LeftNavRailProps> = ({
             </button>
           )}
 
+          {onOpenPlanner && <motion.button type="button" onClick={onOpenPlanner} aria-label="Mở kế hoạch buổi chụp" title="Kế hoạch buổi chụp" whileHover={{ y: -2 }} transition={{ type: 'spring', stiffness: 400, damping: 25 }} className="flex flex-col items-center gap-1 rounded-xl px-2 py-1.5 text-[#554D43] hover:bg-[#DED3B8] hover:text-[#C76B3C]"><ClipboardList className="h-5 w-5" strokeWidth={1.7} /><span className="text-[9px]">Kế hoạch</span></motion.button>}
+
           {/* Compact weather widget */}
           <button
             type="button"
@@ -263,6 +268,8 @@ export const LeftNavRail: React.FC<LeftNavRailProps> = ({
             </span>
           )}
         </button>
+
+        {onOpenPlanner && <button type="button" onClick={onOpenPlanner} aria-label="Mở kế hoạch buổi chụp" className="relative flex flex-1 flex-col items-center justify-center gap-0.5 rounded-xl px-1 py-1.5 text-[#554D43] hover:bg-[#DED3B8] hover:text-[#C76B3C]"><ClipboardList className="h-5 w-5" strokeWidth={1.8} /><span className="text-[9px] leading-tight">Kế hoạch</span></button>}
 
         <button
           type="button"

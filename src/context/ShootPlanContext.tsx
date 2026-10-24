@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import type { Spot, Photographer, PlannedSpot, PlannedItem, PlannedPhotographer, ShootPlanState } from '../types';
-import type { ReferencePhoto } from '../types/planner';
+import type { CyclingWaypoint, ReferencePhoto } from '../types/planner';
 
 interface AddItemInput {
   id: string;
@@ -26,6 +26,7 @@ interface ShootPlanContextType {
   toggleReferencePhoto: (input: { imageUrl: string; label: string; note?: string }) => void;
   state: ShootPlanState;
   spots: PlannedSpot[];
+  cyclingStops: CyclingWaypoint[];
   items: PlannedItem[];
   photographer: PlannedPhotographer | null;
   totalCount: number;
@@ -41,6 +42,9 @@ interface ShootPlanContextType {
   addSpot: (spot: Spot, customCost?: number) => void;
   removeSpot: (spotId: string) => void;
   toggleSpot: (spot: Spot) => void;
+  addCyclingStop: (stop: CyclingWaypoint) => void;
+  removeCyclingStop: (stopId: string) => void;
+  moveCyclingStop: (stopId: string, offset: number) => void;
   isSpotInPlan: (spotId: string) => boolean;
   isSpotPlanned: (spotId: string) => boolean;
   addItem: (input: AddItemInput) => void;
@@ -129,6 +133,11 @@ export const ShootPlanProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         const parsed = JSON.parse(saved);
         if (parsed && Array.isArray(parsed.spots) && Array.isArray(parsed.items)) {
           return { ...parsed, photographer: parsed.photographer ?? null,
+            cyclingStops: Array.isArray(parsed.cyclingStops) ? parsed.cyclingStops.filter((stop: CyclingWaypoint) => stop
+              && typeof stop.id === 'string' && typeof stop.name === 'string'
+              && Number.isFinite(stop.lat) && Number.isFinite(stop.lng)
+              && stop.lat >= 8 && stop.lat <= 24 && stop.lng >= 102 && stop.lng <= 110
+              && (stop.kind === 'spot' || stop.kind === 'filmLab')) : [],
             referencePhotos: Array.isArray(parsed.referencePhotos) ? parsed.referencePhotos.filter(
               (photo: ReferencePhoto) => photo && typeof photo.id === 'string' && typeof photo.imageUrl === 'string' && typeof photo.label === 'string' && typeof photo.note === 'string'
             ) : [] };
@@ -141,6 +150,7 @@ export const ShootPlanProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     return {
       referencePhotos: [],
       spots: [],
+      cyclingStops: [],
       items: [],
       photographer: null,
     };
@@ -182,11 +192,22 @@ export const ShootPlanProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         costEstimated: costInfo.cost,
         costFormatted: costInfo.formatted,
         costType: spot.costType,
+        lat: spot.lat,
+        lng: spot.lng,
       };
+
+      const routeStop: CyclingWaypoint | null = Number.isFinite(spot.lat) && Number.isFinite(spot.lng)
+        && spot.lat >= 8 && spot.lat <= 24 && spot.lng >= 102 && spot.lng <= 110
+        ? { id: spot.id, name: spot.name, lat: spot.lat, lng: spot.lng, kind: 'spot', address: spot.address,
+            imageUrl: spot.coverImageUrl, bestTime: spot.bestTimeDescription, photoTip: spot.photographyTips?.[0],
+            seasonalLabel: spot.seasonalTrend?.trendTitle }
+        : null;
 
       return {
         ...prev,
         spots: [...prev.spots, newSpot],
+        cyclingStops: routeStop && !prev.cyclingStops?.some(stop => stop.id === spot.id)
+          ? [...(prev.cyclingStops || []), routeStop] : prev.cyclingStops || [],
       };
     });
   }, []);
@@ -195,7 +216,29 @@ export const ShootPlanProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setPlan(prev => ({
       ...prev,
       spots: prev.spots.filter(s => s.id !== spotId),
+      cyclingStops: (prev.cyclingStops || []).filter(stop => stop.id !== spotId || stop.kind !== 'spot'),
     }));
+  }, []);
+
+  const addCyclingStop = useCallback((stop: CyclingWaypoint) => {
+    if (!Number.isFinite(stop.lat) || !Number.isFinite(stop.lng) || stop.lat < 8 || stop.lat > 24 || stop.lng < 102 || stop.lng > 110) return;
+    setPlan(prev => prev.cyclingStops?.some(existing => existing.id === stop.id && existing.kind === stop.kind)
+      ? prev : { ...prev, cyclingStops: [...(prev.cyclingStops || []), stop] });
+  }, []);
+
+  const removeCyclingStop = useCallback((stopId: string) => {
+    setPlan(prev => ({ ...prev, cyclingStops: (prev.cyclingStops || []).filter(stop => stop.id !== stopId) }));
+  }, []);
+
+  const moveCyclingStop = useCallback((stopId: string, offset: number) => {
+    setPlan(prev => {
+      const stops = [...(prev.cyclingStops || [])];
+      const index = stops.findIndex(stop => stop.id === stopId);
+      const destination = Math.max(0, Math.min(stops.length - 1, index + Math.sign(offset)));
+      if (index < 0 || destination === index) return prev;
+      [stops[index], stops[destination]] = [stops[destination], stops[index]];
+      return { ...prev, cyclingStops: stops };
+    });
   }, []);
 
   const isSpotInPlan = useCallback((spotId: string) => {
@@ -343,6 +386,7 @@ export const ShootPlanProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setPlan({
       referencePhotos: [],
       spots: [],
+      cyclingStops: [],
       items: [],
       photographer: null,
     });
@@ -467,6 +511,7 @@ export const ShootPlanProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     toggleReferencePhoto,
     state: plan,
     spots: plan.spots,
+    cyclingStops: plan.cyclingStops || [],
     items: plan.items,
     photographer: plan.photographer,
     totalCount,
@@ -482,6 +527,9 @@ export const ShootPlanProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     addSpot,
     removeSpot,
     toggleSpot,
+    addCyclingStop,
+    removeCyclingStop,
+    moveCyclingStop,
     isSpotInPlan,
     isSpotPlanned: isSpotInPlan,
     addItem,
@@ -514,6 +562,9 @@ export const ShootPlanProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     addSpot,
     removeSpot,
     toggleSpot,
+    addCyclingStop,
+    removeCyclingStop,
+    moveCyclingStop,
     isSpotInPlan,
     addItem,
     removeItem,
@@ -536,6 +587,7 @@ export const ShootPlanProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 const defaultFallbackState: ShootPlanState = {
   referencePhotos: [],
   spots: [],
+  cyclingStops: [],
   items: [],
   photographer: null,
 };
@@ -549,6 +601,7 @@ const defaultFallbackContext: ShootPlanContextType = {
   toggleReferencePhoto: () => {},
   state: defaultFallbackState,
   spots: [],
+  cyclingStops: [],
   items: [],
   photographer: null,
   totalCount: 0,
@@ -564,6 +617,9 @@ const defaultFallbackContext: ShootPlanContextType = {
   addSpot: () => {},
   removeSpot: () => {},
   toggleSpot: () => {},
+  addCyclingStop: () => {},
+  removeCyclingStop: () => {},
+  moveCyclingStop: () => {},
   isSpotInPlan: () => false,
   isSpotPlanned: () => false,
   addItem: () => {},

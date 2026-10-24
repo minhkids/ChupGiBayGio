@@ -1,4 +1,5 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
+import { validVietnamCoordinates } from '../utils/spotLocationSearch';
 import { HANOI_LANDMARK_ALIASES } from '../utils/openrouter';
 
 export interface LocationData {
@@ -8,6 +9,9 @@ export interface LocationData {
   placeName?: string;
   district?: string;
   city?: string;
+  source?: 'search';
+  precision?: 'address' | 'area';
+  adjusted?: boolean;
 }
 
 export interface UseMapLocationPickerOptions {
@@ -55,11 +59,21 @@ function findClosestHanoiLandmark(lat: number, lng: number): { name: string; add
 export function useMapLocationPicker(options: UseMapLocationPickerOptions = {}) {
   const [isPicking, setIsPicking] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
-  const [selectedLocation, setSelectedLocation] = useState<LocationData | null>(
+  const [selectedLocation, updateSelectedLocation] = useState<LocationData | null>(
     options.defaultLocation || null
   );
   const [isGeocoding, setIsGeocoding] = useState(false);
   const [geocodingError, setGeocodingError] = useState<string | null>(null);
+  const generation = useRef(0);
+  const currentLocation = useRef<LocationData | null>(options.defaultLocation || null);
+  const setSelectedLocation = useCallback((location: LocationData | null) => {
+    generation.current++;
+    if (location && !validVietnamCoordinates(location.lat, location.lng)) return;
+    currentLocation.current = location;
+    updateSelectedLocation(location);
+    setIsGeocoding(false);
+  }, []);
+  useEffect(() => () => { generation.current++; }, []);
 
   // Toggle cursor style on body when picking mode changes
   useEffect(() => {
@@ -184,6 +198,8 @@ export function useMapLocationPicker(options: UseMapLocationPickerOptions = {}) 
    * Cancel Picking
    */
   const cancelPicking = useCallback(() => {
+    generation.current++;
+    setIsGeocoding(false);
     setIsPicking(false);
     setIsMinimized(false);
   }, []);
@@ -193,14 +209,26 @@ export function useMapLocationPicker(options: UseMapLocationPickerOptions = {}) 
    */
   const onSelectMapCoords = useCallback(
     async (coords: { lat: number; lng: number }) => {
+      if (!validVietnamCoordinates(coords.lat, coords.lng)) return;
       setIsPicking(false);
       setIsMinimized(false); // Restore modal view immediately
 
+      // A searched address belongs to that result, never to a nearby landmark.
+      if (currentLocation.current?.source === 'search') {
+        const adjusted = { ...currentLocation.current, ...coords, adjusted: true };
+        setSelectedLocation(adjusted);
+        options.onLocationSelected?.(adjusted);
+        return;
+      }
+      const request = ++generation.current;
+
       try {
         const resolved = await reverseGeocode(coords.lat, coords.lng);
+        if (request !== generation.current) return;
         setSelectedLocation(resolved);
         options.onLocationSelected?.(resolved);
       } catch (err: unknown) {
+        if (request !== generation.current) return;
         const message = err instanceof Error ? err.message : 'Lỗi lấy địa chỉ';
         setGeocodingError(message);
         const basicLocation: LocationData = {
@@ -212,10 +240,10 @@ export function useMapLocationPicker(options: UseMapLocationPickerOptions = {}) 
         setSelectedLocation(basicLocation);
         options.onLocationSelected?.(basicLocation);
       } finally {
-        setIsGeocoding(false);
+        if (request === generation.current) setIsGeocoding(false);
       }
     },
-    [reverseGeocode, options]
+    [reverseGeocode, options, setSelectedLocation]
   );
 
   /**
@@ -223,7 +251,7 @@ export function useMapLocationPicker(options: UseMapLocationPickerOptions = {}) 
    */
   const clearLocation = useCallback(() => {
     setSelectedLocation(null);
-  }, []);
+  }, [setSelectedLocation]);
 
   return {
     isPicking,

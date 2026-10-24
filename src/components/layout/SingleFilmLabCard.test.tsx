@@ -1,13 +1,20 @@
 // @vitest-environment jsdom
-import { describe, expect, it } from 'vitest';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, describe, expect, it } from 'vitest';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { ShootPlanProvider, useShootPlan } from '../../context/ShootPlanContext';
 import { FILM_LABS } from '../../data/filmLabsData';
 import { SingleFilmLabCard } from './SingleFilmLabCard';
 
+afterEach(cleanup);
+
 function PlanItemsProbe() {
   const plan = useShootPlan();
   return <output data-testid="planned-items">{plan?.items.map((item) => item.name).join(', ')}</output>;
+}
+
+function PlanStopsProbe() {
+  const plan = useShootPlan();
+  return <output data-testid="cycling-stops">{plan.cyclingStops.map(stop => stop.name).join(', ')}</output>;
 }
 
 describe('SingleFilmLabCard', () => {
@@ -31,5 +38,12 @@ describe('SingleFilmLabCard', () => {
     const lab = { ...FILM_LABS[0], expressDelivery2h: true };
     render(<ShootPlanProvider><SingleFilmLabCard lab={lab} userCoords={{ lat: 21.0285, lng: 105.8542 }} onClose={() => undefined} /></ShootPlanProvider>);
     expect(screen.getByRole('img', { name: 'Giao hỏa tốc trong 2 giờ' }).textContent).toBe('2h');
+  });
+
+  it('adds a film lab with verified coordinates as an ordered cycling waypoint', () => {
+    const lab = FILM_LABS[0];
+    render(<ShootPlanProvider><SingleFilmLabCard lab={lab} onClose={() => undefined} /><PlanStopsProbe /></ShootPlanProvider>);
+    fireEvent.click(screen.getByRole('button', { name: `Thêm ${lab.name} vào hành trình xe đạp` }));
+    expect(screen.getByTestId('cycling-stops').textContent).toBe(lab.name);
   });
 });

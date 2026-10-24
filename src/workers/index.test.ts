@@ -21,6 +21,14 @@ function makeEnv() {
   } as unknown as KVNamespace, ADMIN_PASSWORD: 'unit-test-password', ADMIN_SESSION_SECRET: 'unit-test-session-secret' };
 }
 
+describe('production HTTPS enforcement', () => {
+  it('redirects HTTP API requests to HTTPS without changing the request path', async () => {
+    const response = await worker.request('http://chupgibaygio.com/api/services?kind=filmLab', {}, makeEnv());
+    expect(response.status).toBe(308);
+    expect(response.headers.get('Location')).toBe('https://chupgibaygio.com/api/services?kind=filmLab');
+  });
+});
+
 describe('Services Hub admin API', () => {
   it('returns an empty public directory without preloaded data', async () => {
     const response = await worker.request('/api/services', {}, makeEnv());

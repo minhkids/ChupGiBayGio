@@ -29,6 +29,7 @@ interface SpotMapProps {
   focusedCoordinates?: { lat: number; lng: number; zoom?: number } | null;
   statusFilter?: 'ALL' | SpotStatus;
   onToggleStatusFilter?: (status: SpotStatus) => void;
+  onMapReady?: (map: L.Map | null) => void;
 }
 
 type TileProvider = 'osm' | 'esri' | 'carto';
@@ -50,13 +51,19 @@ export const SpotMap: React.FC<SpotMapProps> = ({
   onSelectFilmLab,
   focusedCoordinates,
   statusFilter = 'ALL',
-  onToggleStatusFilter
+  onToggleStatusFilter,
+  onMapReady
 }) => {
   const catalogRevision = useCatalogRevision();
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const [popupReference, setPopupReference] = useState<{ container: HTMLElement; spot: Spot } | null>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const tileLayerRef = useRef<L.TileLayer | null>(null);
+  const lastRegionRef = useRef(activeRegionId);
+  const onMapReadyRef = useRef(onMapReady);
+  onMapReadyRef.current = onMapReady;
+  const successfulTileRef = useRef(false);
+  const [tileError, setTileError] = useState(false);
   const markersLayerRef = useRef<L.LayerGroup | null>(null);
   const filmLabsLayerRef = useRef<L.LayerGroup | null>(null);
   const userMarkerRef = useRef<L.Marker | null>(null);
@@ -64,7 +71,7 @@ export const SpotMap: React.FC<SpotMapProps> = ({
 
   const CARTO_DEFAULT_KEY = 'cb1_469u_1_6a12a7c07d0c9adf82fe0c70';
 
-  const [tileProvider, setTileProvider] = useState<TileProvider>('carto');
+  const [tileProvider, setTileProvider] = useState<TileProvider>('osm');
   const [cartoApiKey, setCartoApiKey] = useState<string>(() => {
     try {
       const stored = localStorage.getItem('carto_api_key');
@@ -142,6 +149,20 @@ export const SpotMap: React.FC<SpotMapProps> = ({
     }
   };
 
+  // A successful tile in the active layer means the basemap is not wholly blank.
+  const attachTileStatus = (layer: L.TileLayer) => {
+    successfulTileRef.current = false;
+    setTileError(false);
+    layer.on('tileload', () => {
+      if (tileLayerRef.current !== layer) return;
+      successfulTileRef.current = true;
+      setTileError(false);
+    });
+    layer.on('tileerror', () => {
+      if (tileLayerRef.current === layer && !successfulTileRef.current) setTileError(true);
+    });
+  };
+
   // Initialize Map
   useEffect(() => {
     if (!mapContainerRef.current) return;
@@ -149,8 +170,8 @@ export const SpotMap: React.FC<SpotMapProps> = ({
 
     // Default center must default to Hanoi (lat: 21.0378, lng: 105.8396) as per Google Maps Layout Rules
     const hanoiRegion = REGIONS.find(r => r.id === 'hanoi') || { lat: 21.0378, lng: 105.8396, zoom: 13.5 };
-    const initialRegion = (activeRegionId && activeRegionId !== 'all')
-      ? (REGIONS.find(r => r.id === activeRegionId) || hanoiRegion)
+    const initialRegion = (lastRegionRef.current && lastRegionRef.current !== 'all')
+      ? (REGIONS.find(r => r.id === lastRegionRef.current) || hanoiRegion)
       : hanoiRegion;
 
     const map = L.map(mapContainerRef.current, {
@@ -161,8 +182,9 @@ export const SpotMap: React.FC<SpotMapProps> = ({
     });
 
     // Default clean OpenStreetMap tile layer (100% free, no watermark)
-    const { url, options } = getTileConfig('osm', cartoApiKey);
+    const { url, options } = getTileConfig('osm', '');
     const tileLayer = L.tileLayer(url, options).addTo(map);
+    attachTileStatus(tileLayer);
     tileLayerRef.current = tileLayer;
 
     // Zoom control in bottom right
@@ -178,6 +200,7 @@ export const SpotMap: React.FC<SpotMapProps> = ({
     const filmLabsLayer = L.layerGroup();
     filmLabsLayerRef.current = filmLabsLayer;
     mapInstanceRef.current = map;
+    onMapReadyRef.current?.(map);
 
     // Observe container resizing to automatically invalidateSize
     const resizeObserver = new ResizeObserver(() => {
@@ -187,7 +210,9 @@ export const SpotMap: React.FC<SpotMapProps> = ({
 
     return () => {
       resizeObserver.disconnect();
+      onMapReadyRef.current?.(null);
       map.remove();
+      tileLayerRef.current = null;
       mapInstanceRef.current = null;
     };
   }, []); // eslint-disable-next-line react-hooks/exhaustive-deps — map init runs once, region/tile changes handled separately
@@ -203,6 +228,7 @@ export const SpotMap: React.FC<SpotMapProps> = ({
 
     const { url, options } = getTileConfig(provider, cartoApiKey);
     const newLayer = L.tileLayer(url, options).addTo(mapInstanceRef.current);
+    attachTileStatus(newLayer);
     tileLayerRef.current = newLayer;
   };
 
@@ -228,14 +254,16 @@ export const SpotMap: React.FC<SpotMapProps> = ({
       }
       const { url, options } = getTileConfig('carto', cleanKey);
       const newLayer = L.tileLayer(url, options).addTo(mapInstanceRef.current);
+      attachTileStatus(newLayer);
       tileLayerRef.current = newLayer;
       setTileProvider('carto');
     }
   };
 
-  // Update Region Center
+  // Update Region Center only when the user changes it (initial center already set).
   useEffect(() => {
-    if (!mapInstanceRef.current) return;
+    if (!mapInstanceRef.current || lastRegionRef.current === activeRegionId) return;
+    lastRegionRef.current = activeRegionId;
     const region = REGIONS.find(r => r.id === activeRegionId);
     if (region) {
       mapInstanceRef.current.flyTo([region.lat, region.lng], region.zoom, {
@@ -496,6 +524,7 @@ export const SpotMap: React.FC<SpotMapProps> = ({
     }
 
     const { lat, lng } = pickedLocation;
+    if (typeof lat !== 'number' || typeof lng !== 'number' || !Number.isFinite(lat) || !Number.isFinite(lng)) return;
 
     if (pickedMarkerRef.current) {
       pickedMarkerRef.current.setLatLng([lat, lng]);
@@ -540,10 +569,26 @@ export const SpotMap: React.FC<SpotMapProps> = ({
     }
   }, [pickedLocation, onPickLocation]);
 
+  useEffect(() => {
+    const lat = pickedLocation?.lat;
+    const lng = pickedLocation?.lng;
+    if (typeof lat === 'number' && typeof lng === 'number' && Number.isFinite(lat) && Number.isFinite(lng)) {
+      mapInstanceRef.current?.setView([lat, lng], 18, { animate: false });
+    }
+  }, [pickedLocation?.lat, pickedLocation?.lng]);
+
   return (
     <div className={`relative w-full h-full bg-neutral-100 overflow-hidden ${className}`}>
       {/* Map Container */}
       <div ref={mapContainerRef} className="w-full h-full z-10" />
+      {tileError && <div role="alert" className="absolute left-3 right-3 top-16 z-30 mx-auto max-w-xs border border-[#D8CFBD] bg-[#FAF8F4] p-3 text-center text-sm text-[#2C2621] shadow-lg">
+        <p>Không tải được bản đồ. Kiểm tra kết nối rồi thử lại.</p>
+        <button type="button" className="mt-2 border border-[#C76B3C] px-3 py-1 font-semibold text-[#C76B3C]" onClick={() => {
+          successfulTileRef.current = false;
+          setTileError(false);
+          tileLayerRef.current?.redraw();
+        }}>Thử tải lại bản đồ</button>
+      </div>}
       {popupReference && createPortal(
         <PinReferenceButton imageUrl={popupReference.spot.coverImageUrl} label={popupReference.spot.name} />,
         popupReference.container,

@@ -13,6 +13,10 @@ import type { Spot, ConceptTag, PlaceCategory } from '../../types';
 import { CONCEPT_METADATA } from '../../utils/season';
 import type { LocationData } from '../../hooks/useMapLocationPicker';
 import { REGIONS } from '../../data/regions';
+import { PlaceCategoryLabel } from '../features/PlaceCategoryLabel';
+import { SpotLocationSearch } from './SpotLocationSearch';
+import { SpotLocationPreview } from './SpotLocationPreview';
+import { validVietnamCoordinates } from '../../utils/spotLocationSearch';
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 const MAX_IMAGE_SIZE = 8 * 1024 * 1024;
@@ -26,6 +30,7 @@ export interface AddSpotModalProps {
   onStartMapPick: () => void;
   onCancelMapPick: () => void;
   onClearLocation: () => void;
+  onSelectLocation?: (location: LocationData) => void;
   isGeocoding?: boolean;
   placeCategories: PlaceCategory[];
 }
@@ -39,9 +44,12 @@ export const AddSpotModal: React.FC<AddSpotModalProps> = ({
   onStartMapPick,
   onCancelMapPick,
   onClearLocation,
+  onSelectLocation,
+  isGeocoding = false,
   placeCategories,
 }) => {
   const [spotName, setSpotName] = useState('');
+  const [searchRevision, setSearchRevision] = useState(0);
   const [spotDescription, setSpotDescription] = useState('');
   const [regionId, setRegionId] = useState('hanoi');
   const [selectedConcepts, setSelectedConcepts] = useState<ConceptTag[]>(['HOA_CO']);
@@ -59,7 +67,7 @@ export const AddSpotModal: React.FC<AddSpotModalProps> = ({
 
   const handleFinalSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isSubmitting || !selectedLocation || !spotName.trim() || selectedPlaceCategories.length === 0) return;
+    if (isSubmitting || isGeocoding || !selectedLocation || !validVietnamCoordinates(selectedLocation.lat, selectedLocation.lng) || !spotName.trim() || selectedPlaceCategories.length === 0) return;
     setUploadError('');
 
     setIsSubmitting(true);
@@ -82,9 +90,7 @@ export const AddSpotModal: React.FC<AddSpotModalProps> = ({
       return;
     }
 
-    const lat = selectedLocation ? selectedLocation.lat : 21.0378;
-    const lng = selectedLocation ? selectedLocation.lng : 105.8396;
-    const resolvedAddress = selectedLocation?.address || 'Hà Nội, Việt Nam';
+    const { lat, lng, address: resolvedAddress } = selectedLocation;
 
     const newSpot: Spot = {
       id: spotId,
@@ -259,6 +265,8 @@ export const AddSpotModal: React.FC<AddSpotModalProps> = ({
             <label className="font-mono-spec font-bold text-slateInk block mb-2">
               TỌA ĐỘ TRÊN BẢN ĐỒ: *
             </label>
+            {onSelectLocation && <SpotLocationSearch key={searchRevision} onSelect={onSelectLocation} />}
+            {isGeocoding && <p role="status" className="mb-2 text-slateInk">Đang lấy địa chỉ cho ghim…</p>}
             {!selectedLocation ? (
               <button
                 type="button"
@@ -274,19 +282,20 @@ export const AddSpotModal: React.FC<AddSpotModalProps> = ({
                   <p className="font-semibold text-sm text-slateInk truncate">
                     {selectedLocation.placeName || 'Địa điểm đã chọn'}
                   </p>
-                  <p className="text-xs text-slateInk-muted truncate mt-0.5">
+                  <p className="text-xs text-slateInk-muted break-words mt-0.5">
                     {selectedLocation.address}
                   </p>
                 </div>
                 <div className="flex gap-3 shrink-0">
                   <button type="button" onClick={onStartMapPick} className="text-xs font-bold text-slateInk hover:underline font-mono-spec">SỬA</button>
-                  <button type="button" onClick={onClearLocation} className="text-xs font-bold text-slateInk-muted hover:underline font-mono-spec">XÓA</button>
+                  <button type="button" onClick={() => { setSearchRevision(value => value + 1); onClearLocation(); }} className="text-xs font-bold text-slateInk-muted hover:underline font-mono-spec">XÓA</button>
                 </div>
               </div>
             )}
           </div>
 
           <div>
+            {selectedLocation && onSelectLocation && <SpotLocationPreview location={selectedLocation} onChange={onSelectLocation} />}
             <label htmlFor="spot-description" className="font-mono-spec font-bold text-slateInk block mb-1">
               MÔ TẢ ĐỊA ĐIỂM (KHÔNG BẮT BUỘC):
             </label>
@@ -375,7 +384,11 @@ export const AddSpotModal: React.FC<AddSpotModalProps> = ({
             <div className="flex flex-wrap gap-2">
               {placeCategories.map(({ id, label }) => {
                 const selected = selectedPlaceCategories.includes(id);
-                return <label key={id} className={`inline-flex min-h-10 cursor-pointer items-center gap-2 border px-3 py-2 text-xs transition-colors ${selected ? 'border-terracotta bg-terracotta text-white' : 'border-slateInk/40 bg-paper-warm text-slateInk hover:border-slateInk'}`}>
+                const isHalloween = id === 'HALLOWEEN';
+                const halloweenClasses = selected
+                  ? 'relative mt-3 border-[#12303D] bg-[#12303D] text-[#FFF7E8] shadow-sm'
+                  : 'relative mt-3 border-[#C76B3C]/60 bg-[#FFF7EB] text-[#12303D] hover:border-[#12303D]';
+                return <label key={id} className={`inline-flex min-h-10 cursor-pointer items-center gap-2 border px-3 py-2 text-xs transition-colors ${isHalloween ? halloweenClasses : selected ? 'border-terracotta bg-terracotta text-white' : 'border-slateInk/40 bg-paper-warm text-slateInk hover:border-slateInk'}`}>
                   <input
                     type="checkbox"
                     aria-label={`Nhóm địa điểm: ${label}`}
@@ -383,7 +396,7 @@ export const AddSpotModal: React.FC<AddSpotModalProps> = ({
                     onChange={event => setSelectedPlaceCategories(current => event.target.checked ? [...current, id] : current.filter(category => category !== id))}
                     className="accent-terracotta"
                   />
-                  {label}
+                  <PlaceCategoryLabel id={id} label={label} selected={selected} />
                 </label>;
               })}
             </div>
@@ -450,7 +463,7 @@ export const AddSpotModal: React.FC<AddSpotModalProps> = ({
             </button>
             <button
               type="submit"
-              disabled={isSubmitting || !spotName.trim() || !selectedLocation || selectedPlaceCategories.length === 0}
+              disabled={isSubmitting || isGeocoding || !spotName.trim() || !selectedLocation || !validVietnamCoordinates(selectedLocation.lat, selectedLocation.lng) || selectedPlaceCategories.length === 0}
               className="px-5 py-2 border border-slateInk bg-terracotta hover:bg-terracotta-dark disabled:opacity-50 text-white font-bold shadow-hard transition-colors flex items-center gap-2"
             >
               {isSubmitting ? 'ĐANG LƯU...' : (

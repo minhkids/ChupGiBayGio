@@ -7,7 +7,22 @@ export interface PlannedSpot {
   costEstimated: number; // in VND
   costFormatted: string;
   costType: 'FREE' | 'TICKET' | 'COMMERCIAL_FEE';
+  lat?: number;
+  lng?: number;
   note?: string;
+}
+
+export interface CyclingWaypoint {
+  id: string;
+  name: string;
+  lat: number;
+  lng: number;
+  kind: 'spot' | 'filmLab' | 'origin';
+  address?: string;
+  imageUrl?: string;
+  bestTime?: string;
+  photoTip?: string;
+  seasonalLabel?: string;
 }
 
 export interface PlannedItem {
@@ -47,6 +62,7 @@ export interface ReferencePhoto {
 export interface ShootPlanState {
   referencePhotos: ReferencePhoto[];
   spots: PlannedSpot[];
+  cyclingStops?: CyclingWaypoint[];
   items: PlannedItem[];
   photographer: PlannedPhotographer | null;
 }

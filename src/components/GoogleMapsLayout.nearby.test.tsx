@@ -5,6 +5,7 @@ import { useState, type ComponentProps } from 'react';
 import { GoogleMapsLayout } from './GoogleMapsLayout';
 import { MOCK_SPOTS } from '../data/mockSpots';
 import type { FilterState, Spot } from '../types';
+import { ShootPlanProvider } from '../context/ShootPlanContext';
 
 vi.mock('./map/SpotMap', () => ({
   SpotMap: (props: { userCoords: { lat: number; lng: number } | null; focusedCoordinates: { lat: number; lng: number } | null }) => (
@@ -97,6 +98,12 @@ afterEach(() => {
 });
 
 describe('GoogleMapsLayout nearby locations', () => {
+  it('opens the cycling-story controls from the selected spot detail', async () => {
+    render(<ShootPlanProvider><GoogleMapsLayout {...props} selectedSpot={MOCK_SPOTS[0]} /></ShootPlanProvider>);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Chạy hành trình đạp xe (Story)' })[0]);
+    expect(await screen.findByRole('toolbar', { name: 'Điều khiển hành trình đạp xe' })).toBeTruthy();
+  });
+
   it('keeps the spot description without claiming an unverified bloom percentage in either detail layout', () => {
     const selectedSpot = { ...allSpots[0], description: 'Phố cổ và kiến trúc, không có số liệu hoa.', seasonalTrend: { ...allSpots[0].seasonalTrend, bloomPercentage: 85 } };
     render(<GoogleMapsLayout {...props} selectedSpot={selectedSpot} />);

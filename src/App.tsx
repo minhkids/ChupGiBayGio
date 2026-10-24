@@ -300,21 +300,20 @@ export function App() {
         {/* Add Spot Modal (Zero manual coordinate input, Click-to-Pin & AI Extraction) */}
         <Suspense fallback={null}>
         <AddSpotModal
+          key={isSubmitModalOpen || mapLocationPicker.isPicking ? 'open' : 'closed'}
           isOpen={isSubmitModalOpen || mapLocationPicker.isPicking}
-          onClose={() => {
-            setIsSubmitModalOpen(false);
-            mapLocationPicker.cancelPicking();
-          }}
+          onClose={() => { setIsSubmitModalOpen(false); mapLocationPicker.cancelPicking(); mapLocationPicker.clearLocation(); }}
           onSubmitNewSpot={async (newSpot) => {
             await handleAddNewSpot(newSpot);
             mapLocationPicker.clearLocation();
           }}
           isPickingLocation={mapLocationPicker.isPicking}
           selectedLocation={mapLocationPicker.selectedLocation}
+          onSelectLocation={mapLocationPicker.setSelectedLocation}
+          isGeocoding={mapLocationPicker.isGeocoding}
           onStartMapPick={mapLocationPicker.startPicking}
           onCancelMapPick={mapLocationPicker.cancelPicking}
           onClearLocation={mapLocationPicker.clearLocation}
-          isGeocoding={mapLocationPicker.isGeocoding}
         placeCategories={placeCategories}
         />
         </Suspense>
@@ -483,21 +482,20 @@ export function App() {
       {/* Add Spot Modal (Zero manual coordinate input, Click-to-Pin & AI Extraction) */}
       <Suspense fallback={null}>
       <AddSpotModal
+        key={isSubmitModalOpen || mapLocationPicker.isPicking ? 'open' : 'closed'}
         isOpen={isSubmitModalOpen || mapLocationPicker.isPicking}
-        onClose={() => {
-          setIsSubmitModalOpen(false);
-          mapLocationPicker.cancelPicking();
-        }}
+        onClose={() => { setIsSubmitModalOpen(false); mapLocationPicker.cancelPicking(); mapLocationPicker.clearLocation(); }}
         onSubmitNewSpot={async (newSpot) => {
           await handleAddNewSpot(newSpot);
           mapLocationPicker.clearLocation();
         }}
         isPickingLocation={mapLocationPicker.isPicking}
         selectedLocation={mapLocationPicker.selectedLocation}
+        onSelectLocation={mapLocationPicker.setSelectedLocation}
+        isGeocoding={mapLocationPicker.isGeocoding}
         onStartMapPick={mapLocationPicker.startPicking}
         onCancelMapPick={mapLocationPicker.cancelPicking}
         onClearLocation={mapLocationPicker.clearLocation}
-        isGeocoding={mapLocationPicker.isGeocoding}
         placeCategories={placeCategories}
       />
       </Suspense>

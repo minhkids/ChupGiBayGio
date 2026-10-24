@@ -7,6 +7,7 @@ import {
   Navigation,
   Bookmark,
   Share2,
+  Bike,
 
   Camera,
   Clock,
@@ -20,6 +21,7 @@ import {
   Layers,
   LocateFixed
 } from 'lucide-react';
+import type { Map as LeafletMap } from 'leaflet';
 import type { PlaceCategory, Spot, FilterState } from '../types';
 import { CONCEPT_METADATA } from '../utils/season';
 import { isUpcomingCandidate } from '../utils/upcomingSpots';
@@ -41,8 +43,11 @@ import type { ServicesTab } from './layout/ShootServicesHubDrawer';
 import type { FilmLab } from '../data/filmLabsData';
 import { SingleFilmLabCard } from './layout/SingleFilmLabCard';
 import { formatDistance, getNearestSpots } from '../utils/geo';
+import { useShootPlan } from '../context/ShootPlanContext';
+import { CyclingStoryController, type CyclingStoryMode } from './map/CyclingStoryController';
 
 const ShootServicesHubDrawer = lazy(() => import('./layout/ShootServicesHubDrawer').then(m => ({ default: m.ShootServicesHubDrawer })));
+const ShootPlannerDrawer = lazy(() => import('./planner/ShootPlannerDrawer').then(m => ({ default: m.ShootPlannerDrawer })));
 
 interface GoogleMapsLayoutProps {
   placeCategories: PlaceCategory[];
@@ -131,6 +136,25 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
   // State quản lý Shoot Services Hub Drawer (Trang phục + Thợ chụp + Tiệm film)
   const [isServicesHubOpen, setIsServicesHubOpen] = useState(false);
   const [servicesHubTab, setServicesHubTab] = useState<ServicesTab>('outfit');
+  const shootPlan = useShootPlan();
+  const [storyMap, setStoryMap] = useState<LeafletMap | null>(null);
+  const [isCyclingStoryOpen, setIsCyclingStoryOpen] = useState(false);
+  const [cyclingStoryMode, setCyclingStoryMode] = useState<CyclingStoryMode>('spot');
+  const [cyclingStoryTarget, setCyclingStoryTarget] = useState<Spot | null>(null);
+  const [isStoryVertical, setIsStoryVertical] = useState(false);
+
+  const startSpotCyclingStory = (spot: Spot) => {
+    setCyclingStoryMode('spot');
+    setCyclingStoryTarget(spot);
+    setIsCyclingStoryOpen(true);
+    onSelectSpot(null);
+  };
+  const startPlanCyclingStory = () => {
+    setCyclingStoryMode('plan');
+    setCyclingStoryTarget(null);
+    setIsCyclingStoryOpen(true);
+    shootPlan.closeDrawer();
+  };
 
   const nearbySpots = useMemo(
     () => filters.userCoords ? getNearestSpots(allSpots, filters.userCoords, 5) : [],
@@ -293,13 +317,15 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
           onSelectRegion={onSelectRegion}
           uiTheme={uiTheme}
           onToggleUiTheme={onToggleUiTheme}
+          onOpenPlanner={shootPlan.openDrawer}
         />
       </div>
 
       {/* ========================================================================= */}
       {/* 2. LAYER 2: MAP CANVAS (Occupies viewport starting from 76px nav rail) */}
       {/* ========================================================================= */}
-      <div className="absolute inset-0 z-0 lg:pl-[76px]">
+      <div className={`absolute inset-0 z-0 lg:pl-[76px] ${isStoryVertical ? 'flex items-center justify-center bg-[#2C2621]/90 p-3 backdrop-blur-sm' : ''}`}>
+        <div className={isStoryVertical ? 'relative aspect-[9/16] w-[min(380px,calc((100vh-48px)*0.5625))] overflow-hidden rounded-3xl border-4 border-[#FAF8F4] shadow-2xl' : 'absolute inset-0'}>
         <SpotMap
           spots={mapSpots}
           statusFilter={filters.status}
@@ -325,7 +351,10 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
             setFocusedCoordinates({ lat: lab.lat, lng: lab.lng, zoom: 15 });
           }}
           focusedCoordinates={focusedCoordinates}
+          onMapReady={setStoryMap}
         />
+        {isStoryVertical && <div className="pointer-events-none absolute left-0 right-0 top-0 z-[70] border-b border-[#D8CFBD] bg-[#FAF8F4]/95 px-3 py-2 text-center text-[10px] font-bold uppercase tracking-[0.13em] text-[#2C2621] shadow-sm">HÀNH TRÌNH SĂN ẢNH HÀ NỘI <span className="ml-1 font-serif italic normal-case tracking-normal text-[#C76B3C]">chupgibaygio.com</span></div>}
+        </div>
       </div>
 
       {/* ATMOSPHERIC WEATHER FX CANVAS (z-5: above map, below UI overlays) */}
@@ -424,6 +453,15 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                     >
                       <PlusCircle className="w-3.5 h-3.5 mr-1.5" />
                       <span>+ Đóng góp điểm</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => { shootPlan.openDrawer(); setIsMobileMenuOpen(false); }}
+                      className="w-full px-3 py-2 rounded-xl text-left flex items-center text-[#554D43] hover:bg-[#ECE4D0]"
+                    >
+                      <Bike className="w-3.5 h-3.5 mr-1.5 text-[#C76B3C]" />
+                      <span>Kế hoạch &amp; hành trình</span>
                     </button>
 
                     <button
@@ -717,6 +755,8 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
 
 
                   </div>
+
+                  <button type="button" aria-label="Chạy hành trình đạp xe (Story)" onClick={() => startSpotCyclingStory(selectedSpot)} className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-[#C76B3C] bg-[#C76B3C] px-4 text-sm font-bold text-white shadow-md transition-colors hover:bg-[#A9552E]"><Bike className="h-5 w-5" />Chạy hành trình đạp xe (Story)</button>
 
                   {/* Spot description */}
                   <div className="bg-[#F3EAD7] border border-[#D8CFBD] rounded-xl p-4 space-y-2">
@@ -1058,6 +1098,8 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                 </p>
               </div>
 
+              <button type="button" aria-label="Chạy hành trình đạp xe (Story)" onClick={() => startSpotCyclingStory(selectedSpot)} className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-[#C76B3C] bg-[#C76B3C] px-4 text-sm font-bold text-white shadow-md transition-colors hover:bg-[#A9552E]"><Bike className="h-5 w-5" />Chạy hành trình đạp xe (Story)</button>
+
               {/* Photography Guide */}
               <div className="space-y-3 pt-1">
                 <h4 className="text-xs font-bold text-[#2C2621] flex items-center">
@@ -1175,6 +1217,21 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
           setIsAllLabsDrawerOpen(false);
           setFocusedCoordinates({ lat: lab.lat, lng: lab.lng, zoom: 16 });
         }}
+      />
+
+      <Suspense fallback={null}>
+        <ShootPlannerDrawer onStartCyclingStory={startPlanCyclingStory} />
+      </Suspense>
+      <CyclingStoryController
+        map={storyMap}
+        isOpen={isCyclingStoryOpen}
+        mode={cyclingStoryMode}
+        targetSpot={cyclingStoryTarget}
+        waypoints={shootPlan.cyclingStops}
+        userCoordinates={filters.userCoords}
+        isVertical={isStoryVertical}
+        onVerticalModeChange={setIsStoryVertical}
+        onClose={() => { setIsCyclingStoryOpen(false); setCyclingStoryTarget(null); }}
       />
 
       <AnimatePresence>

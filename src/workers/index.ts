@@ -5,6 +5,8 @@ import { secureHeaders } from 'hono/secure-headers';
 import cmsAdminRoutes from './cmsAdminRoutes';
 import partnerRoutes from './partnerRoutes';
 import communitySpots from './communitySpots';
+import spotLocationSearch from './spotLocationSearch';
+import cyclingRoute from './cyclingRoute';
 import { getD1 } from './d1Client';
 
 type Bindings = {
@@ -21,6 +23,15 @@ type Variables = {
 };
 
 const app = new Hono<{ Bindings: Bindings; Variables: Variables }>();
+
+app.use('*', async (c, next) => {
+  const url = new URL(c.req.url);
+  if (url.protocol === 'http:' && ['chupgibaygio.com', 'www.chupgibaygio.com'].includes(url.hostname.toLowerCase())) {
+    url.protocol = 'https:';
+    return c.redirect(url.toString(), 308);
+  }
+  await next();
+});
 
 type ServiceCategory = 'rental' | 'outfit' | 'photographer' | 'filmLab' | 'filmColor';
 const SERVICE_CATEGORIES = new Set<ServiceCategory>(['rental', 'outfit', 'photographer', 'filmLab', 'filmColor']);
@@ -90,6 +101,8 @@ app.use('/api/*', cors({
 app.get('/health', (c) => c.json({ status: 'ok', timestamp: new Date().toISOString() }));
 
 // API Routes
+app.route('/', spotLocationSearch);
+app.route('/', cyclingRoute);
 app.get('/api/place-categories', async (c) => {
   const { results } = await getD1(c.env).prepare('SELECT id, label, sort_order FROM place_categories ORDER BY sort_order ASC, label COLLATE NOCASE ASC').all();
   return c.json((results || []).map((value) => {

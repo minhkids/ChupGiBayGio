@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Clock3, MapPin, MessageCircle, Navigation, Plus, X } from 'lucide-react';
+import { Bike, Clock3, MapPin, MessageCircle, Navigation, Plus, X } from 'lucide-react';
 import type { FilmLab } from '../../data/filmLabsData';
 import { useShootPlan } from '../../context/ShootPlanContext';
 import { ExpressDeliveryBadge } from './ExpressDeliveryBadge';
@@ -40,6 +40,11 @@ export const SingleFilmLabCard: React.FC<SingleFilmLabCardProps> = ({ lab, userC
       link: lab.googleMapsUrl,
       type: 'purchase'
     });
+  };
+
+  const addCyclingStop = () => {
+    if (!Number.isFinite(lab.lat) || !Number.isFinite(lab.lng)) return;
+    plan?.addCyclingStop({ id: lab.id, name: lab.name, lat: lab.lat, lng: lab.lng, kind: 'filmLab', address: lab.address });
   };
 
   return (
@@ -99,6 +104,7 @@ export const SingleFilmLabCard: React.FC<SingleFilmLabCardProps> = ({ lab, userC
         <button type="button" onClick={addFilmToPlan} disabled={!selectedFilm} className="col-span-2 flex min-h-10 items-center justify-center gap-1.5 rounded-xl border border-[#D8CFBD] bg-white px-3 text-xs font-semibold text-[#2C2621] hover:border-[#C76B3C] disabled:opacity-50">
           <Plus size={14} />Thêm cuộn film vào Kế hoạch chụp
         </button>
+        {Number.isFinite(lab.lat) && Number.isFinite(lab.lng) && <button type="button" onClick={addCyclingStop} aria-label={`Thêm ${lab.name} vào hành trình xe đạp`} className="col-span-2 flex min-h-10 items-center justify-center gap-1.5 rounded-xl border border-[#D8CFBD] bg-[#ECE4D0] px-3 text-xs font-semibold text-[#2C2621] hover:border-[#C76B3C] hover:text-[#A9552E]"><Bike size={15} />Thêm {lab.name} vào hành trình xe đạp</button>}
       </div>
     </motion.aside>
   );

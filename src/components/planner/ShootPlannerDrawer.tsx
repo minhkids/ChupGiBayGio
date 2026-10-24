@@ -3,6 +3,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   X,
   ClipboardList,
+  Bike,
+  ChevronDown,
+  ChevronUp,
   MapPin,
   Clock,
   Camera,
@@ -20,10 +23,12 @@ import { readReferenceImage, exportVisualBrief } from './referenceImage';
 
 interface ShootPlannerDrawerProps {
   onOpenPhotographerDirectory?: () => void;
+  onStartCyclingStory?: () => void;
 }
 
 export const ShootPlannerDrawer: React.FC<ShootPlannerDrawerProps> = ({
   onOpenPhotographerDirectory,
+  onStartCyclingStory,
 }) => {
   const {
     referencePhotos,
@@ -32,6 +37,7 @@ export const ShootPlannerDrawer: React.FC<ShootPlannerDrawerProps> = ({
     updateReferencePhotoNote,
     generateBriefText,
     spots,
+    cyclingStops,
     items,
     photographer,
     totalCount,
@@ -42,6 +48,8 @@ export const ShootPlannerDrawer: React.FC<ShootPlannerDrawerProps> = ({
     isDrawerOpen,
     closeDrawer,
     removeSpot,
+    removeCyclingStop,
+    moveCyclingStop,
     removeItem,
     removePhotographer,
     clearPlan,
@@ -179,7 +187,23 @@ export const ShootPlannerDrawer: React.FC<ShootPlannerDrawerProps> = ({
 
             {/* 2. Scrollable Body Content */}
             <div className="flex-1 overflow-y-auto p-5 space-y-6 bg-neutral-900/90 custom-scrollbar">
-              {totalCount === 0 ? (
+              {cyclingStops.length > 0 && <section aria-label="Hành trình đạp xe" className="space-y-3 rounded-2xl border border-[#D8CFBD] bg-[#FAF8F4] p-4 text-[#2C2621]">
+                <div className="flex items-center justify-between gap-2 border-b border-[#D8CFBD] pb-2">
+                  <h3 className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider"><Bike className="h-4 w-4 text-[#C76B3C]" />Hành trình đạp xe · {cyclingStops.length} điểm</h3>
+                  <span className="text-[10px] text-[#8C8377]">Sắp xếp thứ tự dừng</span>
+                </div>
+                <ol className="space-y-2">
+                  {cyclingStops.map((stop, index) => <li key={`${stop.kind}:${stop.id}`} className="flex items-center gap-2 rounded-xl border border-[#E5DDCC] bg-white p-2.5">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#C76B3C] text-[10px] font-bold text-white">{index + 1}</span>
+                    <span className="min-w-0 flex-1"><span className="block truncate text-xs font-semibold">{stop.name}</span><span className="block text-[10px] text-[#8C8377]">{stop.kind === 'filmLab' ? 'Tiệm film' : 'Điểm chụp'}{stop.address ? ` · ${stop.address}` : ''}</span></span>
+                    <button type="button" aria-label={`Đưa ${stop.name} lên`} disabled={index === 0} onClick={() => moveCyclingStop(stop.id, -1)} className="flex h-8 w-8 items-center justify-center rounded-lg text-[#6E655B] hover:bg-[#ECE4D0] disabled:opacity-30"><ChevronUp size={15} /></button>
+                    <button type="button" aria-label={`Đưa ${stop.name} xuống`} disabled={index === cyclingStops.length - 1} onClick={() => moveCyclingStop(stop.id, 1)} className="flex h-8 w-8 items-center justify-center rounded-lg text-[#6E655B] hover:bg-[#ECE4D0] disabled:opacity-30"><ChevronDown size={15} /></button>
+                    <button type="button" aria-label={`Xóa ${stop.name} khỏi hành trình`} onClick={() => removeCyclingStop(stop.id)} className="flex h-8 w-8 items-center justify-center rounded-lg text-[#8C8377] hover:bg-[#F3EAD7] hover:text-[#A9552E]">×</button>
+                  </li>)}
+                </ol>
+                {onStartCyclingStory && <button type="button" onClick={onStartCyclingStory} className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#C76B3C] px-4 text-sm font-bold text-white shadow-md hover:bg-[#A9552E]"><Bike size={18} />Chạy hành trình đạp xe (Story)</button>}
+              </section>}
+              {totalCount === 0 && cyclingStops.length === 0 ? (
                 /* Empty state */
                 <div className="py-16 text-center space-y-3 px-4">
                   <div className="w-16 h-16 rounded-2xl bg-neutral-800/60 border border-neutral-700/60 mx-auto flex items-center justify-center text-amber-400">
