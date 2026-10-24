@@ -6,6 +6,19 @@ import { MapStyleCategoryBrowser } from './MapStyleCategoryBrowser';
 describe('MapStyleCategoryBrowser', () => {
   afterEach(cleanup);
 
+  it('decorates only the Halloween map category with a witch hat and no sparkles', () => {
+    render(<MapStyleCategoryBrowser
+      categories={[{ id: 'HALLOWEEN', label: 'Halloween', sortOrder: 9 }, { id: 'CAFE', label: 'Quán cà phê', sortOrder: 1 }]}
+      selectedCategory="ALL"
+      onSelectCategory={vi.fn()}
+    />);
+
+    const tag = screen.getByRole('button', { name: 'Halloween' });
+    expect(tag.querySelector('svg[data-icon="witch-hat"]')).toBeTruthy();
+    expect(tag.querySelector('.lucide-ghost, .lucide-sparkles')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Quán cà phê' }).querySelector('svg[data-icon="witch-hat"]')).toBeNull();
+  });
+
   it('shows a creative shot board instead of repeating the location list', () => {
     const onSelectCategory = vi.fn();
     render(<MapStyleCategoryBrowser

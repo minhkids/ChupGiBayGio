@@ -1,6 +1,7 @@
 import { Camera, Film, RefreshCw, Sparkles } from 'lucide-react';
 import { useState } from 'react';
 import type { PlaceCategory, PlaceCategoryFilter } from '../../types';
+import { PlaceCategoryLabel } from '../features/PlaceCategoryLabel';
 
 interface ShotFrame {
   label: string;
@@ -77,9 +78,16 @@ export const MapStyleCategoryBrowser = ({ categories, selectedCategory, onSelect
         <button type="button" aria-pressed={selectedCategory === 'ALL'} onClick={() => onSelectCategory('ALL')} className={`min-h-11 rounded-xl border px-3 py-2 text-left text-xs font-semibold transition-colors ${selectedCategory === 'ALL' ? 'border-[#2C2621] bg-[#2C2621] text-white' : 'border-[#D8CFBD] bg-[#FAF8F4] text-[#554D43] hover:bg-white'}`}>
           Tất cả style
         </button>
-        {categories.map(category => <button key={category.id} type="button" aria-pressed={selectedCategory === category.id} onClick={() => onSelectCategory(category.id)} className={`min-h-11 rounded-xl border px-3 py-2 text-left text-xs font-semibold transition-colors ${selectedCategory === category.id ? 'border-[#2C2621] bg-[#2C2621] text-white' : 'border-[#D8CFBD] bg-[#FAF8F4] text-[#554D43] hover:bg-white'}`}>
-          {category.label}
-        </button>)}
+        {categories.map(category => {
+          const selected = selectedCategory === category.id;
+          const halloween = category.id === 'HALLOWEEN';
+          const halloweenClasses = selected
+            ? 'relative mt-3 border-[#12303D] bg-[#12303D] text-[#FFF7E8] shadow-sm'
+            : 'relative mt-3 border-[#C76B3C]/60 bg-[#FFF7EB] text-[#12303D] hover:border-[#12303D]';
+          return <button key={category.id} type="button" aria-pressed={selected} onClick={() => onSelectCategory(category.id)} className={`min-h-11 rounded-xl border px-3 py-2 text-left text-xs font-semibold transition-colors ${halloween ? halloweenClasses : selected ? 'border-[#2C2621] bg-[#2C2621] text-white' : 'border-[#D8CFBD] bg-[#FAF8F4] text-[#554D43] hover:bg-white'}`}>
+            <PlaceCategoryLabel id={category.id} label={category.label} selected={selected} />
+          </button>;
+        })}
         <button type="button" aria-pressed={showFilmLabs} onClick={onToggleFilmLabs} className={`inline-flex min-h-11 items-center gap-2 rounded-xl border px-3 py-2 text-left text-xs font-semibold transition-colors ${showFilmLabs ? 'border-[#C76B3C] bg-[#F3EAD7] text-[#8F3F23]' : 'border-[#D8CFBD] bg-[#FAF8F4] text-[#6E655B] hover:bg-white'}`}>
           <Film aria-hidden="true" className="h-4 w-4 shrink-0" />Lab film
         </button>
