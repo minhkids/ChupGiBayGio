@@ -17,6 +17,12 @@ interface Moodboard {
   frames: ShotFrame[];
 }
 
+const accessoryIdea: ShotFrame = {
+  label: '04 · PHỤ KIỆN',
+  title: 'Chọn một món làm điểm nhấn',
+  direction: 'Khăn, túi nhỏ hoặc món trang sức bạn yêu thích có thể hoàn thiện buổi chụp — chọn màu hợp với mood.',
+};
+
 interface Props {
   categories: PlaceCategory[];
   selectedCategory: PlaceCategoryFilter;
@@ -63,6 +69,7 @@ export const MapStyleCategoryBrowser = ({ categories, selectedCategory, onSelect
   const boardOptions = moodboards[selectedCategory] ?? fallbackMoodboards(selectedLabel);
   const boardIndex = moodCursor.category === selectedCategory ? moodCursor.index : 0;
   const board = boardOptions[boardIndex % boardOptions.length];
+  const shotIdeas = [...board.frames, accessoryIdea];
 
   const changeMood = () => setMoodCursor({ category: selectedCategory, index: (boardIndex + 1) % boardOptions.length });
 
@@ -127,11 +134,11 @@ export const MapStyleCategoryBrowser = ({ categories, selectedCategory, onSelect
 
           <div>
             <div className="mb-2 flex items-center justify-between">
-              <h4 className="text-sm font-bold text-[#2C2621]">Ba khung hình thử ngay</h4>
-              <span className="font-mono-spec text-[9px] font-bold text-[#C76B3C]">01 — 03</span>
+              <h4 className="text-sm font-bold text-[#2C2621]">3 khung hình + 1 ý tưởng</h4>
+              <span className="font-mono-spec text-[9px] font-bold text-[#C76B3C]">01 — 04</span>
             </div>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-              {board.frames.map((frame, index) => <article key={frame.label} className={`min-w-0 rounded-xl border border-[#E2D8C6] bg-white/70 p-3 sm:p-2.5 ${index === 2 ? 'sm:col-span-2' : ''}`}>
+              {shotIdeas.map(frame => <article key={frame.label} className="min-w-0 rounded-xl border border-[#E2D8C6] bg-white/70 p-3 sm:p-2.5">
                 <p className="font-mono-spec text-[10px] font-bold tracking-wide text-[#C76B3C] sm:text-[9px]">{frame.label}</p>
                 <h5 className="mt-1 text-sm font-bold leading-snug text-[#2C2621] sm:text-xs">{frame.title}</h5>
                 <p className="mt-1 text-xs leading-relaxed text-[#6E655B] sm:text-[10px]">{frame.direction}</p>

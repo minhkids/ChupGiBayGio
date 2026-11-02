@@ -31,7 +31,10 @@ describe('MapStyleCategoryBrowser', () => {
     expect(screen.getByRole('button', { name: 'Quán cà phê' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Hoàng hôn' })).toBeTruthy();
     expect(screen.getByRole('heading', { name: 'Một khoảng chậm giữa phố' })).toBeTruthy();
-    expect(screen.getByText('Ba khung hình thử ngay')).toBeTruthy();
+    expect(screen.getByText('3 khung hình + 1 ý tưởng')).toBeTruthy();
+    expect(screen.getByText('Chọn một món làm điểm nhấn')).toBeTruthy();
+    expect(screen.getByText(/Khăn, túi nhỏ hoặc món trang sức bạn yêu thích/)).toBeTruthy();
+    expect(screen.getAllByRole('article').length).toBe(4);
     const guideLink = screen.getByRole('link', { name: /Chưa biết chụp gì hôm nay/ });
     const moodCycleButton = screen.getByRole('button', { name: /Đổi mood/ });
     expect(guideLink.getAttribute('href')).toBe('/chup-gi/');
