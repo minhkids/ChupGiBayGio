@@ -36,3 +36,14 @@ it('starts an ordered cycling story from waypoints in the shoot plan', () => {
   fireEvent.click(screen.getByRole('button', { name: 'Chạy hành trình đạp xe (Story)' }));
   expect(onStart).toHaveBeenCalledOnce();
 });
+
+it('uses warm paper surfaces in the planner panel and sticky total bar', () => {
+  render(<ShootPlanProvider><Harness /></ShootPlanProvider>);
+  fireEvent.click(screen.getByText('Open'));
+  const drawer = screen.getByRole('dialog', { name: 'Bản Kế Hoạch & Dự Toán Chi Phí Buổi Chụp' });
+  expect(drawer.className).toContain('bg-[#F7F4EC]');
+  expect(drawer.className).toContain('text-[#2C2621]');
+  expect(drawer.children[1].getAttribute('class')).toContain('bg-[#F7F4EC]');
+  expect(drawer.lastElementChild?.getAttribute('class')).toContain('bg-[#F3EAD7]');
+  expect(screen.getByRole('heading', { name: /Kế Hoạch & Dự Toán/ }).className).toContain('text-[#2C2621]');
+});

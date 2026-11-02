@@ -132,26 +132,26 @@ export const ShootPlannerDrawer: React.FC<ShootPlannerDrawerProps> = ({
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-            className="relative z-10 w-full max-w-lg md:max-w-xl h-full bg-editorial-surface border-l border-editorial-border text-neutral-100 flex flex-col shadow-2xl pointer-events-auto overflow-hidden"
+            className="relative z-10 w-full max-w-lg md:max-w-xl h-full bg-[#F7F4EC] border-l border-[#D8CFBD] text-[#2C2621] flex flex-col shadow-2xl pointer-events-auto overflow-hidden"
             role="dialog"
             aria-modal="true"
             aria-label="Bản Kế Hoạch & Dự Toán Chi Phí Buổi Chụp"
           >
             {/* 1. Header */}
-            <div className="relative shrink-0 border-b border-editorial-border bg-editorial-bg p-5 pb-4">
+            <div className="relative shrink-0 border-b border-[#D8CFBD] bg-[#F3EAD7] p-5 pb-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2.5">
-                  <div className="w-10 h-10 rounded-xl bg-amber-400 text-neutral-950 flex items-center justify-center font-bold shadow-md shadow-amber-400/20">
+                  <div className="w-10 h-10 rounded-xl bg-[#C76B3C] text-white flex items-center justify-center font-bold shadow-sm">
                     <ClipboardList className="w-5 h-5 stroke-[2.2]" />
                   </div>
                   <div>
-                    <h2 className="text-base font-bold text-white tracking-tight flex items-center gap-2">
+                    <h2 className="text-base font-bold text-[#2C2621] tracking-tight flex items-center gap-2">
                       <span>Kế Hoạch & Dự Toán</span>
-                      <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 bg-amber-400/20 text-amber-300 rounded-full border border-amber-400/30">
+                      <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 bg-[#F3EAD7] text-[#A9552E] rounded-full border border-[#D8CFBD]">
                         {totalCount} mục
                       </span>
                     </h2>
-                    <p className="text-[11px] text-neutral-400">
+                    <p className="text-[11px] text-[#6E655B]">
                       Lịch trình và dự toán buổi chụp
                     </p>
                   </div>
@@ -166,7 +166,7 @@ export const ShootPlannerDrawer: React.FC<ShootPlannerDrawerProps> = ({
                           clearPlan();
                         }
                       }}
-                      className="p-2 rounded-xl text-neutral-400 hover:text-red-400 hover:bg-neutral-800/80 transition-colors text-xs flex items-center gap-1 cursor-pointer"
+                      className="p-2 rounded-xl text-[#6E655B] hover:text-red-400 hover:bg-[#ECE4D0]/80 transition-colors text-xs flex items-center gap-1 cursor-pointer"
                       title="Xóa làm lại từ đầu"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -176,7 +176,7 @@ export const ShootPlannerDrawer: React.FC<ShootPlannerDrawerProps> = ({
                   <button
                     type="button"
                     onClick={closeDrawer}
-                    className="p-2 rounded-xl text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors cursor-pointer"
+                    className="p-2 rounded-xl text-[#6E655B] hover:text-[#2C2621] hover:bg-[#ECE4D0] transition-colors cursor-pointer"
                     aria-label="Đóng bảng kế hoạch"
                   >
                     <X className="w-5 h-5" />
@@ -186,7 +186,7 @@ export const ShootPlannerDrawer: React.FC<ShootPlannerDrawerProps> = ({
             </div>
 
             {/* 2. Scrollable Body Content */}
-            <div className="flex-1 overflow-y-auto p-5 space-y-6 bg-neutral-900/90 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto p-5 space-y-6 bg-[#F7F4EC] custom-scrollbar">
               {cyclingStops.length > 0 && <section aria-label="Hành trình đạp xe" className="space-y-3 rounded-2xl border border-[#D8CFBD] bg-[#FAF8F4] p-4 text-[#2C2621]">
                 <div className="flex items-center justify-between gap-2 border-b border-[#D8CFBD] pb-2">
                   <h3 className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider"><Bike className="h-4 w-4 text-[#C76B3C]" />Hành trình đạp xe · {cyclingStops.length} điểm</h3>
@@ -206,32 +206,32 @@ export const ShootPlannerDrawer: React.FC<ShootPlannerDrawerProps> = ({
               {totalCount === 0 && cyclingStops.length === 0 ? (
                 /* Empty state */
                 <div className="py-16 text-center space-y-3 px-4">
-                  <div className="w-16 h-16 rounded-2xl bg-neutral-800/60 border border-neutral-700/60 mx-auto flex items-center justify-center text-amber-400">
+                  <div className="w-16 h-16 rounded-2xl bg-[#ECE4D0]/60 border border-[#D8CFBD]/60 mx-auto flex items-center justify-center text-[#C76B3C]">
                     <ClipboardList className="w-8 h-8" />
                   </div>
-                  <h3 className="text-base font-bold text-white">Chưa có mục nào trong kế hoạch</h3>
-                  <p className="text-xs text-neutral-400 max-w-xs mx-auto leading-relaxed">
-                    Bấm nút <strong className="text-amber-400">[+ Kế hoạch]</strong> tại các thẻ Địa điểm, Trang phục Shopee hoặc Thợ chụp ảnh để ước tính chi phí buổi chụp hoàn chỉnh.
+                  <h3 className="text-base font-bold text-[#2C2621]">Chưa có mục nào trong kế hoạch</h3>
+                  <p className="text-xs text-[#6E655B] max-w-xs mx-auto leading-relaxed">
+                    Bấm nút <strong className="text-[#C76B3C]">[+ Kế hoạch]</strong> tại các thẻ Địa điểm, Trang phục Shopee hoặc Thợ chụp ảnh để ước tính chi phí buổi chụp hoàn chỉnh.
                   </p>
                 </div>
               ) : (
                 <>
                   {/* NHÓM 1: ĐỊA ĐIỂM & GIỜ VÀNG */}
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between pb-1 border-b border-neutral-800">
+                    <div className="flex items-center justify-between pb-1 border-b border-[#D8CFBD]">
                       <div className="flex items-center gap-2">
-                        <MapPin className="w-4 h-4 text-amber-400" />
-                        <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-300">
+                        <MapPin className="w-4 h-4 text-[#C76B3C]" />
+                        <h3 className="text-xs font-bold uppercase tracking-wider text-[#554D43]">
                           1. Địa Điểm & Khung Giờ ({spots.length})
                         </h3>
                       </div>
-                      <span className="text-xs font-mono-spec font-bold text-amber-400">
+                      <span className="text-xs font-mono-spec font-bold text-[#C76B3C]">
                         {totalSpotCost > 0 ? `${totalSpotCost.toLocaleString('vi-VN')}đ` : '0đ'}
                       </span>
                     </div>
 
                     {spots.length === 0 ? (
-                      <p className="text-xs text-neutral-500 italic p-3 bg-neutral-950/40 rounded-xl border border-neutral-800/60">
+                      <p className="text-xs text-[#8C8377] italic p-3 bg-[#F3EAD7] rounded-xl border border-[#D8CFBD]/60">
                         Chưa chọn điểm chụp nào. Hãy bấm [+ Kế hoạch] trên thẻ điểm chụp.
                       </p>
                     ) : (
@@ -239,24 +239,24 @@ export const ShootPlannerDrawer: React.FC<ShootPlannerDrawerProps> = ({
                         {spots.map((spot) => (
                           <div
                             key={spot.id}
-                            className="p-3 bg-neutral-950 border border-neutral-800 hover:border-neutral-700 rounded-xl flex items-start justify-between gap-3 transition-colors group"
+                            className="p-3 bg-[#FFFDF9] border border-[#D8CFBD] hover:border-[#D8CFBD] rounded-xl flex items-start justify-between gap-3 transition-colors group"
                           >
                             <div className="flex items-start space-x-3 min-w-0">
                               <img
                                 src={spot.coverImageUrl}
                                 alt={spot.name}
-                                className="w-14 h-14 rounded-lg object-cover shrink-0 border border-neutral-800"
+                                className="w-14 h-14 rounded-lg object-cover shrink-0 border border-[#D8CFBD]"
                               />
                               <div className="min-w-0">
-                                <h4 className="text-xs font-bold text-white truncate group-hover:text-amber-400 transition-colors">
+                                <h4 className="text-xs font-bold text-[#2C2621] truncate group-hover:text-[#C76B3C] transition-colors">
                                   {spot.name}
                                 </h4>
-                                <div className="flex items-center gap-1 text-[11px] text-neutral-400 mt-0.5 truncate">
-                                  <Clock className="w-3 h-3 text-amber-400 shrink-0" />
+                                <div className="flex items-center gap-1 text-[11px] text-[#6E655B] mt-0.5 truncate">
+                                  <Clock className="w-3 h-3 text-[#C76B3C] shrink-0" />
                                   <span className="truncate">{spot.bestTime}</span>
                                 </div>
                                 <div className="mt-1 flex items-center gap-1.5 flex-wrap">
-                                  <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-neutral-900 text-amber-300 border border-neutral-800">
+                                  <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-[#F3EAD7] text-[#A9552E] border border-[#D8CFBD]">
                                     Vé/Nước: {spot.costFormatted}
                                   </span>
                                 </div>
@@ -266,7 +266,7 @@ export const ShootPlannerDrawer: React.FC<ShootPlannerDrawerProps> = ({
                             <button
                               type="button"
                               onClick={() => removeSpot(spot.id)}
-                              className="p-1.5 text-neutral-500 hover:text-red-400 hover:bg-neutral-800 rounded-lg transition-colors cursor-pointer"
+                              className="p-1.5 text-[#8C8377] hover:text-red-400 hover:bg-[#ECE4D0] rounded-lg transition-colors cursor-pointer"
                               title="Xóa khỏi kế hoạch"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
@@ -279,20 +279,20 @@ export const ShootPlannerDrawer: React.FC<ShootPlannerDrawerProps> = ({
 
                   {/* NHÓM 2: TRANG PHỤC & ĐẠO CỤ */}
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between pb-1 border-b border-neutral-800">
+                    <div className="flex items-center justify-between pb-1 border-b border-[#D8CFBD]">
                       <div className="flex items-center gap-2">
-                        <Shirt className="w-4 h-4 text-amber-300" />
-                        <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-300">
+                        <Shirt className="w-4 h-4 text-[#A9552E]" />
+                        <h3 className="text-xs font-bold uppercase tracking-wider text-[#554D43]">
                           2. Đồ Mặc & Phụ Kiện ({items.length})
                         </h3>
                       </div>
-                      <span className="text-xs font-mono-spec font-bold text-amber-300">
+                      <span className="text-xs font-mono-spec font-bold text-[#A9552E]">
                         {totalItemCost > 0 ? `${totalItemCost.toLocaleString('vi-VN')}đ` : '0đ'}
                       </span>
                     </div>
 
                     {items.length === 0 ? (
-                      <p className="text-xs text-neutral-500 italic p-3 bg-neutral-950/40 rounded-xl border border-neutral-800/60">
+                      <p className="text-xs text-[#8C8377] italic p-3 bg-[#F3EAD7] rounded-xl border border-[#D8CFBD]/60">
                         Chưa chọn đồ mặc. Chọn trong mục Tap-to-Shop hoặc Tiệm thuê đồ.
                       </p>
                     ) : (
@@ -300,26 +300,26 @@ export const ShootPlannerDrawer: React.FC<ShootPlannerDrawerProps> = ({
                         {items.map((item) => (
                           <div
                             key={item.id}
-                            className="p-3 bg-neutral-950 border border-neutral-800 hover:border-neutral-700 rounded-xl flex items-start justify-between gap-3 transition-colors group"
+                            className="p-3 bg-[#FFFDF9] border border-[#D8CFBD] hover:border-[#D8CFBD] rounded-xl flex items-start justify-between gap-3 transition-colors group"
                           >
                             <div className="flex items-start space-x-3 min-w-0">
                               {item.imageUrl && (
                                 <img
                                   src={item.imageUrl}
                                   alt={item.name}
-                                  className="w-12 h-12 rounded-lg object-cover shrink-0 border border-neutral-800"
+                                  className="w-12 h-12 rounded-lg object-cover shrink-0 border border-[#D8CFBD]"
                                 />
                               )}
                               <div className="min-w-0">
                                 <div className="flex items-center gap-1.5 flex-wrap">
-                                  <h4 className="text-xs font-bold text-white truncate">
+                                  <h4 className="text-xs font-bold text-[#2C2621] truncate">
                                     {item.name}
                                   </h4>
-                                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/30">
+                                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#F3EAD7] text-[#A9552E] border border-[#D8CFBD]">
                                     {item.categoryLabel}
                                   </span>
                                 </div>
-                                <div className="text-[11px] font-bold text-amber-400 mt-1">
+                                <div className="text-[11px] font-bold text-[#C76B3C] mt-1">
                                   {item.priceFormatted}
                                 </div>
                                 {item.sourceUrl && (
@@ -327,7 +327,7 @@ export const ShootPlannerDrawer: React.FC<ShootPlannerDrawerProps> = ({
                                     href={item.sourceUrl}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="text-[10px] text-amber-300 hover:underline flex items-center gap-0.5 mt-0.5"
+                                    className="text-[10px] text-[#A9552E] hover:underline flex items-center gap-0.5 mt-0.5"
                                   >
                                     <span>Xem link mua/thuê</span>
                                     <ExternalLink className="w-2.5 h-2.5" />
@@ -339,7 +339,7 @@ export const ShootPlannerDrawer: React.FC<ShootPlannerDrawerProps> = ({
                             <button
                               type="button"
                               onClick={() => removeItem(item.id)}
-                              className="p-1.5 text-neutral-500 hover:text-red-400 hover:bg-neutral-800 rounded-lg transition-colors cursor-pointer"
+                              className="p-1.5 text-[#8C8377] hover:text-red-400 hover:bg-[#ECE4D0] rounded-lg transition-colors cursor-pointer"
                               title="Xóa khỏi kế hoạch"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
@@ -352,21 +352,21 @@ export const ShootPlannerDrawer: React.FC<ShootPlannerDrawerProps> = ({
 
                   {/* NHÓM 3: NHIẾP ẢNH GIA */}
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between pb-1 border-b border-neutral-800">
+                    <div className="flex items-center justify-between pb-1 border-b border-[#D8CFBD]">
                       <div className="flex items-center gap-2">
-                        <Camera className="w-4 h-4 text-amber-400" />
-                        <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-300">
+                        <Camera className="w-4 h-4 text-[#C76B3C]" />
+                        <h3 className="text-xs font-bold uppercase tracking-wider text-[#554D43]">
                           3. Thợ Chụp & Gói Đã Chọn
                         </h3>
                       </div>
-                      <span className="text-xs font-mono-spec font-bold text-amber-400">
+                      <span className="text-xs font-mono-spec font-bold text-[#C76B3C]">
                         {photographerCost > 0 ? `${photographerCost.toLocaleString('vi-VN')}đ` : 'Chưa chọn'}
                       </span>
                     </div>
 
                     {!photographer ? (
-                      <div className="p-4 bg-neutral-950/60 rounded-xl border border-neutral-800/80 text-center space-y-2">
-                        <p className="text-xs text-neutral-400">
+                      <div className="p-4 bg-[#F3EAD7] rounded-xl border border-[#D8CFBD]/80 text-center space-y-2">
+                        <p className="text-xs text-[#6E655B]">
                           Bạn chưa chọn thợ chụp ảnh cho buổi này.
                         </p>
                         {onOpenPhotographerDirectory && (
@@ -376,7 +376,7 @@ export const ShootPlannerDrawer: React.FC<ShootPlannerDrawerProps> = ({
                               closeDrawer();
                               onOpenPhotographerDirectory();
                             }}
-                            className="px-3 py-1.5 bg-neutral-800 hover:bg-neutral-700 text-amber-400 font-bold text-xs rounded-lg inline-flex items-center gap-1.5 border border-neutral-700 cursor-pointer"
+                            className="px-3 py-1.5 bg-[#ECE4D0] hover:bg-[#E0D6BF] text-[#C76B3C] font-bold text-xs rounded-lg inline-flex items-center gap-1.5 border border-[#D8CFBD] cursor-pointer"
                           >
                             <Camera className="w-3.5 h-3.5" />
                             <span>Xem Danh Bạ Thợ Ảnh Hà Nội</span>
@@ -384,24 +384,24 @@ export const ShootPlannerDrawer: React.FC<ShootPlannerDrawerProps> = ({
                         )}
                       </div>
                     ) : (
-                      <div className="p-3 bg-neutral-950 border-2 border-amber-500/50 rounded-xl flex items-start justify-between gap-3 shadow-md shadow-amber-500/5">
+                      <div className="p-3 bg-[#FFFDF9] border-2 border-[#D8CFBD] rounded-xl flex items-start justify-between gap-3 shadow-sm">
                         <div className="flex items-start space-x-3 min-w-0">
                           <img
                             src={photographer.avatarUrl}
                             alt={photographer.name}
-                            className="w-13 h-13 rounded-full object-cover shrink-0 border-2 border-amber-400"
+                            className="w-13 h-13 rounded-full object-cover shrink-0 border-2 border-[#C76B3C]"
                           />
                           <div className="min-w-0">
-                            <h4 className="text-xs font-bold text-white flex items-center gap-1.5 truncate">
+                            <h4 className="text-xs font-bold text-[#2C2621] flex items-center gap-1.5 truncate">
                               <span>{photographer.name}</span>
-                              <span className="text-[9px] uppercase px-1 py-0.2 rounded bg-amber-400/20 text-amber-300 font-black">
+                              <span className="text-[9px] uppercase px-1 py-0.2 rounded bg-[#F3EAD7] text-[#A9552E] font-black">
                                 PRO
                               </span>
                             </h4>
-                            <p className="text-[11px] text-amber-300 font-bold mt-0.5">
+                            <p className="text-[11px] text-[#A9552E] font-bold mt-0.5">
                               {photographer.packageName} ({photographer.priceFormatted})
                             </p>
-                            <p className="text-[10px] text-neutral-400 mt-0.5 truncate">
+                            <p className="text-[10px] text-[#6E655B] mt-0.5 truncate">
                               {photographer.duration} • {photographer.deliverablesSummary}
                             </p>
                             <div className="flex items-center gap-2 mt-2">
@@ -409,7 +409,7 @@ export const ShootPlannerDrawer: React.FC<ShootPlannerDrawerProps> = ({
                                 href={photographer.zaloUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-[10px] font-bold px-2 py-0.5 rounded bg-neutral-800 text-amber-300 flex items-center gap-1 hover:bg-neutral-700"
+                                className="text-[10px] font-bold px-2 py-0.5 rounded bg-[#ECE4D0] text-[#A9552E] flex items-center gap-1 hover:bg-[#E0D6BF]"
                               >
                                 <MessageCircle className="w-3 h-3 fill-current" />
                                 <span>Zalo: {photographer.phone}</span>
@@ -421,7 +421,7 @@ export const ShootPlannerDrawer: React.FC<ShootPlannerDrawerProps> = ({
                         <button
                           type="button"
                           onClick={removePhotographer}
-                          className="p-1.5 text-neutral-500 hover:text-red-400 hover:bg-neutral-800 rounded-lg transition-colors cursor-pointer"
+                          className="p-1.5 text-[#8C8377] hover:text-red-400 hover:bg-[#ECE4D0] rounded-lg transition-colors cursor-pointer"
                           title="Bỏ chọn thợ này"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -432,15 +432,15 @@ export const ShootPlannerDrawer: React.FC<ShootPlannerDrawerProps> = ({
                 </>
               )}
               <section className="space-y-3" aria-label="Ảnh mẫu & Shot List tham khảo">
-                <div className="flex items-center justify-between pb-1 border-b border-neutral-800">
+                <div className="flex items-center justify-between pb-1 border-b border-[#D8CFBD]">
                   <div className="flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-amber-400" />
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-300">
+                    <Sparkles className="w-4 h-4 text-[#C76B3C]" />
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-[#554D43]">
                       4. Ảnh mẫu & Shot List tham khảo ({referencePhotos.length})
                     </h3>
                   </div>
-                  <label className="inline-flex items-center gap-1.5 cursor-pointer rounded-lg border border-neutral-700 bg-neutral-800 hover:bg-neutral-700 px-2.5 py-1 text-xs text-amber-300 font-semibold focus-within:ring-2 focus-within:ring-amber-400 transition-colors">
-                    <Upload className="w-3.5 h-3.5 text-amber-400" />
+                  <label className="inline-flex items-center gap-1.5 cursor-pointer rounded-lg border border-[#D8CFBD] bg-[#ECE4D0] hover:bg-[#E0D6BF] px-2.5 py-1 text-xs text-[#A9552E] font-semibold focus-within:ring-2 focus-within:ring-[#C76B3C] transition-colors">
+                    <Upload className="w-3.5 h-3.5 text-[#C76B3C]" />
                     <span>{uploading ? 'Đang xử lý ảnh…' : '+ Tải ảnh lên'}</span>
                     <input
                       type="file"
@@ -453,7 +453,7 @@ export const ShootPlannerDrawer: React.FC<ShootPlannerDrawerProps> = ({
                     />
                   </label>
                 </div>
-                <p className="text-[11px] text-neutral-400 leading-relaxed">
+                <p className="text-[11px] text-[#6E655B] leading-relaxed">
                   Ghim góc chụp từ website hoặc tải ảnh mẫu từ máy/Pinterest (JPG, PNG, WebP) để tạo shot list chi tiết gửi cho thợ ảnh.
                 </p>
 
@@ -462,9 +462,9 @@ export const ShootPlannerDrawer: React.FC<ShootPlannerDrawerProps> = ({
                   {referencePhotos.map((photo, index) => (
                     <figure
                       key={photo.id}
-                      className="group relative min-w-0 rounded-xl border border-neutral-850 hover:border-amber-400/50 bg-neutral-950 overflow-hidden flex flex-col justify-between transition-all"
+                      className="group relative min-w-0 rounded-xl border border-[#D8CFBD] hover:border-[#C76B3C] bg-[#FFFDF9] overflow-hidden flex flex-col justify-between transition-all"
                     >
-                      <div className="relative aspect-square w-full overflow-hidden bg-neutral-900">
+                      <div className="relative aspect-square w-full overflow-hidden bg-[#F3EAD7]">
                         <img
                           src={photo.imageUrl}
                           alt={photo.label}
@@ -479,12 +479,12 @@ export const ShootPlannerDrawer: React.FC<ShootPlannerDrawerProps> = ({
                         >
                           <X className="h-3.5 w-3.5 stroke-[2.5]" />
                         </button>
-                        <span className="absolute left-1.5 top-1.5 px-1.5 py-0.2 rounded bg-black/70 text-[9px] font-mono-spec font-bold text-amber-300">
+                        <span className="absolute left-1.5 top-1.5 px-1.5 py-0.2 rounded bg-black/70 text-[9px] font-mono-spec font-bold text-[#F3EAD7]">
                           #{index + 1}
                         </span>
                       </div>
-                      <figcaption className="p-2 border-t border-neutral-900">
-                        <p className="truncate text-[10px] font-medium text-neutral-300" title={photo.label}>
+                      <figcaption className="p-2 border-t border-[#D8CFBD]">
+                        <p className="truncate text-[10px] font-medium text-[#554D43]" title={photo.label}>
                           {index + 1}. {photo.label}
                         </p>
                         <textarea
@@ -495,14 +495,14 @@ export const ShootPlannerDrawer: React.FC<ShootPlannerDrawerProps> = ({
                           placeholder="Thêm ghi chú góc chụp…"
                           rows={2}
                           onChange={event => updateReferencePhotoNote(photo.id, event.target.value)}
-                          className="mt-1 w-full resize-none rounded-md bg-neutral-900 border border-neutral-800 p-1 text-[11px] text-white placeholder:text-neutral-500 focus:outline-none focus:border-amber-400"
+                          className="mt-1 w-full resize-none rounded-md bg-[#F3EAD7] border border-[#D8CFBD] p-1 text-[11px] text-[#2C2621] placeholder:text-[#8C8377] focus:outline-none focus:border-[#C76B3C]"
                         />
                       </figcaption>
                     </figure>
                   ))}
                 </div>
                 {referencePhotos.length === 0 && (
-                  <p className="text-xs text-neutral-500 italic p-3 bg-neutral-950/40 rounded-xl border border-neutral-800/60">
+                  <p className="text-xs text-[#8C8377] italic p-3 bg-[#F3EAD7] rounded-xl border border-[#D8CFBD]/60">
                     Chưa có ảnh mẫu nào. Ghim ảnh trên website hoặc bấm [+ Tải ảnh lên] từ máy/Pinterest để tạo shot list.
                   </p>
                 )}
@@ -626,19 +626,19 @@ export const ShootPlannerDrawer: React.FC<ShootPlannerDrawerProps> = ({
             </div>
 
             {/* 3. Sticky Footer with Grand Total & CTAs */}
-            <div className="shrink-0 p-5 border-t border-neutral-800 bg-neutral-950 flex flex-col gap-3 shadow-2xl">
+            <div className="shrink-0 p-5 border-t border-[#D8CFBD] bg-[#F3EAD7] flex flex-col gap-3 shadow-2xl">
               {/* Grand Total Box */}
-              <div className="flex items-center justify-between p-3.5 rounded-2xl bg-neutral-900 border border-neutral-800">
+              <div className="flex items-center justify-between p-3.5 rounded-2xl bg-[#F3EAD7] border border-[#D8CFBD]">
                 <div>
-                  <span className="text-[10px] font-bold tracking-wider uppercase text-neutral-400 block">
+                  <span className="text-[10px] font-bold tracking-wider uppercase text-[#6E655B] block">
                     TỔNG DỰ TOÁN BUỔI CHỤP
                   </span>
-                  <span className="text-[11px] text-neutral-500">
+                  <span className="text-[11px] text-[#8C8377]">
                     Vé/nước ({totalSpotCost.toLocaleString('vi-VN')}đ) + Đồ ({totalItemCost.toLocaleString('vi-VN')}đ) + Thợ ({photographerCost.toLocaleString('vi-VN')}đ)
                   </span>
                 </div>
                 <div className="text-right">
-                  <span className="text-xl md:text-2xl font-black text-amber-400 tracking-tight font-mono-spec">
+                  <span className="text-xl md:text-2xl font-black text-[#C76B3C] tracking-tight font-mono-spec">
                     {grandTotalFormatted}
                   </span>
                 </div>
@@ -651,11 +651,11 @@ export const ShootPlannerDrawer: React.FC<ShootPlannerDrawerProps> = ({
                 aria-label="Xuất Thẻ Lịch Trình (Ảnh)"
                 onClick={handleExport}
                 disabled={exporting || uploading || totalCount === 0}
-                className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 hover:from-amber-300 hover:to-amber-400 active:scale-[0.99] text-neutral-950 font-bold text-xs flex items-center justify-center space-x-2 shadow-lg shadow-amber-500/20 transition-all disabled:opacity-50 disabled:cursor-wait cursor-pointer"
+                className="w-full py-3 px-4 rounded-xl bg-[#C76B3C] hover:bg-[#A9552E] active:scale-[0.99] text-white font-bold text-xs flex items-center justify-center space-x-2 shadow-sm transition-all disabled:opacity-50 disabled:cursor-wait cursor-pointer"
               >
                 {exporting ? (
                   <>
-                    <span className="w-3.5 h-3.5 border-2 border-neutral-950 border-t-transparent rounded-full animate-spin" />
+                    <span className="w-3.5 h-3.5 border-2 border-[#2C2621] border-t-transparent rounded-full animate-spin" />
                     <span>Đang xuất PNG…</span>
                   </>
                 ) : (
@@ -670,7 +670,7 @@ export const ShootPlannerDrawer: React.FC<ShootPlannerDrawerProps> = ({
                 <button
                   type="button"
                   onClick={handleCopy}
-                  className="py-3 px-3.5 rounded-xl bg-neutral-800 hover:bg-neutral-700 active:scale-[0.98] text-white font-bold text-xs flex items-center justify-center space-x-1.5 border border-neutral-700 transition-all cursor-pointer"
+                  className="py-3 px-3.5 rounded-xl bg-[#ECE4D0] hover:bg-[#E0D6BF] active:scale-[0.98] text-[#2C2621] font-bold text-xs flex items-center justify-center space-x-1.5 border border-[#D8CFBD] transition-all cursor-pointer"
                 >
                   {copied ? (
                     <>
@@ -679,7 +679,7 @@ export const ShootPlannerDrawer: React.FC<ShootPlannerDrawerProps> = ({
                     </>
                   ) : (
                     <>
-                      <Copy className="w-4 h-4 text-amber-400" />
+                      <Copy className="w-4 h-4 text-[#C76B3C]" />
                       <span>Copy Lịch Trình</span>
                     </>
                   )}
@@ -691,7 +691,7 @@ export const ShootPlannerDrawer: React.FC<ShootPlannerDrawerProps> = ({
                     href={photographer.zaloUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="py-3 px-3.5 rounded-xl bg-kodak-amber hover:bg-amber-400 active:scale-[0.98] text-editorial-bg font-bold text-xs flex items-center justify-center space-x-1.5 transition-all"
+                    className="py-3 px-3.5 rounded-xl bg-[#C76B3C] hover:bg-[#A9552E] active:scale-[0.98] text-white font-bold text-xs flex items-center justify-center space-x-1.5 transition-all"
                   >
                     <MessageCircle className="w-4 h-4 fill-current" />
                     <span>Nhắn Zalo Đặt Lịch</span>
@@ -707,7 +707,7 @@ export const ShootPlannerDrawer: React.FC<ShootPlannerDrawerProps> = ({
                         alert('Vui lòng chọn một thợ ảnh trong danh bạ trước khi đặt lịch.');
                       }
                     }}
-                    className="py-3 px-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 active:scale-[0.98] text-neutral-950 font-bold text-xs flex items-center justify-center space-x-1.5 shadow-md shadow-amber-500/20 transition-all cursor-pointer"
+                    className="py-3 px-3.5 rounded-xl bg-[#C76B3C] hover:bg-[#A9552E] active:scale-[0.98] text-white font-bold text-xs flex items-center justify-center space-x-1.5 shadow-sm transition-all cursor-pointer"
                   >
                     <Camera className="w-4 h-4" />
                     <span>Chọn Thợ Để Đặt Lịch</span>
