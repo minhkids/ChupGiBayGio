@@ -95,6 +95,7 @@ it('loads, edits, and saves spot flower condition and photography guide details'
   render(<ServicesHubAdminView onBack={vi.fn()} />);
   await waitFor(() => expect(serviceHubApi.adminList).toHaveBeenCalled());
 
+  await screen.findByRole('button', { name: 'Sửa Hồ Tây' });
   fireEvent.click(screen.getByRole('button', { name: 'Sửa Hồ Tây' }));
   expect((screen.getByLabelText('Mức độ nở / hiện trạng (%)') as HTMLInputElement).value).toBe('73');
   expect((screen.getByLabelText('Mô tả tình trạng hoa / phong cảnh') as HTMLTextAreaElement).value).toBe('Hoa đang nở.');

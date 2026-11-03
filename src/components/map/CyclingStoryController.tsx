@@ -250,14 +250,6 @@ export function CyclingStoryController({ map, isOpen, mode, targetSpot, waypoint
   return <>
     <style>{STORY_MOTION_CSS}</style>
     {route && finalStop && <ArrivalSpotPopup map={map} stop={finalStop} distanceKm={route.distanceKm} durationMinutes={route.durationMinutes} visible={status === 'arrived'} />}
-    <StoryPlayerControls status={status} progress={progress} isVertical={isVertical} onReplay={handleReplay} onToggleVertical={() => onVerticalModeChange(!isVertical)} onExport={handleExport} onClose={handleClose} exporting={exporting} error={error} />
-    <div className="fixed left-1/2 top-4 z-[110] -translate-x-1/2 rounded-full border border-[#D8CFBD] bg-[#FAF8F4]/95 px-4 py-2 text-center text-[10px] font-semibold uppercase tracking-[0.14em] text-[#6E655B] shadow-lg backdrop-blur-md">
-      <div>{route ? `${route.distanceKm.toLocaleString('vi-VN', { maximumFractionDigits: 1 })} km · ~${Math.round(route.durationMinutes)} phút · ${route.attribution}` : status === 'loading' ? 'Đang tìm đường xe đạp…' : 'Hành trình đạp xe'}</div>
-      {route && <div className="mt-1 flex flex-wrap justify-center gap-x-2 text-[9px] font-medium normal-case tracking-normal">
-        <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer" className="underline">© OpenStreetMap contributors</a>
-        <a href="https://www.openstreetmap.org/fixthemap" target="_blank" rel="noreferrer" className="underline">Sửa bản đồ</a>
-        <a href="https://routing.openstreetmap.de/about.html" target="_blank" rel="noreferrer" className="underline">FOSSGIS routing</a>
-      </div>}
-    </div>
+    <StoryPlayerControls status={status} progress={progress} isVertical={isVertical} onReplay={handleReplay} onToggleVertical={() => onVerticalModeChange(!isVertical)} onExport={handleExport} onClose={handleClose} exporting={exporting} error={error} showRouteAttribution={Boolean(route)} />
   </>;
 }

@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import L from 'leaflet';
 import type { Map as LeafletMap } from 'leaflet';
@@ -33,7 +33,18 @@ it('requests an ordered multi-stop cycling route and flies to the real route ori
   expect(fetchRoute).toHaveBeenCalledWith(stops, expect.any(AbortSignal));
   expect(map.flyTo).toHaveBeenCalledWith([21.03, 105.83], 15.5, expect.objectContaining({ duration: 1.5 }));
   expect(map.openPopup).toHaveBeenCalledOnce();
-  expect(await screen.findByText('1,4 km · ~8 phút · © OpenStreetMap contributors')).toBeTruthy();
+  await waitFor(() => expect(fetchRoute).toHaveBeenCalledOnce());
+  expect(screen.queryByText(/1,4 km · ~8 phút · © OpenStreetMap contributors/)).toBeNull();
+  const toolbar = screen.getByRole('toolbar', { name: 'Điều khiển hành trình đạp xe' });
+  await waitFor(() => expect(within(toolbar).getByRole('link', { name: '© OpenStreetMap contributors' })).toBeTruthy());
+  expect(within(toolbar).getByRole('link', { name: 'FOSSGIS routing' }).getAttribute('href')).toBe('https://routing.openstreetmap.de/about.html');
+});
+
+it('removes route credits with the playback controls when the story closes', async () => {
+  const view = render(<CyclingStoryController map={map} isOpen mode="plan" targetSpot={null} waypoints={stops} isVertical={false} onVerticalModeChange={vi.fn()} onClose={vi.fn()} />);
+  expect(await screen.findByRole('link', { name: 'FOSSGIS routing' })).toBeTruthy();
+  view.unmount();
+  expect(screen.queryByRole('link', { name: 'FOSSGIS routing' })).toBeNull();
 });
 
 it('renders layered vintage vectors, bounded rear dust and clean cased route without obsolete glimmer', async () => {

@@ -13,9 +13,10 @@ interface StoryPlayerControlsProps {
   onClose: () => void;
   exporting: boolean;
   error?: string | null;
+  showRouteAttribution?: boolean;
 }
 
-export function StoryPlayerControls({ status, progress, isVertical, onReplay, onToggleVertical, onExport, onClose, exporting, error }: StoryPlayerControlsProps) {
+export function StoryPlayerControls({ status, progress, isVertical, onReplay, onToggleVertical, onExport, onClose, exporting, error, showRouteAttribution = false }: StoryPlayerControlsProps) {
   const percent = Math.round(Math.max(0, Math.min(1, progress)) * 100);
   const prefersReducedMotion = useReducedMotion();
   const bikeAnimation = prefersReducedMotion ? { y: 0, rotate: 0, scale: 1 } : status === 'playing' ? { y: [0, -2, 0], rotate: [0, -5, 2, 0], scale: [1, 1.08, 1] } : status === 'arrived' ? { scale: [1, 1.24, 1], rotate: [0, -8, 0] } : { y: 0, rotate: 0, scale: 1 };
@@ -35,6 +36,11 @@ export function StoryPlayerControls({ status, progress, isVertical, onReplay, on
         <button type="button" onClick={onExport} aria-label={exporting ? 'Đang xuất video…' : 'Xuất Video Story'} disabled={exporting || status === 'loading' || status === 'error'} className="flex min-h-10 items-center justify-center gap-1.5 rounded-xl bg-[#C76B3C] px-2 text-xs font-bold text-white hover:bg-[#A9552E] disabled:cursor-wait disabled:opacity-50"><Download size={15}/><span className="hidden sm:inline">{exporting ? 'Đang xuất…' : 'Xuất Video Story'}</span><span className="sm:hidden">{exporting ? 'Xuất…' : 'Xuất'}</span></button>
         <button type="button" onClick={onClose} aria-label="Đóng" className="flex min-h-10 items-center justify-center gap-1.5 rounded-xl border border-[#D8CFBD] bg-white px-2 text-xs font-semibold hover:border-[#C76B3C] hover:text-[#A9552E]"><X size={15}/><span className="hidden sm:inline">Đóng</span></button>
       </div>
+      {showRouteAttribution && <p aria-label="Nguồn dữ liệu tuyến đường" className="mt-2 text-center text-[9px] leading-relaxed text-[#8C8377]">
+        <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer" className="underline">© OpenStreetMap contributors</a>
+        {' · '}
+        <a href="https://routing.openstreetmap.de/about.html" target="_blank" rel="noopener noreferrer" className="underline">FOSSGIS routing</a>
+      </p>}
     </div>
   );
 }
