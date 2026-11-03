@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import {
   X,
   ClipboardList,
@@ -56,6 +56,7 @@ export const ShootPlannerDrawer: React.FC<ShootPlannerDrawerProps> = ({
     copyBriefToClipboard,
   } = useShootPlan();
 
+  const reducedMotion = useReducedMotion();
   const [copied, setCopied] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -128,11 +129,11 @@ export const ShootPlannerDrawer: React.FC<ShootPlannerDrawerProps> = ({
 
           {/* Drawer Panel */}
           <motion.aside
-            initial={{ x: '100%' }}
-            animate={{ x: 0 }}
-            exit={{ x: '100%' }}
-            transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-            className="relative z-10 w-full max-w-lg md:max-w-xl h-full bg-[#F7F4EC] border-l border-[#D8CFBD] text-[#2C2621] flex flex-col shadow-2xl pointer-events-auto overflow-hidden"
+            initial={{ transform: reducedMotion ? 'none' : 'translateX(100%)', opacity: 0 }}
+            animate={{ transform: reducedMotion ? 'none' : 'translateX(0%)', opacity: 1 }}
+            exit={{ transform: reducedMotion ? 'none' : 'translateX(100%)', opacity: 0 }}
+            transition={{ duration: reducedMotion ? 0.12 : 0.28, ease: [0.32, 0.72, 0, 1] }}
+            className="relative z-10 w-full max-w-lg md:max-w-xl h-full sm:rounded-l-3xl bg-[#F7F4EC] border-l border-[#D8CFBD] text-[#2C2621] flex flex-col shadow-2xl pointer-events-auto overflow-hidden"
             role="dialog"
             aria-modal="true"
             aria-label="Bản Kế Hoạch & Dự Toán Chi Phí Buổi Chụp"

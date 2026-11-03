@@ -7,6 +7,16 @@ export default {
   ],
   theme: {
     extend: {
+      // Shared curvature for controls, cards and sheets; keep circles unchanged.
+      borderRadius: {
+        DEFAULT: 'var(--radius-md)',
+        sm: 'var(--radius-sm)',
+        md: 'var(--radius-md)',
+        lg: 'var(--radius-lg)',
+        xl: 'var(--radius-xl)',
+        '2xl': 'var(--radius-2xl)',
+        '3xl': 'var(--radius-3xl)',
+      },
       colors: {
         editorial: { bg: '#141312', surface: '#1C1A18', border: '#2E2A27' },
         'kodak-amber': '#F59E0B',

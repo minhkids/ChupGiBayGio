@@ -102,6 +102,14 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
 }) => {
   // Desktop sidebar collapse toggle state
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isDesktopViewport, setIsDesktopViewport] = useState(() => typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia('(min-width: 1024px)').matches);
+  useEffect(() => {
+    if (typeof window.matchMedia !== 'function') return;
+    const media = window.matchMedia('(min-width: 1024px)');
+    const updateViewport = () => setIsDesktopViewport(media.matches);
+    media.addEventListener('change', updateViewport);
+    return () => media.removeEventListener('change', updateViewport);
+  }, []);
 
   // Detail card tab state: 'info' (Cẩm nang) | 'posts' (Bài viết liên quan)
   const [detailTab, setDetailTab] = useState<'info' | 'posts'>('info');
@@ -591,6 +599,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
           <MapStyleCategoryBrowser
             categories={placeCategories}
             selectedCategory={filters.placeCategory}
+            autoOpenSharedPost={isDesktopViewport}
             onSelectCategory={placeCategory => onChangeFilters(prev => ({ ...prev, placeCategory }))}
             showFilmLabs={showFilmLabs}
             onToggleFilmLabs={() => setShowFilmLabs(current => !current)}
@@ -957,6 +966,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
           <MapStyleCategoryBrowser
             categories={placeCategories}
             selectedCategory={filters.placeCategory}
+            autoOpenSharedPost={!isDesktopViewport}
             onSelectCategory={placeCategory => onChangeFilters(prev => ({ ...prev, placeCategory }))}
             showFilmLabs={showFilmLabs}
             onToggleFilmLabs={() => setShowFilmLabs(current => !current)}

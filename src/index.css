@@ -54,7 +54,7 @@
 }
 ::-webkit-scrollbar-thumb {
   background: var(--ui-border);
-  border-radius: 0;
+  border-radius: var(--radius-full);
 }
 ::-webkit-scrollbar-thumb:hover {
   background: var(--editorial-muted);
@@ -104,9 +104,9 @@
 
 .leaflet-popup-content-wrapper {
   background: var(--ui-surface) !important;
-  border-radius: 0 !important;
+  border-radius: var(--radius-xl) !important;
   border: 1px solid var(--ui-border) !important;
-  box-shadow: 3px 3px 0px #1C1D1F !important;
+  box-shadow: 0 8px 28px #2C262126 !important;
   padding: 0 !important;
   overflow: hidden !important;
 }
