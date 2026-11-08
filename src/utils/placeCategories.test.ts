@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getPlaceCategoryLabel, matchesPlaceCategory } from './placeCategories';
+import { DEFAULT_PLACE_CATEGORIES, getPlaceCategoryLabel, matchesPlaceCategory } from './placeCategories';
 import type { SeasonalTrend } from '../types';
 
 const trend: SeasonalTrend = {
@@ -9,6 +9,11 @@ const trend: SeasonalTrend = {
 };
 
 describe('place category filters', () => {
+  it('keeps the live áo dài category available when the category API is unavailable', () => {
+    expect(DEFAULT_PLACE_CATEGORIES).toContainEqual({ id: 'AO_DAI', label: 'Áo dài', sortOrder: 8 });
+    expect(getPlaceCategoryLabel('AO_DAI')).toBe('Áo dài');
+  });
+
   it('includes a place in each assigned category but not unassigned groups', () => {
     expect(matchesPlaceCategory(trend, 'CAFE')).toBe(true);
     expect(matchesPlaceCategory(trend, 'RED_RIVER')).toBe(true);

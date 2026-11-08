@@ -113,10 +113,12 @@ export const MapStyleCategoryBrowser = ({ categories, selectedCategory, autoOpen
         {categories.map(category => {
           const selected = selectedCategory === category.id;
           const halloween = category.id === 'HALLOWEEN';
+          const aoDai = category.id === 'AO_DAI';
           const halloweenClasses = selected
-            ? 'relative mt-3 border-[#12303D] bg-[#12303D] text-[#FFF7E8] shadow-sm'
-            : 'relative mt-3 border-[#C76B3C]/60 bg-[#FFF7EB] text-[#12303D] hover:border-[#12303D]';
-          return <button key={category.id} type="button" aria-pressed={selected} onClick={() => onSelectCategory(category.id)} className={`min-h-12 rounded-xl border px-3 py-3 text-left text-sm font-semibold transition-colors ${halloween ? halloweenClasses : selected ? 'border-[#2C2621] bg-[#2C2621] text-white' : 'border-[#D8CFBD] bg-[#FAF8F4] text-[#554D43] hover:bg-white'}`}>
+            ? 'border-[#12303D] bg-[#12303D] text-[#FFF7E8] shadow-sm'
+            : 'border-[#C76B3C]/60 bg-[#FFF7EB] text-[#12303D] hover:border-[#12303D]';
+          const categoryClasses = halloween ? halloweenClasses : selected ? 'border-[#2C2621] bg-[#2C2621] text-white' : 'border-[#D8CFBD] bg-[#FAF8F4] text-[#554D43] hover:bg-white';
+          return <button key={category.id} type="button" aria-pressed={selected} onClick={() => onSelectCategory(category.id)} className={`min-h-12 rounded-xl border px-3 py-3 text-left text-sm font-semibold transition-colors ${halloween || aoDai ? 'relative mt-3' : ''} ${categoryClasses}`}>
             <PlaceCategoryLabel id={category.id} label={category.label} selected={selected} />
           </button>;
         })}

@@ -26,6 +26,22 @@ describe('MapStyleCategoryBrowser', () => {
     expect(screen.getByRole('button', { name: 'Quán cà phê' }).querySelector('svg[data-icon="witch-hat"]')).toBeNull();
   });
 
+  it('shows the supplied áo dài illustration above the AO_DAI category and keeps it selectable', () => {
+    const onSelectCategory = vi.fn();
+    render(<MapStyleCategoryBrowser
+      categories={[{ id: 'AO_DAI', label: 'Áo dài', sortOrder: 8 }, { id: 'HALLOWEEN', label: 'Halloween', sortOrder: 9 }, { id: 'CAFE', label: 'Quán cà phê', sortOrder: 1 }]}
+      selectedCategory="ALL"
+      onSelectCategory={onSelectCategory}
+    />);
+
+    const aoDaiCategory = screen.getByRole('button', { name: 'Áo dài' });
+    expect(aoDaiCategory.querySelector('img[data-icon="ao-dai"]')?.getAttribute('src')).toBe('/icons/ao-dai-category.webp');
+    expect(screen.getByRole('button', { name: 'Halloween' }).querySelector('svg[data-icon="witch-hat"]')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Quán cà phê' }).querySelector('img[data-icon="ao-dai"]')).toBeNull();
+    fireEvent.click(aoDaiCategory);
+    expect(onSelectCategory).toHaveBeenCalledWith('AO_DAI');
+  });
+
   it('shows three accessories instead of a shot board while preserving the filter and guide', () => {
     const onSelectCategory = vi.fn();
     render(<MapStyleCategoryBrowser

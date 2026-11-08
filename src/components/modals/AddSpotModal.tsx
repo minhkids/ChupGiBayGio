@@ -385,10 +385,12 @@ export const AddSpotModal: React.FC<AddSpotModalProps> = ({
               {placeCategories.map(({ id, label }) => {
                 const selected = selectedPlaceCategories.includes(id);
                 const isHalloween = id === 'HALLOWEEN';
+                const isAoDai = id === 'AO_DAI';
                 const halloweenClasses = selected
-                  ? 'relative mt-3 border-[#12303D] bg-[#12303D] text-[#FFF7E8] shadow-sm'
-                  : 'relative mt-3 border-[#C76B3C]/60 bg-[#FFF7EB] text-[#12303D] hover:border-[#12303D]';
-                return <label key={id} className={`inline-flex min-h-10 cursor-pointer items-center gap-2 border px-3 py-2 text-xs transition-colors ${isHalloween ? halloweenClasses : selected ? 'border-terracotta bg-terracotta text-white' : 'border-slateInk/40 bg-paper-warm text-slateInk hover:border-slateInk'}`}>
+                  ? 'border-[#12303D] bg-[#12303D] text-[#FFF7E8] shadow-sm'
+                  : 'border-[#C76B3C]/60 bg-[#FFF7EB] text-[#12303D] hover:border-[#12303D]';
+                const categoryClasses = isHalloween ? halloweenClasses : selected ? 'border-terracotta bg-terracotta text-white' : 'border-slateInk/40 bg-paper-warm text-slateInk hover:border-slateInk';
+                return <label key={id} className={`inline-flex min-h-10 cursor-pointer items-center gap-2 border px-3 py-2 text-xs transition-colors ${isHalloween || isAoDai ? 'relative mt-3' : ''} ${categoryClasses}`}>
                   <input
                     type="checkbox"
                     aria-label={`Nhóm địa điểm: ${label}`}

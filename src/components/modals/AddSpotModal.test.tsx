@@ -8,7 +8,7 @@ describe('AddSpotModal', () => {
   afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
   const selectedLocation = { lat: 21.04, lng: 105.84, address: 'Hà Nội', placeName: 'Tên do bản đồ gợi ý' };
 
-  const renderModal = (onSubmitNewSpot = vi.fn()) => {
+  const renderModal = (onSubmitNewSpot = vi.fn(), placeCategories = DEFAULT_PLACE_CATEGORIES) => {
     render(
       <AddSpotModal
         isOpen
@@ -19,7 +19,7 @@ describe('AddSpotModal', () => {
         onStartMapPick={vi.fn()}
         onCancelMapPick={vi.fn()}
         onClearLocation={vi.fn()}
-        placeCategories={DEFAULT_PLACE_CATEGORIES}
+        placeCategories={placeCategories}
       />
     );
     return onSubmitNewSpot;
@@ -67,6 +67,12 @@ describe('AddSpotModal', () => {
       seasonalTrend: expect.objectContaining({ placeCategories: ['CAFE'] }),
     })));
     expect(await screen.findByText(/đang chờ quản trị viên duyệt/i)).toBeTruthy();
+  });
+
+  it('shows the áo dài artwork on the AO_DAI category without changing its form label', () => {
+    renderModal();
+    const checkbox = screen.getByLabelText('Nhóm địa điểm: Áo dài');
+    expect(checkbox.closest('label')?.querySelector('img[data-icon="ao-dai"]')?.getAttribute('src')).toBe('/icons/ao-dai-category.webp');
   });
 
   it('waits for persistent creation and keeps form data on server failure', async () => {

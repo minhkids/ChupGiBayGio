@@ -11,7 +11,7 @@ describe('PlaceCategoryFilterControl', () => {
     render(<PlaceCategoryFilterControl value="ALL" onChange={onChange} />);
     const select = screen.getByRole('combobox', { name: 'Nhóm địa điểm' });
     expect(Array.from(select.querySelectorAll('option')).map(option => option.text)).toEqual([
-      'Tất cả', 'Quán cà phê', 'Vintage', 'Trung tâm thương mại', 'Gần sông Hồng', 'Chụp hoàng hôn',
+      'Tất cả', 'Quán cà phê', 'Vintage', 'Trung tâm thương mại', 'Gần sông Hồng', 'Chụp hoàng hôn', 'Áo dài',
     ]);
     fireEvent.change(select, { target: { value: 'RED_RIVER' } });
     expect(onChange).toHaveBeenCalledWith('RED_RIVER');

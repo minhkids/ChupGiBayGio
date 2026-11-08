@@ -6,6 +6,7 @@ export const DEFAULT_PLACE_CATEGORIES: PlaceCategory[] = [
   { id: 'SHOPPING_MALL', label: 'Trung tâm thương mại', sortOrder: 3 },
   { id: 'RED_RIVER', label: 'Gần sông Hồng', sortOrder: 4 },
   { id: 'SUNSET', label: 'Chụp hoàng hôn', sortOrder: 5 },
+  { id: 'AO_DAI', label: 'Áo dài', sortOrder: 8 },
 ];
 
 export function matchesPlaceCategory(trend: Pick<SeasonalTrend, 'placeCategories'>, category: PlaceCategoryFilter): boolean {

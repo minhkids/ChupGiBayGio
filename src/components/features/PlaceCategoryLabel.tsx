@@ -5,6 +5,20 @@ interface PlaceCategoryLabelProps {
 }
 
 export const PlaceCategoryLabel = ({ id, label, selected = false }: PlaceCategoryLabelProps) => {
+  if (id === 'AO_DAI') {
+    return (
+      <span className="inline-flex items-center">
+        <img
+          aria-hidden="true"
+          alt=""
+          data-icon="ao-dai"
+          src="/icons/ao-dai-category.webp"
+          className="pointer-events-none absolute right-1 -top-3 h-11 w-5 -rotate-12 object-contain"
+        />
+        <span>{label}</span>
+      </span>
+    );
+  }
   if (id !== 'HALLOWEEN') return <>{label}</>;
 
   return (
