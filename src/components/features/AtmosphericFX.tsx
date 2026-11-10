@@ -146,10 +146,10 @@ function createParticle(
       return {
         x: Math.random() * w * 1.2,
         y: -10 - Math.random() * 50,
-        vx: (Math.random() - 0.5) * 1.5 + windForce,
-        vy: 0.8 + Math.random() * 1.2,
-        size: 2 + Math.random() * 4,
-        opacity: 0.5 + Math.random() * 0.4,
+        vx: (Math.random() - 0.5) * 0.6 + windForce * 0.3,
+        vy: 0.35 + Math.random() * 0.55,
+        size: 2 + Math.random() * 3,
+        opacity: 0.75 + Math.random() * 0.25,
         rotation: Math.random() * Math.PI * 2,
         rotationSpeed: (Math.random() - 0.5) * 0.03,
         type: 'snow',
@@ -298,12 +298,12 @@ function drawSnowflake(ctx: CanvasRenderingContext2D, p: Particle) {
   ctx.translate(p.x, p.y);
   ctx.rotate(p.rotation);
   ctx.globalAlpha = p.opacity;
-  ctx.fillStyle = p.color;
-
-  const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, p.size);
-  gradient.addColorStop(0, 'rgba(255,255,255,0.9)');
-  gradient.addColorStop(0.5, 'rgba(240,248,255,0.4)');
-  gradient.addColorStop(1, 'rgba(240,248,255,0)');
+  ctx.shadowColor = 'rgba(255,255,255,0.9)';
+  ctx.shadowBlur = 6;
+  const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, p.size * 1.8);
+  gradient.addColorStop(0, 'rgba(255,255,255,1)');
+  gradient.addColorStop(0.45, 'rgba(255,255,255,0.85)');
+  gradient.addColorStop(1, 'rgba(255,255,255,0)');
   ctx.fillStyle = gradient;
   ctx.beginPath();
   ctx.arc(0, 0, p.size, 0, Math.PI * 2);
@@ -396,8 +396,9 @@ export const AtmosphericFX: React.FC<AtmosphericFXProps> = ({
   const lastFlashRef = useRef<number>(0);
   const flashActiveRef = useRef(false);
 
-  const TARGET_SNOW = 14;
   const TARGET_SUNBEAMS = 5;
+  const winterSnow = season === 'winter' || [11, 12, 1].includes(new Date().getMonth() + 1);
+  const snowBudget = typeof window !== 'undefined' && window.innerWidth < 768 ? 20 : 40;
 
   const getMaxParticles = useCallback(() => {
     if (!isActive || particleDensity === 0) return 0;
@@ -441,16 +442,12 @@ export const AtmosphericFX: React.FC<AtmosphericFXProps> = ({
 
     // ─── Initial Population (immediate display without waiting for drift) ───
     const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-    const snowBudget = Math.min(TARGET_SNOW, window.innerWidth < 768 ? 8 : 14);
-    if (!reducedMotion && particlesRef.current.length === 0 && (effect === 'clear' || effect === 'cloudy')) {
+    if (!reducedMotion && winterSnow && particlesRef.current.length === 0) {
       const initList: Particle[] = [];
       for (let i = 0; i < snowBudget; i++) {
         const flake = createParticle(w(), h(), 'snow', 'winter', windSpeed);
         flake.y = Math.random() * h();
         initList.push(flake);
-      }
-      if (season !== 'winter') {
-        for (let i = 0; i < TARGET_SUNBEAMS; i++) initList.push(createSunbeam(w(), h(), i, true));
       }
       particlesRef.current = initList;
     }
@@ -505,11 +502,16 @@ export const AtmosphericFX: React.FC<AtmosphericFXProps> = ({
       }
 
       // ─── 5. Replenish particles by category ───
-      if (effect === 'clear' || effect === 'cloudy') {
-        const snowCount = particles.filter((p) => p.type === 'snow').length;
+      if (winterSnow) {
+        let snowCount = 0;
+        for (const p of particles) if (p.type === 'snow') snowCount++;
+        while (snowCount < snowBudget) {
+          particles.push(createParticle(w(), h(), 'snow', 'winter', windSpeed));
+          snowCount++;
+        }
+      } else if (effect === 'clear' || effect === 'cloudy') {
         const beamCount = particles.filter((p) => p.type === 'sunbeam').length;
-        if (snowCount < snowBudget) particles.push(createParticle(w(), h(), 'snow', 'winter', windSpeed));
-        if (season !== 'winter' && beamCount < TARGET_SUNBEAMS) particles.push(createSunbeam(w(), h(), beamCount, false));
+        if (beamCount < TARGET_SUNBEAMS) particles.push(createSunbeam(w(), h(), beamCount, false));
       } else {
         // Standard weather replenishment
         while (particles.length < maxP) {
@@ -584,33 +586,25 @@ export const AtmosphericFX: React.FC<AtmosphericFXProps> = ({
       }
 
       // DEBUG: Log particle count every 60 frames
-      if (pLifeCounter++ % 60 === 0) {
-        console.log(`[AtmosphericFX] effect: ${effect}, particles: ${particles.length}`);
-      }
-
       animFrameRef.current = requestAnimationFrame(animate);
     };
 
     if (reducedMotion) return () => window.removeEventListener('resize', resize);
-    let pLifeCounter = 0;
     animate();
 
     return () => {
       window.removeEventListener('resize', resize);
       cancelAnimationFrame(animFrameRef.current);
     };
-  }, [effect, season, timeOfDay, particleDensity, overlayOpacity, colorTemperature, windSpeed, isActive, getMaxParticles]);
+  }, [effect, season, timeOfDay, particleDensity, overlayOpacity, colorTemperature, windSpeed, isActive, getMaxParticles, winterSnow, snowBudget]);
 
   if (!isActive) return null;
 
   return (
     <canvas
       ref={canvasRef}
-      className="fixed inset-0 w-screen h-screen pointer-events-none"
-      style={{
-        zIndex: 'var(--z-base)',
-        mixBlendMode: 'normal',
-      }}
+      className="pointer-events-none fixed inset-0 z-[8] h-screen w-screen"
+      style={{ mixBlendMode: 'normal' }}
       aria-hidden="true"
     />
   );
