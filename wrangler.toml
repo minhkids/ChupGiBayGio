@@ -1,6 +1,7 @@
 name = "chupgibaygio"
 main = "src/workers/frontend.ts"
 compatibility_date = "2024-10-02"
+previews = { }
 
 [assets]
 binding = "ASSETS"
