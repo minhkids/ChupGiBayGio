@@ -86,6 +86,14 @@
   box-shadow: 2px 2px 0px #1C1D1F;
 }
 
+.winter-panel {
+  box-shadow: 0 16px 36px rgba(28, 36, 48, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+.winter-panel button:hover,
+.winter-panel a:hover {
+  filter: brightness(1.03);
+}
+
 .film-border-amber {
   border: 1px solid #E09F3E;
   box-shadow: 2px 2px 0px #E09F3E;

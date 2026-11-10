@@ -14,12 +14,12 @@ it('retains the description without an unverified bloom claim in alternate spot 
   const callbacks = {
     onToggleSave: vi.fn(), handleOpenDirections: vi.fn(), handleShareSpot: vi.fn(), onOpenReportModal: vi.fn(), onOpenAddPostModal: vi.fn(),
   } as unknown as LayoutCallbacks;
-  render(<ShootPlanProvider><SpotDetailContent spot={spot} activePhotoIdx={0} setActivePhotoIdx={vi.fn()} detailTab="info" setDetailTab={vi.fn()} savedSpotIds={[]} callbacks={callbacks} /></ShootPlanProvider>);
+  render(<ShootPlanProvider><SpotDetailContent spot={spot} activePhotoIdx={0} setActivePhotoIdx={vi.fn()} savedSpotIds={[]} callbacks={callbacks} /></ShootPlanProvider>);
   expect(screen.getByText(spot.description)).toBeTruthy();
   expect(screen.queryByText(/85% ĐANG NỞ/i)).toBeNull();
   expect(screen.queryByText('Báo nở')).toBeNull();
   cleanup();
-  render(<ShootPlanProvider><MobileSheet spot={spot} savedSpotIds={[]} callbacks={callbacks} uiState={{ detailTab:'info',setDetailTab:vi.fn(),activePhotoIdx:0,setActivePhotoIdx:vi.fn() }} onClose={vi.fn()} /></ShootPlanProvider>);
+  render(<ShootPlanProvider><MobileSheet spot={spot} savedSpotIds={[]} callbacks={callbacks} uiState={{ activePhotoIdx:0,setActivePhotoIdx:vi.fn() }} onClose={vi.fn()} /></ShootPlanProvider>);
   expect(screen.getByText(spot.description)).toBeTruthy();
   expect(screen.queryByText(/85% ĐANG NỞ/i)).toBeNull();
   expect(screen.queryByText('Báo nở')).toBeNull();

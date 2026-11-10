@@ -35,7 +35,7 @@
     "vaul": "^1.1.2"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20241022.0",
+    "@cloudflare/workers-types": "^5.20261110.1",
     "@playwright/test": "^1.63.0",
     "@testing-library/react": "^16.3.3",
     "@types/node": "^24.13.3",
@@ -50,7 +50,7 @@
     "typescript": "~6.0.2",
     "vite": "^8.3.0",
     "vitest": "^5.0.3",
-    "wrangler": "^3.80.0"
+    "wrangler": "^4.149.0"
   },
   "engines": {
     "node": ">=22.12.0"

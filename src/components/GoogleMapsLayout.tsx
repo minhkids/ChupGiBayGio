@@ -112,7 +112,6 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
   }, []);
 
   // Detail card tab state: 'info' (Cẩm nang) | 'posts' (Bài viết liên quan)
-  const [detailTab, setDetailTab] = useState<'info' | 'posts'>('info');
 
   // Mobile drawer snap: 'peek' (110px) | 'half' (48vh) | 'full' (86vh)
   const [mobileSnap, setMobileSnap] = useState<'peek' | 'half' | 'full'>('half');
@@ -344,7 +343,6 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
           onSelectSpot={(spot) => {
             onSelectSpot(spot);
             setActivePhotoIdx(0);
-            setDetailTab('info');
           }}
           activeRegionId={activeRegionId}
           userCoords={filters.userCoords}
@@ -618,7 +616,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -30 }}
             transition={{ duration: 0.25, ease: 'easeOut' }}
-            className={`hidden lg:flex flex-col fixed top-3 bottom-3 z-30 w-[420px] rounded-2xl shadow-2xl border border-[#D8CFBD] bg-[#FAF8F4] text-[#2C2621] overflow-hidden transition-all duration-300 ease-out ${isSidebarCollapsed ? 'left-[96px] max-w-[calc(100vw-112px)]' : 'left-[560px] max-w-[calc(100vw-576px)]'
+            className={`winter-panel hidden lg:flex flex-col fixed top-3 bottom-3 z-30 w-[420px] rounded-3xl border border-[#D8CFBD] bg-[#FAF8F4] text-[#2C2621] overflow-hidden transition-all duration-300 ease-out ${isSidebarCollapsed ? 'left-[96px] max-w-[calc(100vw-112px)]' : 'left-[560px] max-w-[calc(100vw-576px)]'
               }`}
           >
             {/* Cover Photo Gallery Banner */}
@@ -710,37 +708,10 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                 </div>
               </div>
 
-              {/* Sub-navbar inside detail card */}
-              <div className="flex items-center p-1 bg-[#ECE4D0] rounded-lg text-sm font-semibold">
-                <button
-                  type="button"
-                  onClick={() => setDetailTab('info')}
-                  className={`flex-1 py-1.5 rounded-md transition-all ${detailTab === 'info'
-                      ? 'bg-[#FAF8F4] text-[#2C2621] shadow-xs'
-                      : 'text-[#6E655B] hover:text-[#2C2621]'
-                    }`}
-                >
-                  Cẩm Nang & Góc Chụp
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setDetailTab('posts')}
-                  className={`flex-1 py-1.5 rounded-md transition-all flex items-center justify-center space-x-1 ${detailTab === 'posts'
-                      ? 'bg-[#FAF8F4] text-blue-700 shadow-xs'
-                      : 'text-[#6E655B] hover:text-[#2C2621]'
-                    }`}
-                >
-                  <span>Bài Đăng FB</span>
-                  <span className="text-xs px-1.5 bg-blue-100 text-blue-700 rounded font-mono-spec">
-                    {selectedSpot.inspirationPosts?.length || 0}
-                  </span>
-                </button>
-              </div>
             </div>
 
             {/* Scrollable Detail Body */}
             <div className="flex-1 overflow-y-auto p-5 space-y-5">
-              {detailTab === 'info' ? (
                 <>
                   {/* Quick Action Row */}
                   <div className="grid grid-cols-2 gap-2 py-1">
@@ -826,73 +797,6 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                     </div>
                   </div>
                 </>
-              ) : (
-                /* DETAIL TAB: REAL POSTS SPECIFICALLY FOR THIS SPOT */
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-mono-spec font-bold text-blue-700">
-                      BÀI ĐĂNG THỰC TẾ ({selectedSpot.inspirationPosts?.length || 0})
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => onOpenAddPostModal(selectedSpot.id)}
-                      className="text-xs text-blue-700 font-mono-spec font-bold hover:underline"
-                    >
-                      + Thêm bài viết
-                    </button>
-                  </div>
-
-                  {(!selectedSpot.inspirationPosts || selectedSpot.inspirationPosts.length === 0) ? (
-                    <div className="py-8 text-center text-neutral-400 text-xs">
-                      Chưa có bài viết nào cho điểm chụp này. Hãy là người đầu tiên chia sẻ!
-                    </div>
-                  ) : (
-                    selectedSpot.inspirationPosts.map(post => (
-                      <div
-                        key={post.id}
-                        className="p-4 rounded-xl border border-[#D8CFBD] bg-white space-y-2"
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-2">
-                            <img
-                              src={post.authorAvatar}
-                              alt={post.authorName}
-                              className="w-6 h-6 rounded-full object-cover"
-                            />
-                            <div>
-                              <div className="text-sm font-bold text-[#2C2621]">
-                                {post.authorName}
-                              </div>
-                              <div className="text-xs text-[#8C8377] font-mono-spec">
-                                {post.postDate}
-                              </div>
-                            </div>
-                          </div>
-
-                          <a
-                            href={post.postUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-neutral-400 hover:text-blue-600 p-1"
-                          >
-                            <ExternalLink className="w-3.5 h-3.5" />
-                          </a>
-                        </div>
-
-                        <p className="text-sm text-[#554D43] font-sans leading-relaxed">
-                          {post.fullContent || post.caption}
-                        </p>
-
-                        {post.cameraSettings && (
-                          <div className="text-xs font-mono-spec text-[#6E655B] bg-[#F3EAD7] px-2 py-1 rounded">
-                            📷 {post.cameraSettings}
-                          </div>
-                        )}
-                      </div>
-                    ))
-                  )}
-                </div>
-              )}
             </div>
           </motion.div>
         )}

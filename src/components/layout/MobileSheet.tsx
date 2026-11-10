@@ -11,7 +11,7 @@ interface MobileSheetProps {
   spot: Spot | null;
   savedSpotIds: string[];
   callbacks: LayoutCallbacks;
-  uiState: Pick<SharedUIState, 'detailTab' | 'activePhotoIdx' | 'setDetailTab' | 'setActivePhotoIdx'>;
+  uiState: Pick<SharedUIState, 'activePhotoIdx' | 'setActivePhotoIdx'>;
   onClose: () => void;
   className?: string;
 }

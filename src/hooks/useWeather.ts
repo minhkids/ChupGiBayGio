@@ -99,8 +99,8 @@ function deriveSeason(month: number): Season {
   // Vietnamese seasons (Northern Vietnam / Hanoi context)
   if (month >= 2 && month <= 4) return 'spring';
   if (month >= 5 && month <= 8) return 'summer';
-  if (month >= 9 && month <= 11) return 'autumn';
-  return 'winter'; // Dec, Jan
+  if (month >= 9 && month <= 10) return 'autumn';
+  return 'winter'; // Nov–Jan
 }
 
 function deriveTimeOfDay(now: Date, sunrise: string, sunset: string): TimeOfDay {
