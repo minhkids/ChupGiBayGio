@@ -1,5 +1,5 @@
 /**
- * Generates filled layout exports for the PR (requires: npm run build && npm run preview).
+ * Generates filled layout exports for the PR (requires: npm run build && npm run vite:preview).
  */
 import { chromium } from '@playwright/test';
 import path from 'node:path';

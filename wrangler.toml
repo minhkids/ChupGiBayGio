@@ -1,6 +1,11 @@
 name = "chupgibaygio"
 main = "src/workers/frontend.ts"
 compatibility_date = "2024-10-02"
+workers_dev = true
+preview_urls = true
+
+[build]
+command = "npm run build"
 
 [assets]
 binding = "ASSETS"
