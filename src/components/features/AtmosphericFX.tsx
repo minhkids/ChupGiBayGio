@@ -72,25 +72,6 @@ const TIME_OVERLAYS: Record<TimeOfDay, string> = {
 // ═══════════════════════════════════════════════════════════════
 // SPECIFIC FACTORY HELPERS FOR CLEAR/SUNNY CONDITIONS
 // ═══════════════════════════════════════════════════════════════
-function createAutumnLeaf(w: number, h: number, windSpeed: number, isInitial = false): Particle {
-  const windForce = Math.min(windSpeed / 25, 1);
-  const color = AUTUMN_LEAF_COLORS[Math.floor(Math.random() * AUTUMN_LEAF_COLORS.length)];
-  return {
-    x: Math.random() * (w + 60) - 30,
-    y: isInitial ? Math.random() * h : -30 - Math.random() * 50,
-    vx: 0.6 + Math.random() * 1.2 + windForce * 0.8,
-    vy: 0.7 + Math.random() * 0.9,
-    size: 14 + Math.random() * 8, // Clearly visible 14–22px
-    opacity: 0.75 + Math.random() * 0.22,
-    rotation: Math.random() * Math.PI * 2,
-    rotationSpeed: (Math.random() - 0.5) * 0.035,
-    type: 'leaf',
-    color,
-    life: isInitial ? Math.floor(Math.random() * 200) : 0,
-    maxLife: 700 + Math.random() * 400,
-  };
-}
-
 function createSunbeam(w: number, h: number, index: number, isInitial = false): Particle {
   // Distribute beam origins across the top width
   const slotWidth = w / 5;
@@ -226,7 +207,20 @@ function createParticle(
           maxLife: 500,
         };
       }
-      return createAutumnLeaf(w, h, windSpeed);
+      return {
+        x: Math.random() * w * 1.2,
+        y: -10 - Math.random() * 40,
+        vx: (Math.random() - 0.5) * 0.6 + windForce * 0.4,
+        vy: 0.45 + Math.random() * 0.7,
+        size: 1.6 + Math.random() * 2.4,
+        opacity: 0.55 + Math.random() * 0.35,
+        rotation: 0,
+        rotationSpeed: 0,
+        type: 'snow',
+        color: '#F7FBFF',
+        life: 0,
+        maxLife: 700,
+      };
     }
   }
 }
@@ -402,8 +396,7 @@ export const AtmosphericFX: React.FC<AtmosphericFXProps> = ({
   const lastFlashRef = useRef<number>(0);
   const flashActiveRef = useRef(false);
 
-  // Targets for clear / sunny autumn weather
-  const TARGET_LEAVES = 15;
+  const TARGET_SNOW = 14;
   const TARGET_SUNBEAMS = 5;
 
   const getMaxParticles = useCallback(() => {
@@ -447,15 +440,17 @@ export const AtmosphericFX: React.FC<AtmosphericFXProps> = ({
     const h = () => window.innerHeight;
 
     // ─── Initial Population (immediate display without waiting for drift) ───
-    if (particlesRef.current.length === 0 && (effect === 'clear' || effect === 'cloudy')) {
+    const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    const snowBudget = Math.min(TARGET_SNOW, window.innerWidth < 768 ? 8 : 14);
+    if (!reducedMotion && particlesRef.current.length === 0 && (effect === 'clear' || effect === 'cloudy')) {
       const initList: Particle[] = [];
-      // ~15 autumn leaves scattered across the screen
-      for (let i = 0; i < TARGET_LEAVES; i++) {
-        initList.push(createAutumnLeaf(w(), h(), windSpeed, true));
+      for (let i = 0; i < snowBudget; i++) {
+        const flake = createParticle(w(), h(), 'snow', 'winter', windSpeed);
+        flake.y = Math.random() * h();
+        initList.push(flake);
       }
-      // ~5 sunbeams
-      for (let i = 0; i < TARGET_SUNBEAMS; i++) {
-        initList.push(createSunbeam(w(), h(), i, true));
+      if (season !== 'winter') {
+        for (let i = 0; i < TARGET_SUNBEAMS; i++) initList.push(createSunbeam(w(), h(), i, true));
       }
       particlesRef.current = initList;
     }
@@ -511,15 +506,10 @@ export const AtmosphericFX: React.FC<AtmosphericFXProps> = ({
 
       // ─── 5. Replenish particles by category ───
       if (effect === 'clear' || effect === 'cloudy') {
-        const leafCount = particles.filter((p) => p.type === 'leaf' || p.type === 'petal').length;
+        const snowCount = particles.filter((p) => p.type === 'snow').length;
         const beamCount = particles.filter((p) => p.type === 'sunbeam').length;
-
-        if (leafCount < TARGET_LEAVES) {
-          particles.push(createAutumnLeaf(w(), h(), windSpeed, false));
-        }
-        if (beamCount < TARGET_SUNBEAMS) {
-          particles.push(createSunbeam(w(), h(), beamCount, false));
-        }
+        if (snowCount < snowBudget) particles.push(createParticle(w(), h(), 'snow', 'winter', windSpeed));
+        if (season !== 'winter' && beamCount < TARGET_SUNBEAMS) particles.push(createSunbeam(w(), h(), beamCount, false));
       } else {
         // Standard weather replenishment
         while (particles.length < maxP) {
@@ -601,6 +591,7 @@ export const AtmosphericFX: React.FC<AtmosphericFXProps> = ({
       animFrameRef.current = requestAnimationFrame(animate);
     };
 
+    if (reducedMotion) return () => window.removeEventListener('resize', resize);
     let pLifeCounter = 0;
     animate();
 

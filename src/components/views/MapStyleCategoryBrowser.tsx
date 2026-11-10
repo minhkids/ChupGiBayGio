@@ -94,7 +94,8 @@ export const MapStyleCategoryBrowser = ({ categories, selectedCategory, autoOpen
     <section aria-label="Khám phá style chụp" className="editorial-motion space-y-5 sm:space-y-4">
       <header className="space-y-1">
         <p className="font-mono-spec text-[10px] font-bold uppercase tracking-[0.14em] text-[#C76B3C]">Style finder / map</p>
-        <h2 className="text-[22px] font-bold leading-tight text-[#2C2621]">Bạn định chụp style gì?</h2>
+        <h2 className="text-[22px] font-bold leading-tight tracking-tight text-[#2C2621]">Bạn định chụp style gì?</h2>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#6E7C93]">Mùa đông · Hà Nội</p>
         <p className="text-sm leading-relaxed text-[#6E655B]">Chọn style để lọc các điểm chụp trên bản đồ.</p>
       </header>
 

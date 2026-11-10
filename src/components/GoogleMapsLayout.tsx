@@ -616,7 +616,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -30 }}
             transition={{ duration: 0.25, ease: 'easeOut' }}
-            className={`hidden lg:flex flex-col fixed top-3 bottom-3 z-30 w-[420px] rounded-2xl shadow-2xl border border-[#D8CFBD] bg-[#FAF8F4] text-[#2C2621] overflow-hidden transition-all duration-300 ease-out ${isSidebarCollapsed ? 'left-[96px] max-w-[calc(100vw-112px)]' : 'left-[560px] max-w-[calc(100vw-576px)]'
+            className={`winter-panel hidden lg:flex flex-col fixed top-3 bottom-3 z-30 w-[420px] rounded-3xl border border-[#D8CFBD] bg-[#FAF8F4] text-[#2C2621] overflow-hidden transition-all duration-300 ease-out ${isSidebarCollapsed ? 'left-[96px] max-w-[calc(100vw-112px)]' : 'left-[560px] max-w-[calc(100vw-576px)]'
               }`}
           >
             {/* Cover Photo Gallery Banner */}

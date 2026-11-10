@@ -144,7 +144,7 @@ export function AccessoryEditorialExperience({ category, categoryLabel, suggesti
 
   return (
     <>
-      <section aria-label="Gợi ý phụ kiện" className="space-y-4 overflow-hidden rounded-2xl border border-[#D8CFBD] bg-[#FAF8F4] p-4 shadow-sm">
+      <section aria-label="Gợi ý phụ kiện" className="winter-panel space-y-4 overflow-hidden rounded-3xl border border-[#D8CFBD] bg-[#FAF8F4] p-4">
         <header className="space-y-1.5">
           <p className="font-mono-spec text-[10px] font-bold uppercase tracking-[0.12em] text-[#C76B3C]">Phụ kiện / {categoryLabel}</p>
           <h3 className="font-editorial text-[22px] font-bold leading-tight text-[#2C2621]">Phụ kiện bạn có thể thích</h3>
