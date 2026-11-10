@@ -11,7 +11,7 @@ interface PanelProps {
   spot: Spot | null;
   savedSpotIds: string[];
   callbacks: LayoutCallbacks;
-  uiState: Pick<SharedUIState, 'detailTab' | 'activePhotoIdx' | 'setDetailTab' | 'setActivePhotoIdx'>;
+  uiState: Pick<SharedUIState, 'activePhotoIdx' | 'setActivePhotoIdx'>;
   isSidebarCollapsed: boolean;
   onClose: () => void;
   className?: string;
@@ -28,7 +28,7 @@ export const Panel: React.FC<PanelProps> = ({
 }) => {
   if (!spot) return null;
 
-  const { detailTab, activePhotoIdx, setDetailTab, setActivePhotoIdx } = uiState;
+  const { activePhotoIdx, setActivePhotoIdx } = uiState;
   const effectiveStatus = getEffectiveSeasonalStatus(spot.seasonalTrend);
   const statusInfo = getStatusBadgeInfo(effectiveStatus, spot.seasonalTrend?.daysLeftInPeak || 0);
 
@@ -122,8 +122,6 @@ export const Panel: React.FC<PanelProps> = ({
           spot={spot}
           activePhotoIdx={activePhotoIdx}
           setActivePhotoIdx={setActivePhotoIdx}
-          detailTab={detailTab}
-          setDetailTab={setDetailTab}
           savedSpotIds={savedSpotIds}
           callbacks={{
             onToggleSave: callbacks.onToggleSave,

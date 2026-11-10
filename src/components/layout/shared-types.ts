@@ -4,7 +4,6 @@ import type { Spot, FilterState, InspirationPost, ConceptTag, BestTimeOfDay, Spo
  * Shared types for layout primitives
  */
 export type SidebarTab = 'spots' | 'posts';
-export type DetailTab = 'info' | 'posts';
 export type DrawerSnap = 'peek' | 'half' | 'full';
 export type ViewMode = 'map' | 'grid' | 'film' | 'services';
 
@@ -31,8 +30,6 @@ export interface LayoutCallbacks {
 export interface SharedUIState {
   sidebarTab: SidebarTab;
   setSidebarTab: (tab: SidebarTab) => void;
-  detailTab: DetailTab;
-  setDetailTab: (tab: DetailTab) => void;
   mobileSnap: DrawerSnap;
   setMobileSnap: (snap: DrawerSnap) => void;
   activePhotoIdx: number;
@@ -73,8 +70,6 @@ export interface SpotDetailContentProps {
   spot: Spot;
   activePhotoIdx: number;
   setActivePhotoIdx: (idx: number) => void;
-  detailTab: DetailTab;
-  setDetailTab: (tab: DetailTab) => void;
   savedSpotIds: string[];
   callbacks: Pick<LayoutCallbacks, 'onToggleSave' | 'handleOpenDirections' | 'handleShareSpot' | 'onOpenReportModal' | 'onOpenAddPostModal' | 'onSelectPhotographer' | 'onOpenPhotographerDirectory'>;
   className?: string;

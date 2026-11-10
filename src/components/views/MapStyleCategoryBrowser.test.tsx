@@ -56,7 +56,7 @@ describe('MapStyleCategoryBrowser', () => {
     expect(screen.getByRole('heading', { name: 'Phụ kiện bạn có thể thích' })).toBeTruthy();
     expect(screen.getByText('Túi vải nhỏ')).toBeTruthy();
     expect(screen.getByRole('button', { name: /Xem bộ ảnh & cách phối/ })).toBeTruthy();
-    expect(screen.getAllByText('Ảnh sản phẩm và link mua sẽ được bổ sung')).toHaveLength(3);
+    expect(screen.getByText('Màu kem hoặc nâu nhạt, vừa đủ đựng sách và đồ cá nhân.')).toBeTruthy();
     expect(screen.queryByText(/Moodboard|Bảng màu|khung hình|Chọn một món làm điểm nhấn/i)).toBeNull();
     const guideLink = screen.getByRole('link', { name: /Chưa biết chụp gì hôm nay/ });
     const moodCycleButton = screen.getByRole('button', { name: 'Đổi gợi ý phụ kiện' });
@@ -133,18 +133,26 @@ describe('MapStyleCategoryBrowser', () => {
     ['VINTAGE', 'Khăn họa tiết nhỏ', 'Mũ beret mềm'],
     ['SUNSET', 'Khăn choàng mỏng', 'Kẹp tóc màu hổ phách'],
     ['RED_RIVER', 'Mũ rộng vành có dây', 'Mũ bucket gấp gọn'],
-    ['ALL', 'Túi đeo chéo gọn', 'Kẹp tóc nhỏ'],
-    ['SHOPPING_MALL', 'Túi đeo chéo gọn', 'Kẹp tóc nhỏ'],
-    ['CUSTOM_STYLE', 'Túi đeo chéo gọn', 'Kẹp tóc nhỏ'],
-  ])('offers three items and cycles for %s, with a generic fallback', (category, first, next) => {
+  ])('offers three items and cycles for %s', (category, first, next) => {
     render(<MapStyleCategoryBrowser categories={[]} selectedCategory={category} onSelectCategory={vi.fn()} />);
     expect(screen.getByText(first)).toBeTruthy();
-    expect(screen.getAllByText('Ảnh sản phẩm và link mua sẽ được bổ sung')).toHaveLength(3);
+    expect(screen.queryAllByRole('link', { name: /Xem trên Shopee/ })).toHaveLength(0);
     fireEvent.click(screen.getByRole('button', { name: 'Đổi gợi ý phụ kiện' }));
     expect(screen.getByText(next)).toBeTruthy();
-    expect(screen.getAllByText('Ảnh sản phẩm và link mua sẽ được bổ sung')).toHaveLength(3);
+    expect(screen.queryAllByRole('link', { name: /Xem trên Shopee/ })).toHaveLength(0);
     fireEvent.click(screen.getByRole('button', { name: 'Đổi gợi ý phụ kiện' }));
     expect(screen.getByText(first)).toBeTruthy();
+  });
+
+  it.each(['ALL', 'SHOPPING_MALL', 'CUSTOM_STYLE'])('shows featured accessories with Shopee links for %s', category => {
+    render(<MapStyleCategoryBrowser categories={[]} selectedCategory={category} onSelectCategory={vi.fn()} />);
+    expect(screen.getByText('Túi đeo chéo gọn')).toBeTruthy();
+    expect(screen.getByText('Mũ bucket nhung (vàng mù tạt)')).toBeTruthy();
+    expect(screen.getAllByRole('link', { name: /Xem trên Shopee/ })).toHaveLength(4);
+    expect(screen.getByRole('img', { name: 'Ảnh sản phẩm: Túi đeo chéo gọn' }).getAttribute('src')).toBe('/accessories/tui-deo-cheo-gon.webp');
+    fireEvent.click(screen.getByRole('button', { name: 'Đổi gợi ý phụ kiện' }));
+    expect(screen.getByText('Kẹp tóc nhỏ')).toBeTruthy();
+    expect(screen.queryAllByRole('link', { name: /Xem trên Shopee/ })).toHaveLength(0);
   });
 
   it('toggles film lab markers independently from the selected place style', () => {

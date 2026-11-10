@@ -1,7 +1,8 @@
 import { Film, RefreshCw } from 'lucide-react';
 import { useState } from 'react';
 import '../../styles/editorial-motion.css';
-import { AccessoryEditorialExperience } from './AccessoryEditorialExperience';
+import { featuredMapAccessorySet } from '../../data/mapAccessoryProducts';
+import { AccessoryEditorialExperience, type AccessorySuggestion } from './AccessoryEditorialExperience';
 import type { PlaceCategory, PlaceCategoryFilter } from '../../types';
 import { PlaceCategoryLabel } from '../features/PlaceCategoryLabel';
 
@@ -14,19 +15,10 @@ interface Props {
   onToggleFilmLabs?: () => void;
 }
 
-interface Accessory {
-  title: string;
-  description: string;
-}
-
-type AccessorySet = [Accessory, Accessory, Accessory];
+type AccessorySet = AccessorySuggestion[];
 
 const fallbackAccessories: AccessorySet[] = [
-  [
-    { title: 'Túi đeo chéo gọn', description: 'Đựng đồ thiết yếu, để hai tay thoải mái khi đi dạo.' },
-    { title: 'Khăn cotton trơn', description: 'Chọn màu trung tính để dễ phối với trang phục sẵn có.' },
-    { title: 'Mũ vải mềm', description: 'Dễ gấp cất trong túi, tiện mang theo khi ra ngoài.' },
-  ],
+  featuredMapAccessorySet,
   [
     { title: 'Kẹp tóc nhỏ', description: 'Giữ tóc gọn mà không cần mang thêm nhiều đồ.' },
     { title: 'Đồng hồ dây vải', description: 'Nhẹ tay, hợp với trang phục thường ngày.' },
@@ -34,7 +26,7 @@ const fallbackAccessories: AccessorySet[] = [
   ],
 ];
 
-const accessories: Partial<Record<PlaceCategoryFilter, AccessorySet[]>> = {
+const accessories: Partial<Record<PlaceCategoryFilter, readonly AccessorySet[]>> = {
   CAFE: [
     [
       { title: 'Túi vải nhỏ', description: 'Màu kem hoặc nâu nhạt, vừa đủ đựng sách và đồ cá nhân.' },

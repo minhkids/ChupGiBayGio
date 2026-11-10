@@ -1,6 +1,6 @@
 import { PinReferenceButton } from '../planner/PinReferenceButton';
 import React from 'react';
-import { Navigation, Share2, Bookmark, Camera, Clock, Sparkles, ExternalLink } from 'lucide-react';
+import { Navigation, Share2, Bookmark, Camera, Clock, Sparkles } from 'lucide-react';
 import type { Spot } from '../../types';
 import { getStatusBadgeInfo, getEffectiveSeasonalStatus, CONCEPT_METADATA } from '../../utils/season';
 import { getPlaceCategoryLabel } from '../../utils/placeCategories';
@@ -148,75 +148,10 @@ const SpotDetailInfoTab: React.FC<SpotDetailInfoTabProps> = ({ spot, callbacks }
   );
 };
 
-interface SpotDetailPostsTabProps {
-  spot: Spot;
-  callbacks: SpotDetailContentProps['callbacks'];
-}
-
-const SpotDetailPostsTab: React.FC<SpotDetailPostsTabProps> = ({ spot, callbacks }) => {
-  const { onOpenAddPostModal } = callbacks;
-
-  if (!spot.inspirationPosts || spot.inspirationPosts.length === 0) {
-    return (
-      <div className="py-8 text-center text-neutral-400 text-xs">
-        Chưa có bài viết nào cho điểm chụp này. Hãy là người đầu tiên chia sẻ!
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-mono-spec font-bold text-blue-600 dark:text-blue-400">
-          BÀI ĐĂNG THỰC TẾ ({spot.inspirationPosts.length})
-        </span>
-        <button
-          type="button"
-          onClick={() => onOpenAddPostModal(spot.id)}
-          className="text-xs text-blue-600 dark:text-blue-400 font-mono-spec font-bold hover:underline"
-        >
-          + Thêm bài viết
-        </button>
-      </div>
-
-      {spot.inspirationPosts.map(post => (
-        <div
-          key={post.id}
-          className="p-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50/80 dark:bg-neutral-850/80 space-y-2"
-        >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <img
-                src={post.authorAvatar}
-                alt={post.authorName}
-                className="w-6 h-6 rounded-full object-cover"
-              />
-              <span className="font-bold">{post.authorName}</span>
-            </div>
-            <a
-              href={post.postUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600"
-            >
-              <ExternalLink className="w-3.5 h-3.5" />
-            </a>
-          </div>
-          <p className="text-xs text-neutral-600 dark:text-neutral-300 leading-relaxed">
-            {post.fullContent || post.caption}
-          </p>
-        </div>
-      ))}
-    </div>
-  );
-};
-
 export const SpotDetailContent: React.FC<SpotDetailContentProps> = ({
   spot,
   activePhotoIdx,
   setActivePhotoIdx,
-  detailTab,
-  setDetailTab,
   savedSpotIds,
   callbacks,
   className = '',
@@ -290,42 +225,11 @@ export const SpotDetailContent: React.FC<SpotDetailContentProps> = ({
             </button>
           </div>
         </div>
-
-        {/* Sub-navbar inside detail card */}
-        <div className="flex items-center p-0.5 bg-neutral-100 dark:bg-neutral-800 rounded-lg text-xs font-semibold">
-          <button
-            type="button"
-            onClick={() => setDetailTab('info')}
-            className={`flex-1 py-1 rounded-md transition-all ${detailTab === 'info'
-                ? 'bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white shadow-xs'
-                : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-white'
-              }`}
-          >
-            Cẩm Nang & Góc Chụp
-          </button>
-          <button
-            type="button"
-            onClick={() => setDetailTab('posts')}
-            className={`flex-1 py-1 rounded-md transition-all flex items-center justify-center space-x-1 ${detailTab === 'posts'
-                ? 'bg-white dark:bg-neutral-900 text-blue-600 dark:text-blue-400 shadow-xs'
-                : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-white'
-              }`}
-          >
-            <span>Bài Đăng FB</span>
-            <span className="text-[10px] px-1 bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-300 rounded font-mono-spec">
-              {spot.inspirationPosts?.length || 0}
-            </span>
-          </button>
-        </div>
       </div>
 
       {/* Scrollable Detail Body */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {detailTab === 'info' ? (
-          <SpotDetailInfoTab spot={spot} savedSpotIds={savedSpotIds} callbacks={callbacks} />
-        ) : (
-          <SpotDetailPostsTab spot={spot} callbacks={callbacks} />
-        )}
+        <SpotDetailInfoTab spot={spot} savedSpotIds={savedSpotIds} callbacks={callbacks} />
       </div>
     </div>
   );
