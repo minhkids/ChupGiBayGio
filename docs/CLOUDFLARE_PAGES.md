@@ -17,8 +17,9 @@
 # Headers (configured in _headers file in public/)
 # See public/_headers for security headers
 
-# Redirects (configured in _redirects file in public/)
-# See public/_redirects for SPA fallback
+# Client-side routes (SPA): production uses the **Worker** in wrangler.toml with
+# assets.not_found_handling = "single-page-application". Do not add public/_redirects;
+# Cloudflare Workers static assets reject catch-all rules like /* → /index.html.
 
 # Custom domain: chupgibaygio.com (configure in Pages dashboard after first deploy)
 # www.chupgibaygio.com -> chupgibaygio.com (redirect)

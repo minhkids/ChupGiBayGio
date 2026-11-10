@@ -1,9 +1,18 @@
 name = "chupgibaygio"
 main = "src/workers/frontend.ts"
 compatibility_date = "2024-10-02"
+workers_dev = true
+preview_urls = true
+
+[build]
+command = "npm run build"
+
+# Required for `wrangler preview` on Workers Builds (PRs); block may be empty per Cloudflare docs.
+[previews]
 
 [assets]
 binding = "ASSETS"
 directory = "./dist"
+# SPA client routes (/tao-anh, /join/*, /admin/*): use not_found_handling; do not add public/_redirects.
 not_found_handling = "single-page-application"
 run_worker_first = true
