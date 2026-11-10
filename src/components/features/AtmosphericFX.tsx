@@ -442,9 +442,10 @@ export const AtmosphericFX: React.FC<AtmosphericFXProps> = ({
 
     // ─── Initial Population (immediate display without waiting for drift) ───
     const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-    if (!reducedMotion && winterSnow && particlesRef.current.length === 0) {
+    const flakeTarget = reducedMotion ? 20 : snowBudget;
+    if (winterSnow && particlesRef.current.length === 0) {
       const initList: Particle[] = [];
-      for (let i = 0; i < snowBudget; i++) {
+      for (let i = 0; i < flakeTarget; i++) {
         const flake = createParticle(w(), h(), 'snow', 'winter', windSpeed);
         flake.y = Math.random() * h();
         initList.push(flake);
@@ -505,7 +506,7 @@ export const AtmosphericFX: React.FC<AtmosphericFXProps> = ({
       if (winterSnow) {
         let snowCount = 0;
         for (const p of particles) if (p.type === 'snow') snowCount++;
-        while (snowCount < snowBudget) {
+        while (snowCount < flakeTarget) {
           particles.push(createParticle(w(), h(), 'snow', 'winter', windSpeed));
           snowCount++;
         }
@@ -535,9 +536,10 @@ export const AtmosphericFX: React.FC<AtmosphericFXProps> = ({
           p.x += p.vx + Math.sin(p.life * 0.003) * 0.1;
           p.y += p.vy;
         } else if (p.type === 'snow') {
-          p.x += p.vx + Math.sin(p.life * 0.01 + p.x * 0.01) * 0.5;
-          p.y += p.vy;
-          p.rotation += p.rotationSpeed;
+          const pace = reducedMotion ? 0.5 : 1;
+          p.x += p.vx * pace + (reducedMotion ? 0 : Math.sin(p.life * 0.01 + p.x * 0.01) * 0.5);
+          p.y += p.vy * pace;
+          if (!reducedMotion) p.rotation += p.rotationSpeed;
         } else if (p.type === 'fog') {
           p.x += p.vx;
           p.y += p.vy + Math.sin(p.life * 0.005) * 0.2;
@@ -589,7 +591,6 @@ export const AtmosphericFX: React.FC<AtmosphericFXProps> = ({
       animFrameRef.current = requestAnimationFrame(animate);
     };
 
-    if (reducedMotion) return () => window.removeEventListener('resize', resize);
     animate();
 
     return () => {
