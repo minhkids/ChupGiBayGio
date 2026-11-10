@@ -398,7 +398,7 @@ export const AtmosphericFX: React.FC<AtmosphericFXProps> = ({
 
   const TARGET_SUNBEAMS = 5;
   const winterSnow = season === 'winter' || [11, 12, 1].includes(new Date().getMonth() + 1);
-  const snowBudget = typeof window !== 'undefined' && window.innerWidth < 768 ? 20 : 40;
+  const snowBudget = typeof window !== 'undefined' && window.innerWidth < 768 ? 50 : 100;
 
   const getMaxParticles = useCallback(() => {
     if (!isActive || particleDensity === 0) return 0;
@@ -442,7 +442,7 @@ export const AtmosphericFX: React.FC<AtmosphericFXProps> = ({
 
     // ─── Initial Population (immediate display without waiting for drift) ───
     const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-    const flakeTarget = reducedMotion ? 20 : snowBudget;
+    const flakeTarget = reducedMotion ? 60 : snowBudget;
     if (winterSnow && particlesRef.current.length === 0) {
       const initList: Particle[] = [];
       for (let i = 0; i < flakeTarget; i++) {
