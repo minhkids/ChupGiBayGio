@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { WeatherData } from '../../hooks/useWeather';
-import { NAV_ITEMS, type ViewId } from './viewItems';
+import { LAYOUT_MAKER_NAV, NAV_ITEMS, openLayoutMaker, type ViewId } from './viewItems';
 import { ThemeToggle } from '../features/ThemeToggle';
 
 interface LeftNavRailProps {
@@ -143,6 +143,20 @@ export const LeftNavRail: React.FC<LeftNavRailProps> = ({
               );
             })}
 
+            <motion.button
+              type="button"
+              onClick={openLayoutMaker}
+              whileHover={{ y: -2 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+              className="group relative flex w-full flex-col items-center gap-1 py-2.5 transition-colors duration-200 text-[#554D43] hover:bg-[#DED3B8] hover:text-[#2C2621] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C76B3C]"
+              aria-label="Tạo khung ảnh layout"
+            >
+              <span className="flex h-8 w-8 items-center justify-center rounded-2xl transition-colors duration-200">
+                <LAYOUT_MAKER_NAV.icon className="h-5 w-5" strokeWidth={1.7} />
+              </span>
+              <span className="text-[10px] font-medium leading-tight select-none">{LAYOUT_MAKER_NAV.short}</span>
+            </motion.button>
+
             {/* "Đã lưu" as the 5th nav item */}
             <motion.button
               type="button"
@@ -254,6 +268,15 @@ export const LeftNavRail: React.FC<LeftNavRailProps> = ({
             </button>
           );
         })}
+
+        <button
+          type="button"
+          onClick={openLayoutMaker}
+          className="relative flex flex-1 flex-col items-center justify-center gap-0.5 rounded-xl px-1 py-1.5 transition-colors duration-200"
+        >
+          <LAYOUT_MAKER_NAV.icon className="h-5 w-5 text-[#554D43]" strokeWidth={1.8} />
+          <span className="text-[10px] leading-tight text-[#554D43]">{LAYOUT_MAKER_NAV.short}</span>
+        </button>
 
         <button
           type="button"
