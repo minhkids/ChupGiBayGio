@@ -79,7 +79,7 @@ git push origin main
 | `package.json` | Build scripts + dependencies |
 | `migrations/0001_initial_schema.sql` | D1 schema |
 | `public/_headers` | Security headers |
-| `public/_redirects` | SPA fallback + redirects |
+| `wrangler.toml` `[assets] not_found_handling` | SPA fallback for `/join/*`, `/tao-anh`, etc. (no `public/_redirects`) |
 
 ---
 

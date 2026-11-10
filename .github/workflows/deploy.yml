@@ -47,6 +47,13 @@ jobs:
       - name: Build frontend
         run: npm run build
 
+      - name: Guard Workers assets (no Pages _redirects)
+        run: |
+          if [ -f dist/_redirects ]; then
+            echo "::error::dist/_redirects is incompatible with Cloudflare Workers static assets (invalid /* → /index.html proxy rules). Use wrangler.toml assets.not_found_handling = single-page-application instead."
+            exit 1
+          fi
+
       - name: Build API Worker
         run: npm run build:worker
 
