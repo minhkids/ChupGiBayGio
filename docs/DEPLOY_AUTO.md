@@ -81,7 +81,7 @@ git push origin main
 | `public/_headers` | Security headers |
 | `wrangler.toml` `[assets] not_found_handling` | SPA fallback for `/join/*`, `/tao-anh`, etc. (no `public/_redirects`) |
 | `wrangler` **4.135+** (package.json) | PR Workers Builds default preview command `npx wrangler preview` (Wrangler 3 exits with deprecation) |
-| `wrangler.toml` `[build]` + `preview_urls` | Ensures `dist/` exists before preview/deploy; enables workers.dev preview URLs |
+| `wrangler.toml` `[build]` + `preview_urls` + `[previews]` | `dist/` before preview/deploy; workers.dev preview URLs; empty `[previews]` required for `wrangler preview` |
 | `npm run preview` | Maps to `wrangler preview` (use `npm run vite:preview` for local Vite) |
 
 ---

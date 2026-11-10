@@ -7,6 +7,9 @@ preview_urls = true
 [build]
 command = "npm run build"
 
+# Required for `wrangler preview` on Workers Builds (PRs); block may be empty per Cloudflare docs.
+[previews]
+
 [assets]
 binding = "ASSETS"
 directory = "./dist"
