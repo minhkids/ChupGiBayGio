@@ -80,6 +80,7 @@ git push origin main
 | `migrations/0001_initial_schema.sql` | D1 schema |
 | `public/_headers` | Security headers |
 | `wrangler.toml` `[assets] not_found_handling` | SPA fallback for `/join/*`, `/tao-anh`, etc. (no `public/_redirects`) |
+| `wrangler` **4.135+** (package.json) | PR Workers Builds default preview command `npx wrangler preview` (Wrangler 3 exits with deprecation) |
 
 ---
 
