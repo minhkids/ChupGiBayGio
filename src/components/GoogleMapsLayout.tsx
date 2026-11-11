@@ -737,6 +737,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
                   </div>
 
                   <button type="button" aria-label="Chạy hành trình đạp xe (Story)" onClick={() => startSpotCyclingStory(selectedSpot)} className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-[#C76B3C] bg-[#C76B3C] px-4 text-sm font-bold text-white shadow-md transition-colors hover:bg-[#A9552E]"><Bike className="h-5 w-5" />Chạy hành trình đạp xe (Story)</button>
+                  <a href={`/?postcard=1&location=${encodeURIComponent(selectedSpot.name)}`} className="flex min-h-11 w-full items-center justify-center rounded-xl border border-[#D8CFBD] bg-white text-sm font-semibold text-[#8F3F23]">Làm bưu thiếp từ ảnh này</a>
 
                   {/* Spot description */}
                   <div className="bg-[#F3EAD7] border border-[#D8CFBD] rounded-xl p-4 space-y-2">
@@ -1013,6 +1014,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
               </div>
 
               <button type="button" aria-label="Chạy hành trình đạp xe (Story)" onClick={() => startSpotCyclingStory(selectedSpot)} className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-[#C76B3C] bg-[#C76B3C] px-4 text-sm font-bold text-white shadow-md transition-colors hover:bg-[#A9552E]"><Bike className="h-5 w-5" />Chạy hành trình đạp xe (Story)</button>
+                  <a href={`/?postcard=1&location=${encodeURIComponent(selectedSpot.name)}`} className="flex min-h-11 w-full items-center justify-center rounded-xl border border-[#D8CFBD] bg-white text-sm font-semibold text-[#8F3F23]">Làm bưu thiếp từ ảnh này</a>
 
               {/* Photography Guide */}
               <div className="space-y-3 pt-1">

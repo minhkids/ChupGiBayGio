@@ -7,6 +7,7 @@ import partnerRoutes from './partnerRoutes';
 import communitySpots from './communitySpots';
 import spotLocationSearch from './spotLocationSearch';
 import cyclingRoute from './cyclingRoute';
+import postcardRoutes from './postcardRoute';
 import { getD1 } from './d1Client';
 
 type Bindings = {
@@ -15,6 +16,7 @@ type Bindings = {
   CACHE: KVNamespace;
   ADMIN_PASSWORD?: string;
   ADMIN_SESSION_SECRET?: string;
+  OPENAI_API_KEY?: string;
   // AI: Ai;
 };
 
@@ -537,6 +539,7 @@ app.delete('/api/admin/services/:id', async (c) => {
   return c.json({ success: true });
 });
 
+app.route('/', postcardRoutes);
 app.route('/', communitySpots);
 app.route('/', partnerRoutes);
 app.route('/', cmsAdminRoutes);
