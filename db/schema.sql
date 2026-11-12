@@ -196,4 +196,5 @@ INSERT OR IGNORE INTO place_categories (id, label, sort_order) VALUES
   ('VINTAGE', 'Vintage', 2),
   ('SHOPPING_MALL', 'Trung tâm thương mại', 3),
   ('RED_RIVER', 'Gần sông Hồng', 4),
-  ('SUNSET', 'Chụp hoàng hôn', 5);
+  ('SUNSET', 'Chụp hoàng hôn', 5),
+  ('CHRISTMAS', 'Giáng Sinh', 9);

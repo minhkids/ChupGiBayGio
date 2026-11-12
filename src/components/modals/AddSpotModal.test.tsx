@@ -75,6 +75,14 @@ describe('AddSpotModal', () => {
     expect(checkbox.closest('label')?.querySelector('img[data-icon="ao-dai"]')?.getAttribute('src')).toBe('/icons/ao-dai-category.webp');
   });
 
+  it('shows the Christmas tree on the Giáng Sinh category without changing its form label', () => {
+    renderModal();
+    const checkbox = screen.getByLabelText('Nhóm địa điểm: Giáng Sinh');
+    const icon = checkbox.closest('label')?.querySelector('img[data-icon="christmas-tree"]');
+    expect(icon?.getAttribute('src')).toBe('/icons/christmas-tree-category.png');
+    expect(checkbox.closest('label')?.textContent).toContain('Giáng Sinh');
+  });
+
   it('waits for persistent creation and keeps form data on server failure', async () => {
     let reject!: (reason: Error) => void;
     const submit = vi.fn(() => new Promise<void>((_resolve, rejectPromise) => { reject = rejectPromise; }));

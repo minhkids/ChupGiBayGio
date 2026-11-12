@@ -19,6 +19,20 @@ export const PlaceCategoryLabel = ({ id, label, selected = false }: PlaceCategor
       </span>
     );
   }
+  if (id === 'CHRISTMAS') {
+    return (
+      <span className="inline-flex items-center">
+        <img
+          aria-hidden="true"
+          alt=""
+          data-icon="christmas-tree"
+          src="/icons/christmas-tree-category.png"
+          className="pointer-events-none absolute right-1 -top-3 h-[52px] w-[52px] bg-transparent object-contain"
+        />
+        <span className="pr-11">{label}</span>
+      </span>
+    );
+  }
   if (id !== 'HALLOWEEN') return <>{label}</>;
 
   return (
