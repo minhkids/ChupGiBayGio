@@ -16,8 +16,7 @@ import { useMapLocationPicker } from './hooks/useMapLocationPicker';
 import { useCatalogRevision } from './hooks/useCatalogRevision';
 import { getCurrentMonthInVietnam, matchesSeasonalStatusFilter } from './utils/season';
 import { matchesSpotMonth } from './utils/upcomingSpots';
-import { matchesPlaceCategory } from './utils/placeCategories';
-import { DEFAULT_PLACE_CATEGORIES } from './utils/placeCategories';
+import { DEFAULT_PLACE_CATEGORIES, ensureChristmasPlaceCategory, matchesPlaceCategory } from './utils/placeCategories';
 import { calculateDistanceKm } from './utils/geo';
 import { recommendFilmForSpot } from './utils/filmAdvisor';
 import { readSavedSpotIds } from './utils/savedSpots';
@@ -96,8 +95,9 @@ export function App() {
     let mounted = true;
     serviceHubApi.listPlaceCategories().then((categories) => {
       if (!mounted) return;
-      setPlaceCategories(categories);
-      setFilters(current => current.placeCategory !== 'ALL' && !categories.some(category => category.id === current.placeCategory)
+      const next = ensureChristmasPlaceCategory(categories);
+      setPlaceCategories(next);
+      setFilters(current => current.placeCategory !== 'ALL' && !next.some(category => category.id === current.placeCategory)
         ? { ...current, placeCategory: 'ALL' }
         : current);
     }).catch(() => { /* Keep bundled categories while the public category API is unavailable. */ });

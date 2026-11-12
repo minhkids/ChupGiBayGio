@@ -41,6 +41,7 @@ describe('place category management', () => {
       { id: 'SHOPPING_MALL', label: 'Trung tâm thương mại', sortOrder: 3 },
       { id: 'RED_RIVER', label: 'Gần sông Hồng', sortOrder: 4 },
       { id: 'SUNSET', label: 'Chụp hoàng hôn', sortOrder: 5 },
+      { id: 'CHRISTMAS', label: 'Giáng Sinh', sortOrder: 9 },
     ]);
 
     const body = { label: 'Tiệm sách' };
@@ -50,7 +51,7 @@ describe('place category management', () => {
     const created = await worker.request('/api/admin/place-categories', { method: 'POST', headers, body: JSON.stringify(body) }, env);
     expect(created.status).toBe(201);
     const category = await created.json() as { id: string; label: string; sortOrder: number };
-    expect(category).toMatchObject({ id: 'TIEM_SACH', label: 'Tiệm sách', sortOrder: 6 });
+    expect(category).toMatchObject({ id: 'TIEM_SACH', label: 'Tiệm sách', sortOrder: 10 });
 
     const renamed = await worker.request(`/api/admin/place-categories/${category.id}`, { method: 'PUT', headers, body: JSON.stringify({ label: 'Không gian sách' }) }, env);
     expect(renamed.status).toBe(200);

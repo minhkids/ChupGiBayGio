@@ -42,6 +42,29 @@ describe('MapStyleCategoryBrowser', () => {
     expect(onSelectCategory).toHaveBeenCalledWith('AO_DAI');
   });
 
+  it('shows the Christmas tree before the Giáng Sinh label and selects CHRISTMAS', () => {
+    const onSelectCategory = vi.fn();
+    const categories = [{ id: 'CHRISTMAS', label: 'Giáng Sinh', sortOrder: 9 }, { id: 'AO_DAI', label: 'Áo dài', sortOrder: 8 }, { id: 'CAFE', label: 'Quán cà phê', sortOrder: 1 }];
+    const { rerender } = render(<MapStyleCategoryBrowser categories={categories} selectedCategory="ALL" onSelectCategory={onSelectCategory} />);
+
+    const chip = screen.getByRole('button', { name: 'Giáng Sinh' });
+    const icon = chip.querySelector('img[data-icon="christmas-tree"]');
+    const label = within(chip).getByText('Giáng Sinh');
+    expect(icon?.getAttribute('src')).toBe('/icons/christmas-tree-category.png');
+    expect(icon?.className).toContain('object-contain');
+    expect(icon?.className).toContain('bg-transparent');
+    expect(Boolean(icon && (icon.compareDocumentPosition(label) & Node.DOCUMENT_POSITION_FOLLOWING))).toBe(true);
+    expect(chip.className).toContain('bg-[#FAF8F4]');
+    expect(chip.className).not.toContain('bg-[#12303D]');
+    expect(screen.getByRole('button', { name: 'Quán cà phê' }).querySelector('img[data-icon="christmas-tree"]')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Áo dài' }).querySelector('img[data-icon="ao-dai"]')).toBeTruthy();
+    fireEvent.click(chip);
+    expect(onSelectCategory).toHaveBeenCalledWith('CHRISTMAS');
+
+    rerender(<MapStyleCategoryBrowser categories={categories} selectedCategory="CHRISTMAS" onSelectCategory={onSelectCategory} />);
+    expect(screen.getByRole('button', { name: 'Giáng Sinh' }).className).toContain('bg-[#2C2621]');
+  });
+
   it('shows three accessories instead of a shot board while preserving the filter and guide', () => {
     const onSelectCategory = vi.fn();
     render(<MapStyleCategoryBrowser
