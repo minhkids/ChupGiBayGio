@@ -26,6 +26,7 @@ import type { ViewId } from './components/navigation/viewItems';
 
 // Lazy-loaded heavy components
 const GoogleMapsLayout = lazy(() => import('./components/GoogleMapsLayout').then(m => ({ default: m.GoogleMapsLayout })));
+const PostcardPage = lazy(() => import('./components/views/PostcardPage').then(m => ({ default: m.PostcardPage })));
 
 const AddSpotModal = lazy(() => import('./components/modals/AddSpotModal').then(m => ({ default: m.AddSpotModal })));
 const SavedSpotsModal = lazy(() => import('./components/modals/SavedSpotsModal').then(m => ({ default: m.SavedSpotsModal })));
@@ -260,6 +261,14 @@ export function App() {
   }, [spots, savedSpotIds]);
 
   const weather = useWeather();
+  const postcardQuery = new URLSearchParams(window.location.search);
+  if (postcardQuery.has('postcard')) {
+    return (
+      <Suspense fallback={<div className="grid min-h-screen place-items-center bg-[#F7F5F0] text-[#2C2621]">Đang mở bưu thiếp…</div>}>
+        <PostcardPage initialLocation={postcardQuery.get('location') || ''} />
+      </Suspense>
+    );
+  }
 
   // GOOGLE MAPS UI PARADIGM: Full Viewport Canvas & Floating Overlays
   if (activeView === 'map') {
