@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { SHOW_ILLUSTRATED_ARTICLE } from './AccessoryEditorialExperience';
 import { MapStyleCategoryBrowser } from './MapStyleCategoryBrowser';
 
 const { addItemMock, isItemInPlanMock } = vi.hoisted(() => ({ addItemMock: vi.fn(), isItemInPlanMock: vi.fn(() => false) }));
@@ -76,9 +77,15 @@ describe('MapStyleCategoryBrowser', () => {
     expect(screen.getByRole('heading', { name: 'Bạn định chụp style gì?' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Quán cà phê' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Hoàng hôn' })).toBeTruthy();
-    expect(screen.getByRole('heading', { name: 'Phụ kiện bạn có thể thích' })).toBeTruthy();
-    expect(screen.getByText('Túi vải nhỏ')).toBeTruthy();
-    expect(screen.getByRole('button', { name: /Xem bộ ảnh & cách phối/ })).toBeTruthy();
+    expect(SHOW_ILLUSTRATED_ARTICLE).toBe(false);
+    const accessoriesHeading = screen.getByRole('heading', { name: 'Phụ kiện bạn có thể thích' });
+    const firstAccessory = screen.getByText('Túi vải nhỏ');
+    expect(Boolean(accessoriesHeading.compareDocumentPosition(firstAccessory) & Node.DOCUMENT_POSITION_FOLLOWING)).toBe(true);
+    expect(screen.queryByRole('button', { name: /Xem bộ ảnh & cách phối/ })).toBeNull();
+    expect(screen.queryByText('Bộ ảnh · 01')).toBeNull();
+    expect(screen.queryByText('Bộ ảnh · 02')).toBeNull();
+    expect(screen.queryByText('Bài viết minh họa · chưa xuất bản')).toBeNull();
+    expect(screen.queryByText(/Một buổi cà phê — phối phụ kiện từ những món sẵn có/)).toBeNull();
     expect(screen.getByText('Màu kem hoặc nâu nhạt, vừa đủ đựng sách và đồ cá nhân.')).toBeTruthy();
     expect(screen.queryByText(/Moodboard|Bảng màu|khung hình|Chọn một món làm điểm nhấn/i)).toBeNull();
     const guideLink = screen.getByRole('link', { name: /Chưa biết chụp gì hôm nay/ });
@@ -94,9 +101,10 @@ describe('MapStyleCategoryBrowser', () => {
     expect(screen.queryByText(/hot trend|có thể hot|sắp tới/i)).toBeNull();
   });
 
-  it('opens the editorial post, reveals a product detail and saves without inventing a price or Shopee link', () => {
-    render(<MapStyleCategoryBrowser categories={[{ id: 'CAFE', label: 'Quán cà phê', sortOrder: 1 }]} selectedCategory="CAFE" onSelectCategory={vi.fn()} />);
-    fireEvent.click(screen.getByRole('button', { name: /Xem bộ ảnh & cách phối/ }));
+  it('opens the editorial post from its share URL, reveals a product detail and saves without inventing a price or Shopee link', () => {
+    window.history.replaceState({}, '', '/?accessory-story=demo');
+    render(<MapStyleCategoryBrowser categories={[{ id: 'CAFE', label: 'Quán cà phê', sortOrder: 1 }]} selectedCategory="CAFE" autoOpenSharedPost onSelectCategory={vi.fn()} />);
+    expect(screen.queryByRole('button', { name: /Xem bộ ảnh & cách phối/ })).toBeNull();
     const dialog = screen.getByRole('dialog');
     expect(within(dialog).getByText(/Bài viết minh họa · nội dung mẫu/)).toBeTruthy();
     expect(within(dialog).getByRole('region', { name: 'Bộ ảnh minh họa' })).toBeTruthy();
@@ -169,6 +177,10 @@ describe('MapStyleCategoryBrowser', () => {
 
   it.each(['ALL', 'SHOPPING_MALL', 'CUSTOM_STYLE'])('shows featured accessories with Shopee links for %s', category => {
     render(<MapStyleCategoryBrowser categories={[]} selectedCategory={category} onSelectCategory={vi.fn()} />);
+    expect(screen.getByText('Phụ kiện / Tất cả style')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /Xem bộ ảnh & cách phối/ })).toBeNull();
+    expect(screen.queryByText('Bộ ảnh · 01')).toBeNull();
+    expect(screen.queryByText('Ảnh chờ bổ sung')).toBeNull();
     expect(screen.getByText('Túi đeo chéo gọn')).toBeTruthy();
     expect(screen.getByText('Mũ bucket nhung (vàng mù tạt)')).toBeTruthy();
     expect(screen.getAllByRole('link', { name: /Xem trên Shopee/ })).toHaveLength(4);
@@ -176,6 +188,27 @@ describe('MapStyleCategoryBrowser', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Đổi gợi ý phụ kiện' }));
     expect(screen.getByText('Kẹp tóc nhỏ')).toBeTruthy();
     expect(screen.queryAllByRole('link', { name: /Xem trên Shopee/ })).toHaveLength(0);
+  });
+
+  it('hides the illustrated article card on Tất cả style and keeps the Shopee accessory cards', () => {
+    render(<MapStyleCategoryBrowser categories={[]} selectedCategory="ALL" onSelectCategory={vi.fn()} />);
+    const section = screen.getByRole('region', { name: 'Gợi ý phụ kiện' });
+    expect(within(section).getByText('Phụ kiện / Tất cả style')).toBeTruthy();
+    const heading = within(section).getByRole('heading', { name: 'Phụ kiện bạn có thể thích' });
+    const firstCard = within(section).getByRole('button', { name: /Túi đeo chéo gọn/ });
+    expect(Boolean(heading.compareDocumentPosition(firstCard) & Node.DOCUMENT_POSITION_FOLLOWING)).toBe(true);
+    expect(within(section).queryByRole('button', { name: /Xem bộ ảnh & cách phối/ })).toBeNull();
+    expect(within(section).queryByText('Bộ ảnh · 01')).toBeNull();
+    expect(within(section).queryByText('Bộ ảnh · 02')).toBeNull();
+    expect(within(section).queryByText('Ảnh chờ bổ sung')).toBeNull();
+    expect(within(section).queryByText('Một buổi chụp ảnh — phối phụ kiện từ những món sẵn có')).toBeNull();
+    expect(within(section).getAllByRole('button')).toHaveLength(4);
+    expect(within(section).getAllByRole('link', { name: /Xem trên Shopee/ })).toHaveLength(4);
+
+    fireEvent.click(firstCard);
+    const dialog = screen.getByRole('dialog');
+    expect(within(dialog).getByRole('heading', { name: 'Túi đeo chéo gọn' })).toBeTruthy();
+    expect(within(dialog).getByRole('link', { name: /Xem trên Shopee/ }).getAttribute('href')).toContain('shopee.vn');
   });
 
   it('toggles film lab markers independently from the selected place style', () => {
