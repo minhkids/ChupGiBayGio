@@ -60,6 +60,9 @@ function ProductImage({ item, className = 'aspect-[4/3]' }: { item: AccessorySug
 
 const SHOPEE_LINK_REL = 'noopener nofollow sponsored';
 
+/** Unpublished illustrated-article card. Set to true to show it again. */
+export const SHOW_ILLUSTRATED_ARTICLE = false;
+
 function validShopeeUrl(value?: string) {
   if (!value) return false;
   try {
@@ -151,18 +154,20 @@ export function AccessoryEditorialExperience({ category, categoryLabel, suggesti
           <p className="text-sm leading-relaxed text-[#6E655B]">Một bộ ảnh minh họa cách phối; ưu tiên những món bạn đã có.</p>
         </header>
 
-        <button type="button" onClick={() => openArticle()} className="group block w-full overflow-hidden rounded-2xl border border-[#E2D8C6] bg-white text-left transition-colors hover:border-[#C76B3C] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C76B3C]">
-          <div className="grid grid-cols-2 gap-1.5 bg-[#E8DEC7] p-1.5">
-          <EditorialPhotoFrame photo={photos[0]} label="Bộ ảnh · 01" note="Ảnh chờ bổ sung" aspect="aspect-[1.2/1]" />
-          <EditorialPhotoFrame photo={photos[1]} label="Bộ ảnh · 02" note="Ảnh chờ bổ sung" aspect="aspect-[1.2/1]" />
-          </div>
-          <div className="space-y-2 p-4">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-[#F3EAD7] px-2.5 py-1 text-xs font-semibold text-[#8F3F23]"><BookOpen aria-hidden="true" className="h-3.5 w-3.5" />Bài viết minh họa · chưa xuất bản</span>
-            <h4 className="text-base font-bold leading-snug text-[#2C2621]">{articleTitle}</h4>
-            <p className="text-sm leading-relaxed text-[#6E655B]">Xem bộ ảnh, ghi chú phối đồ và danh sách món được dùng trong bài.</p>
-            <span className="inline-flex items-center gap-1 text-sm font-semibold text-[#8F3F23]">Xem bộ ảnh & cách phối <ChevronRight aria-hidden="true" className="h-4 w-4 transition-transform group-hover:translate-x-0.5" /></span>
-          </div>
-        </button>
+        {SHOW_ILLUSTRATED_ARTICLE ? (
+          <button type="button" onClick={() => openArticle()} className="group block w-full overflow-hidden rounded-2xl border border-[#E2D8C6] bg-white text-left transition-colors hover:border-[#C76B3C] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C76B3C]">
+            <div className="grid grid-cols-2 gap-1.5 bg-[#E8DEC7] p-1.5">
+            <EditorialPhotoFrame photo={photos[0]} label="Bộ ảnh · 01" note="Ảnh chờ bổ sung" aspect="aspect-[1.2/1]" />
+            <EditorialPhotoFrame photo={photos[1]} label="Bộ ảnh · 02" note="Ảnh chờ bổ sung" aspect="aspect-[1.2/1]" />
+            </div>
+            <div className="space-y-2 p-4">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#F3EAD7] px-2.5 py-1 text-xs font-semibold text-[#8F3F23]"><BookOpen aria-hidden="true" className="h-3.5 w-3.5" />Bài viết minh họa · chưa xuất bản</span>
+              <h4 className="text-base font-bold leading-snug text-[#2C2621]">{articleTitle}</h4>
+              <p className="text-sm leading-relaxed text-[#6E655B]">Xem bộ ảnh, ghi chú phối đồ và danh sách món được dùng trong bài.</p>
+              <span className="inline-flex items-center gap-1 text-sm font-semibold text-[#8F3F23]">Xem bộ ảnh & cách phối <ChevronRight aria-hidden="true" className="h-4 w-4 transition-transform group-hover:translate-x-0.5" /></span>
+            </div>
+          </button>
+        ) : null}
 
         <div className="space-y-2" aria-label="Phụ kiện trong bài viết">
           {suggestions.map(item => (
