@@ -9,6 +9,10 @@ export interface AccessorySuggestion {
   description: string;
   productImageUrl?: string;
   shopeeUrl?: string;
+  /** Non-Shopee destination. Used when `shopeeUrl` is absent. */
+  linkUrl?: string;
+  /** Button label for `linkUrl`, e.g. "Xem trên Threads". */
+  linkLabel?: string;
   priceText?: string;
 }
 
@@ -59,6 +63,28 @@ function ProductImage({ item, className = 'aspect-[4/3]' }: { item: AccessorySug
 }
 
 const SHOPEE_LINK_REL = 'noopener nofollow sponsored';
+const GENERIC_LINK_REL = 'noopener';
+
+function validHttpsUrl(value?: string) {
+  if (!value) return false;
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' && url.hostname.length > 0;
+  } catch {
+    return false;
+  }
+}
+
+/** Shopee stays the affiliate link. Other items can supply their own label and URL. */
+function accessoryOutboundLink(item: AccessorySuggestion): { href: string; label: string; rel: string } | null {
+  if (item.shopeeUrl && validShopeeUrl(item.shopeeUrl)) {
+    return { href: item.shopeeUrl, label: 'Xem trên Shopee', rel: SHOPEE_LINK_REL };
+  }
+  if (item.linkUrl && validHttpsUrl(item.linkUrl)) {
+    return { href: item.linkUrl, label: item.linkLabel?.trim() || 'Xem liên kết', rel: GENERIC_LINK_REL };
+  }
+  return null;
+}
 
 /** Unpublished illustrated-article card. Set to true to show it again. */
 export const SHOW_ILLUSTRATED_ARTICLE = false;
@@ -140,7 +166,7 @@ export function AccessoryEditorialExperience({ category, categoryLabel, suggesti
       categoryLabel: 'Phụ kiện',
       priceText: item.priceText || '',
       imageUrl: item.productImageUrl,
-      sourceUrl: validShopeeUrl(item.shopeeUrl) ? item.shopeeUrl : undefined,
+      sourceUrl: accessoryOutboundLink(item)?.href,
     });
     setSavedIds(current => current.includes(id) ? current : [...current, id]);
   };
@@ -180,13 +206,17 @@ export function AccessoryEditorialExperience({ category, categoryLabel, suggesti
                 </span>
                 <ChevronRight aria-hidden="true" className="h-4 w-4 shrink-0 text-[#8F3F23]" />
               </button>
-              {validShopeeUrl(item.shopeeUrl) ? (
-                <div className="border-t border-[#ECE4D0] px-3 py-2">
-                  <a href={item.shopeeUrl} target="_blank" rel={SHOPEE_LINK_REL} className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-[#D8CFBD] bg-[#FAF8F4] px-3 text-xs font-semibold text-[#8F3F23] transition-colors hover:border-[#C76B3C] hover:bg-white">
-                    Xem trên Shopee <ExternalLink aria-hidden="true" className="h-3.5 w-3.5" />
-                  </a>
-                </div>
-              ) : null}
+              {(() => {
+                const link = accessoryOutboundLink(item);
+                if (!link) return null;
+                return (
+                  <div className="border-t border-[#ECE4D0] px-3 py-2">
+                    <a href={link.href} target="_blank" rel={link.rel} className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-[#D8CFBD] bg-[#FAF8F4] px-3 text-xs font-semibold text-[#8F3F23] transition-colors hover:border-[#C76B3C] hover:bg-white">
+                      {link.label} <ExternalLink aria-hidden="true" className="h-3.5 w-3.5" />
+                    </a>
+                  </div>
+                );
+              })()}
             </article>
           ))}
         </div>
@@ -219,11 +249,21 @@ export function AccessoryEditorialExperience({ category, categoryLabel, suggesti
                   <ProductImage item={selectedAccessory} className="aspect-square" />
                   <section className="space-y-4">
                     <div><p className="font-mono-spec text-xs font-bold uppercase tracking-wide text-[#C76B3C]">Phụ kiện gợi ý · {categoryLabel}</p><h1 className="mt-2 text-2xl font-bold">{selectedAccessory.title}</h1><p className="mt-3 text-base leading-relaxed text-[#554D43]">{selectedAccessory.description}</p></div>
-                    <p className="rounded-2xl bg-[#F3EAD7] p-4 text-sm leading-relaxed text-[#554D43]">Gợi ý phối trong bài minh họa. Chỉ hiển thị liên kết Shopee khi URL đã được xác minh.</p>
-                    <p className="text-sm text-[#6E655B]">Giá: {selectedAccessory.priceText || 'chưa có thông tin; chưa tính vào dự toán.'}</p>
-                    {validShopeeUrl(selectedAccessory.shopeeUrl)
-                      ? <a href={selectedAccessory.shopeeUrl} target="_blank" rel={SHOPEE_LINK_REL} className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#C76B3C] px-4 text-sm font-semibold text-white hover:bg-[#A9552E]">Xem trên Shopee <ExternalLink aria-hidden="true" className="h-4 w-4" /></a>
-                      : <button type="button" disabled className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-[#D8CFBD] bg-[#ECE4D0] px-4 text-sm font-semibold text-[#6E655B] disabled:cursor-not-allowed">Link Shopee sẽ bổ sung sau <ExternalLink aria-hidden="true" className="h-4 w-4" /></button>}
+                    {(() => {
+                      const link = accessoryOutboundLink(selectedAccessory);
+                      const note = link && link.rel !== SHOPEE_LINK_REL
+                        ? 'Liên kết bên dưới mở trong tab mới.'
+                        : 'Chỉ hiển thị liên kết Shopee khi URL đã được xác minh.';
+                      return (
+                        <>
+                          <p className="rounded-2xl bg-[#F3EAD7] p-4 text-sm leading-relaxed text-[#554D43]">Gợi ý phối trong bài minh họa. {note}</p>
+                          <p className="text-sm text-[#6E655B]">Giá: {selectedAccessory.priceText || 'chưa có thông tin; chưa tính vào dự toán.'}</p>
+                          {link
+                            ? <a href={link.href} target="_blank" rel={link.rel} className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#C76B3C] px-4 text-sm font-semibold text-white hover:bg-[#A9552E]">{link.label} <ExternalLink aria-hidden="true" className="h-4 w-4" /></a>
+                            : <button type="button" disabled className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-[#D8CFBD] bg-[#ECE4D0] px-4 text-sm font-semibold text-[#6E655B] disabled:cursor-not-allowed">Link Shopee sẽ bổ sung sau <ExternalLink aria-hidden="true" className="h-4 w-4" /></button>}
+                        </>
+                      );
+                    })()}
                     <button type="button" onClick={() => saveToPlan(selectedAccessory)} className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#C76B3C] px-4 text-sm font-semibold text-white hover:bg-[#A9552E]">
                       {savedIds.includes(getItemId(selectedAccessory)) || isItemInPlan(getItemId(selectedAccessory)) ? <><Check aria-hidden="true" className="h-4 w-4" />Đã lưu vào kế hoạch</> : <>+ Lưu vào kế hoạch</>}
                     </button>
@@ -256,13 +296,17 @@ export function AccessoryEditorialExperience({ category, categoryLabel, suggesti
                             <ProductImage item={item} />
                             <div className="space-y-1.5 p-1 pt-3"><h3 className="font-bold">{item.title}</h3><p className="text-sm leading-relaxed text-[#6E655B]">{item.description}</p><span className="inline-flex items-center gap-1 text-sm font-semibold text-[#8F3F23]">Xem thông tin món <ChevronRight aria-hidden="true" className="h-4 w-4" /></span></div>
                           </button>
-                          {validShopeeUrl(item.shopeeUrl) ? (
-                            <div className="px-3 pb-3">
-                              <a href={item.shopeeUrl} target="_blank" rel={SHOPEE_LINK_REL} className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-[#D8CFBD] bg-white px-3 text-xs font-semibold text-[#8F3F23] hover:border-[#C76B3C]">
-                                Xem trên Shopee <ExternalLink aria-hidden="true" className="h-3.5 w-3.5" />
-                              </a>
-                            </div>
-                          ) : null}
+                          {(() => {
+                            const link = accessoryOutboundLink(item);
+                            if (!link) return null;
+                            return (
+                              <div className="px-3 pb-3">
+                                <a href={link.href} target="_blank" rel={link.rel} className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-[#D8CFBD] bg-white px-3 text-xs font-semibold text-[#8F3F23] hover:border-[#C76B3C]">
+                                  {link.label} <ExternalLink aria-hidden="true" className="h-3.5 w-3.5" />
+                                </a>
+                              </div>
+                            );
+                          })()}
                           <div className="flex flex-wrap gap-2 border-t border-[#E2D8C6] p-3">
                             <button type="button" onClick={() => { document.getElementById(`accessory-photo-${index + 1}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }} className="inline-flex min-h-10 flex-1 items-center justify-center gap-1 rounded-xl bg-[#ECE4D0] px-3 text-xs font-semibold text-[#554D43]">Ảnh dùng trong bài <Camera aria-hidden="true" className="h-3.5 w-3.5" /></button>
                             <button type="button" onClick={() => saveToPlan(item)} className="inline-flex min-h-10 flex-1 items-center justify-center gap-1 rounded-xl bg-[#C76B3C] px-3 text-xs font-semibold text-white">Lưu kế hoạch</button>

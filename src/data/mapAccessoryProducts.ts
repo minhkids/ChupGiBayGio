@@ -10,6 +10,13 @@ export const MAP_ACCESSORY_SHOPEE_URLS = {
 
 export const featuredMapAccessorySet: AccessorySuggestion[] = [
   {
+    title: 'Cây thông Noel mini (workshop 98k)',
+    description: 'Tự tay trang trí một cây thông nhỏ tại Đoài cà phê, Mỹ Đình 2. Workshop 98k, mang cây về làm quà.',
+    productImageUrl: '/accessories/doai-workshop-cay-thong.webp',
+    linkUrl: 'https://www.threads.com/@quangkwang',
+    linkLabel: 'Xem trên Threads',
+  },
+  {
     title: 'Túi đeo chéo gọn',
     description: 'Đựng đồ thiết yếu, để hai tay thoải mái khi đi dạo.',
     productImageUrl: '/accessories/tui-deo-cheo-gon.webp',
