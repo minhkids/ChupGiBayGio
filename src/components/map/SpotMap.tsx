@@ -34,6 +34,19 @@ interface SpotMapProps {
 
 type TileProvider = 'osm' | 'esri' | 'carto';
 
+// CARTO Voyager is the default because the OSM tile CDN drops some mobile
+// in-app browsers. Failures walk this ring (osm → carto → esri) before the alert.
+const TILE_FALLBACK_ORDER: TileProvider[] = ['osm', 'carto', 'esri'];
+const DEFAULT_TILE_PROVIDER: TileProvider = 'carto';
+const TILE_ERROR_LIMIT = 4;
+const TILE_FALLBACK_MS = 5000;
+const TILE_REFERRER_POLICY = 'strict-origin-when-cross-origin' as const;
+
+const nextTileProvider = (current: TileProvider): TileProvider => {
+  const index = TILE_FALLBACK_ORDER.indexOf(current);
+  return TILE_FALLBACK_ORDER[(index + 1) % TILE_FALLBACK_ORDER.length];
+};
+
 export const SpotMap: React.FC<SpotMapProps> = ({
   editorial = false,
   spots,
@@ -63,6 +76,10 @@ export const SpotMap: React.FC<SpotMapProps> = ({
   const onMapReadyRef = useRef(onMapReady);
   onMapReadyRef.current = onMapReady;
   const successfulTileRef = useRef(false);
+  const tileErrorCountRef = useRef(0);
+  const attemptedProvidersRef = useRef<Set<TileProvider>>(new Set());
+  const fallbackTimerRef = useRef<ReturnType<typeof window.setTimeout> | null>(null);
+  const tileProviderRef = useRef<TileProvider>(DEFAULT_TILE_PROVIDER);
   const [tileError, setTileError] = useState(false);
   const markersLayerRef = useRef<L.LayerGroup | null>(null);
   const filmLabsLayerRef = useRef<L.LayerGroup | null>(null);
@@ -71,7 +88,7 @@ export const SpotMap: React.FC<SpotMapProps> = ({
 
   const CARTO_DEFAULT_KEY = 'cb1_469u_1_6a12a7c07d0c9adf82fe0c70';
 
-  const [tileProvider, setTileProvider] = useState<TileProvider>('osm');
+  const [tileProvider, setTileProvider] = useState<TileProvider>(DEFAULT_TILE_PROVIDER);
   const [cartoApiKey, setCartoApiKey] = useState<string>(() => {
     try {
       const stored = localStorage.getItem('carto_api_key');
@@ -84,6 +101,8 @@ export const SpotMap: React.FC<SpotMapProps> = ({
       return CARTO_DEFAULT_KEY;
     }
   });
+  const cartoApiKeyRef = useRef(cartoApiKey);
+  cartoApiKeyRef.current = cartoApiKey;
   const [showKeyModal, setShowKeyModal] = useState(false);
   const [tempKeyInput, setTempKeyInput] = useState(cartoApiKey);
   const [keySaved, setKeySaved] = useState(false);
@@ -114,53 +133,109 @@ export const SpotMap: React.FC<SpotMapProps> = ({
     return () => { active = false; };
   }, [catalogRevision]);
 
-  // Helper to get tile configuration
+  // Single hostname per provider: OSM's a/b/c aliases are deprecated, and extra
+  // subdomains are a common failure point in mobile in-app browsers.
   const getTileConfig = (provider: TileProvider, key: string) => {
+    const referrerPolicy = TILE_REFERRER_POLICY;
     switch (provider) {
       case 'esri':
         return {
           url: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',
           options: {
-            maxZoom: 16,
+            maxZoom: 19,
+            maxNativeZoom: 16,
+            referrerPolicy,
             attribution: '&copy; Esri &mdash; World Light Gray'
           }
         };
       case 'carto':
         return {
-          url: key 
-            ? `https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?key=${key}`
-            : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+          url: key
+            ? `https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?key=${encodeURIComponent(key)}`
+            : 'https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
           options: {
             maxZoom: 19,
-            subdomains: 'abcd',
-            attribution: '&copy; CARTO'
+            referrerPolicy,
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a>'
           }
         };
       case 'osm':
       default:
         return {
-          url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+          url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
           options: {
             maxZoom: 19,
-            subdomains: 'abc',
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>'
+            referrerPolicy,
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>'
           }
         };
     }
   };
 
-  // A successful tile in the active layer means the basemap is not wholly blank.
-  const attachTileStatus = (layer: L.TileLayer) => {
+  const clearFallbackTimer = () => {
+    if (fallbackTimerRef.current != null) {
+      window.clearTimeout(fallbackTimerRef.current);
+      fallbackTimerRef.current = null;
+    }
+  };
+
+  const switchTileLayerRef = useRef<(provider: TileProvider, source: 'user' | 'fallback') => void>(() => {});
+  const considerFallbackRef = useRef<(provider: TileProvider, layer: L.TileLayer) => void>(() => {});
+
+  const attachTileStatus = (layer: L.TileLayer, provider: TileProvider) => {
     successfulTileRef.current = false;
+    tileErrorCountRef.current = 0;
     setTileError(false);
+    clearFallbackTimer();
+    fallbackTimerRef.current = window.setTimeout(() => {
+      considerFallbackRef.current(provider, layer);
+    }, TILE_FALLBACK_MS);
     layer.on('tileload', () => {
       if (tileLayerRef.current !== layer) return;
       successfulTileRef.current = true;
+      tileErrorCountRef.current = 0;
+      clearFallbackTimer();
       setTileError(false);
     });
     layer.on('tileerror', () => {
-      if (tileLayerRef.current === layer && !successfulTileRef.current) setTileError(true);
+      if (tileLayerRef.current !== layer || successfulTileRef.current) return;
+      tileErrorCountRef.current += 1;
+      if (tileErrorCountRef.current >= TILE_ERROR_LIMIT) {
+        clearFallbackTimer();
+        considerFallbackRef.current(provider, layer);
+      }
     });
+  };
+
+  switchTileLayerRef.current = (provider, source) => {
+    clearFallbackTimer();
+    if (source === 'user') attemptedProvidersRef.current = new Set();
+    attemptedProvidersRef.current.add(provider);
+    tileProviderRef.current = provider;
+    setTileProvider(provider);
+    successfulTileRef.current = false;
+    tileErrorCountRef.current = 0;
+    setTileError(false);
+    const map = mapInstanceRef.current;
+    if (!map) return;
+    tileLayerRef.current?.remove();
+    const { url, options } = getTileConfig(provider, cartoApiKeyRef.current);
+    const layer = L.tileLayer(url, options).addTo(map);
+    tileLayerRef.current = layer;
+    attachTileStatus(layer, provider);
+  };
+
+  considerFallbackRef.current = (provider, layer) => {
+    if (tileLayerRef.current !== layer || successfulTileRef.current || tileProviderRef.current !== provider) return;
+    let candidate = provider;
+    for (let step = 0; step < TILE_FALLBACK_ORDER.length; step += 1) {
+      candidate = nextTileProvider(candidate);
+      if (!attemptedProvidersRef.current.has(candidate)) {
+        switchTileLayerRef.current(candidate, 'fallback');
+        return;
+      }
+    }
+    setTileError(true);
   };
 
   // Initialize Map
@@ -181,11 +256,8 @@ export const SpotMap: React.FC<SpotMapProps> = ({
       attributionControl: false
     });
 
-    // Default clean OpenStreetMap tile layer (100% free, no watermark)
-    const { url, options } = getTileConfig('osm', '');
-    const tileLayer = L.tileLayer(url, options).addTo(map);
-    attachTileStatus(tileLayer);
-    tileLayerRef.current = tileLayer;
+    mapInstanceRef.current = map;
+    switchTileLayerRef.current(DEFAULT_TILE_PROVIDER, 'user');
 
     // Zoom control in bottom right
     L.control.zoom({ position: 'bottomright' }).addTo(map);
@@ -209,6 +281,7 @@ export const SpotMap: React.FC<SpotMapProps> = ({
     resizeObserver.observe(mapContainerRef.current);
 
     return () => {
+      clearFallbackTimer();
       resizeObserver.disconnect();
       onMapReadyRef.current?.(null);
       map.remove();
@@ -217,19 +290,8 @@ export const SpotMap: React.FC<SpotMapProps> = ({
     };
   }, []); // eslint-disable-next-line react-hooks/exhaustive-deps — map init runs once, region/tile changes handled separately
 
-    // Switch Tile Provider
   const handleSwitchProvider = (provider: TileProvider) => {
-    setTileProvider(provider);
-    if (!mapInstanceRef.current) return;
-
-    if (tileLayerRef.current) {
-      tileLayerRef.current.remove();
-    }
-
-    const { url, options } = getTileConfig(provider, cartoApiKey);
-    const newLayer = L.tileLayer(url, options).addTo(mapInstanceRef.current);
-    attachTileStatus(newLayer);
-    tileLayerRef.current = newLayer;
+    switchTileLayerRef.current(provider, 'user');
   };
 
   // Save Carto API Key
@@ -247,17 +309,8 @@ export const SpotMap: React.FC<SpotMapProps> = ({
       setShowKeyModal(false);
     }, 1200);
 
-    // If currently on Carto or switching to Carto
-    if (mapInstanceRef.current) {
-      if (tileLayerRef.current) {
-        tileLayerRef.current.remove();
-      }
-      const { url, options } = getTileConfig('carto', cleanKey);
-      const newLayer = L.tileLayer(url, options).addTo(mapInstanceRef.current);
-      attachTileStatus(newLayer);
-      tileLayerRef.current = newLayer;
-      setTileProvider('carto');
-    }
+    cartoApiKeyRef.current = cleanKey;
+    if (mapInstanceRef.current) switchTileLayerRef.current('carto', 'user');
   };
 
   // Update Region Center only when the user changes it (initial center already set).
@@ -584,9 +637,12 @@ export const SpotMap: React.FC<SpotMapProps> = ({
       {tileError && <div role="alert" className="absolute left-3 right-3 top-16 z-30 mx-auto max-w-xs border border-[#D8CFBD] bg-[#FAF8F4] p-3 text-center text-sm text-[#2C2621] shadow-lg">
         <p>Không tải được bản đồ. Kiểm tra kết nối rồi thử lại.</p>
         <button type="button" className="mt-2 border border-[#C76B3C] px-3 py-1 font-semibold text-[#C76B3C]" onClick={() => {
+          const current = tileProviderRef.current;
+          const layer = tileLayerRef.current;
+          if (!layer) return;
+          attemptedProvidersRef.current = new Set([current]);
           successfulTileRef.current = false;
-          setTileError(false);
-          tileLayerRef.current?.redraw();
+          considerFallbackRef.current(current, layer);
         }}>Thử tải lại bản đồ</button>
       </div>}
       {popupReference && createPortal(
