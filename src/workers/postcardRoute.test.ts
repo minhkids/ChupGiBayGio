@@ -6,14 +6,12 @@ describe('postcard route helpers', () => {
     expect(dayKey('1.2.3.4', new Date('2026-11-11T00:00:00Z'))).toBe('postcard:1.2.3.4:2026-11-11');
   });
 
-  it('allows three postcards then blocks', async () => {
+  it('allows one postcard then blocks', async () => {
     const store = new Map<string, string>();
     const kv = {
       get: async (key: string) => store.get(key) ?? null,
       put: async (key: string, value: string) => { store.set(key, value); },
     } as unknown as KVNamespace;
-    expect(await consumeQuota(kv, 'a')).toBe(true);
-    expect(await consumeQuota(kv, 'a')).toBe(true);
     expect(await consumeQuota(kv, 'a')).toBe(true);
     expect(await consumeQuota(kv, 'a')).toBe(false);
   });
