@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 import {
   POSTCARD_MESSAGE_MAX,
   buildPostcardCaption,
+  fitPostcardMessage,
   formatGreeting,
+  layoutPostcardFooter,
   normalizePostcardMessage,
   wrapPostcardText,
 } from './postcard';
@@ -35,8 +37,9 @@ describe('wrapPostcardText', () => {
 });
 
 describe('normalizePostcardMessage', () => {
-  it('caps the note at 200 characters', () => {
-    expect(Array.from(normalizePostcardMessage('à'.repeat(240))).length).toBe(POSTCARD_MESSAGE_MAX);
+  it('caps the note at 400 characters', () => {
+    expect(POSTCARD_MESSAGE_MAX).toBe(400);
+    expect(Array.from(normalizePostcardMessage('à'.repeat(460))).length).toBe(400);
   });
 
   it('keeps a line break inside the limit', () => {
@@ -133,5 +136,53 @@ describe('buildPostcardCaption', () => {
     const message = lines.filter(line => line.role === 'message').map(line => line.text);
     expect(message).toEqual(['một hai', 'ba bốn…']);
     expect(widthOf(message[1])).toBeLessThanOrEqual(70);
+  });
+});
+
+describe('fitPostcardMessage', () => {
+  const measureAt = (text: string, fontSize: number) => text.length * (fontSize / 2);
+
+  it('keeps a short note at the larger size', () => {
+    const fitted = fitPostcardMessage('Chiều nay trời đẹp.', 400, 200, measureAt, [30, 20]);
+    expect(fitted.fontSize).toBe(30);
+    expect(fitted.lines).toEqual(['Chiều nay trời đẹp.']);
+  });
+
+  it('shrinks a long note so the lines fit the column', () => {
+    const fitted = fitPostcardMessage('aa aa aa aa aa aa aa aa', 90, 100, measureAt, [30, 20]);
+    expect(fitted.fontSize).toBe(20);
+    expect(fitted.lines).toEqual(['aa aa aa', 'aa aa aa', 'aa aa']);
+    expect(fitted.lines.length * fitted.lineHeight).toBeLessThanOrEqual(100);
+  });
+
+  it('keeps an intentional three-line note when the column is tall enough', () => {
+    const note = 'Chiều nay trời đẹp.\nMình ngồi cạnh cửa sổ,\nnhớ bạn quá.';
+    const fitted = fitPostcardMessage(note, 500, 300, measureAt, [30, 20]);
+    expect(fitted.fontSize).toBe(30);
+    expect(fitted.lines).toEqual(['Chiều nay trời đẹp.', 'Mình ngồi cạnh cửa sổ,', 'nhớ bạn quá.']);
+  });
+});
+
+describe('layoutPostcardFooter', () => {
+  it('sets the date beside a short location', () => {
+    expect(layoutPostcardFooter({
+      location: 'ka:mon kafe',
+      date: '15/11/2026',
+      maxWidth: 400,
+      measure: text => text.length * 10,
+    })).toEqual([{ role: 'location', text: 'ka:mon kafe', aside: '15/11/2026' }]);
+  });
+
+  it('gives a wide date its own line', () => {
+    const lines = layoutPostcardFooter({
+      location: 'ka:mon kafe',
+      date: '15/11/2026',
+      maxWidth: 400,
+      measure: (text, role) => (role === 'date' ? 500 : text.length * 10),
+    });
+    expect(lines).toEqual([
+      { role: 'location', text: 'ka:mon kafe' },
+      { role: 'date', text: '15/11/2026' },
+    ]);
   });
 });

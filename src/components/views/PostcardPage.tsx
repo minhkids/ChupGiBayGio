@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   POSTCARD_FONT_FAMILIES,
+  POSTCARD_HEIGHT,
   POSTCARD_MESSAGE_MAX,
   POSTCARD_RECIPIENT_MAX,
+  POSTCARD_WIDTH,
   drawPostcard,
   type PostcardLayout,
 } from '../../lib/postcard';
@@ -81,7 +83,6 @@ export function PostcardPage({ initialLocation = '' }: { initialLocation?: strin
   const [location, setLocation] = useState(initialLocation);
   const [date, setDate] = useState(() => new Date().toLocaleDateString('vi-VN'));
   const [layout, setLayout] = useState<PostcardLayout>('zine');
-  const [side, setSide] = useState<'front' | 'back'>('front');
   const [recipient, setRecipient] = useState('');
   const [note, setNote] = useState('');
   const [status, setStatus] = useState('');
@@ -104,9 +105,9 @@ export function PostcardPage({ initialLocation = '' }: { initialLocation?: strin
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     const artwork = artRef.current;
-    canvas.width = 1000;
-    canvas.height = 1500;
-    drawPostcard(ctx, 1000, 1500, {
+    canvas.width = POSTCARD_WIDTH;
+    canvas.height = POSTCARD_HEIGHT;
+    drawPostcard(ctx, POSTCARD_WIDTH, POSTCARD_HEIGHT, {
       artwork,
       artworkWidth: artwork?.naturalWidth || 0,
       artworkHeight: artwork?.naturalHeight || 0,
@@ -115,10 +116,9 @@ export function PostcardPage({ initialLocation = '' }: { initialLocation?: strin
       location,
       date,
       layout,
-      side,
     });
     setReady(true);
-  }, [recipient, note, location, date, layout, side]);
+  }, [recipient, note, location, date, layout]);
 
   useEffect(() => {
     paintRef.current = paint;
@@ -166,17 +166,17 @@ export function PostcardPage({ initialLocation = '' }: { initialLocation?: strin
   const download = () => {
     const link = document.createElement('a');
     link.href = canvasRef.current?.toDataURL('image/png') || '';
-    link.download = side === 'back' ? 'buu-thiep-mat-sau.png' : 'buu-thiep.png';
+    link.download = 'buu-thiep.png';
     link.click();
   };
 
   return (
     <main className="min-h-screen bg-[#F7F5F0] px-4 py-6 text-[#2C2621] sm:px-8">
-      <div className="mx-auto grid max-w-5xl gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
+      <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
         <section className="space-y-4 rounded-3xl border border-[#D8CFBD] bg-[#FAF8F4] p-4 shadow-sm">
           <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#C76B3C]">Bưu thiếp</p>
           <h1 className="text-2xl font-bold">Ảnh thành bưu thiếp thủy mặc</h1>
-          <p className="text-sm leading-relaxed text-[#6E655B]">Tải ảnh của bạn. AI vẽ bản thủy mặc lớn trên giấy ngà; lời nhắn, địa điểm và ngày được viết phía dưới.</p>
+          <p className="text-sm leading-relaxed text-[#6E655B]">Tải ảnh của bạn. AI vẽ bản thủy mặc bên trái giấy ngà; lời nhắn, địa điểm và ngày nằm bên phải.</p>
           <label className="block text-sm font-semibold" htmlFor="postcard-file">Ảnh
             <input id="postcard-file" type="file" accept="image/*" className="mt-1 block w-full text-sm" onChange={() => onFile()} />
           </label>
@@ -184,7 +184,7 @@ export function PostcardPage({ initialLocation = '' }: { initialLocation?: strin
             <input id="postcard-recipient" value={recipient} maxLength={POSTCARD_RECIPIENT_MAX} autoComplete="off" placeholder="Lan" onChange={event => setRecipient(event.target.value)} className="mt-1 h-11 w-full rounded-xl border border-[#D8CFBD] bg-white px-3" />
           </label>
           <label className="block text-sm font-semibold" htmlFor="postcard-note">Lời nhắn
-            <textarea id="postcard-note" value={note} maxLength={POSTCARD_MESSAGE_MAX} rows={4} placeholder="Chiều nay trời đẹp." onChange={event => setNote(event.target.value)} className="mt-1 w-full resize-y rounded-xl border border-[#D8CFBD] bg-white px-3 py-2 text-sm leading-relaxed" />
+            <textarea id="postcard-note" value={note} maxLength={POSTCARD_MESSAGE_MAX} rows={5} placeholder="Chiều nay trời đẹp." onChange={event => setNote(event.target.value)} className="mt-1 w-full resize-y rounded-xl border border-[#D8CFBD] bg-white px-3 py-2 text-sm leading-relaxed" />
             <span className="mt-1 block text-right text-xs font-medium text-[#6E655B]">{note.length}/{POSTCARD_MESSAGE_MAX}</span>
           </label>
           <label className="block text-sm font-semibold" htmlFor="postcard-location">Địa điểm
@@ -197,17 +197,13 @@ export function PostcardPage({ initialLocation = '' }: { initialLocation?: strin
             <button type="button" onClick={() => setLayout('zine')} className={`min-h-11 flex-1 rounded-xl border px-3 text-sm font-semibold ${layout === 'zine' ? 'border-[#2C2621] bg-[#2C2621] text-white' : 'border-[#D8CFBD]'}`}>Zine</button>
             <button type="button" onClick={() => setLayout('wash')} className={`min-h-11 flex-1 rounded-xl border px-3 text-sm font-semibold ${layout === 'wash' ? 'border-[#2C2621] bg-[#2C2621] text-white' : 'border-[#D8CFBD]'}`}>Thủy mặc</button>
           </div>
-          <div className="flex gap-2">
-            <button type="button" onClick={() => setSide('front')} className={`min-h-11 flex-1 rounded-xl border px-3 text-sm font-semibold ${side === 'front' ? 'border-[#C76B3C] bg-[#F3EAD7]' : 'border-[#D8CFBD]'}`}>Mặt trước</button>
-            <button type="button" onClick={() => setSide('back')} className={`min-h-11 flex-1 rounded-xl border px-3 text-sm font-semibold ${side === 'back' ? 'border-[#C76B3C] bg-[#F3EAD7]' : 'border-[#D8CFBD]'}`}>Mặt sau</button>
-          </div>
           <button type="button" disabled={busy} onClick={() => void create()} className="min-h-12 w-full rounded-xl bg-[#C76B3C] text-sm font-bold text-white disabled:opacity-60">{busy ? 'Đang vẽ…' : 'Tạo bưu thiếp'}</button>
           <button type="button" onClick={() => void paint()} className="min-h-11 w-full rounded-xl border border-[#D8CFBD] text-sm font-semibold">Xem bố cục mẫu</button>
           <button type="button" disabled={!ready} onClick={download} className="min-h-11 w-full rounded-xl border border-[#D8CFBD] text-sm font-semibold disabled:opacity-50">Tải PNG</button>
           {status && <p role="status" className="text-sm text-[#8F3F23]">{status}</p>}
           <a href="/" className="inline-block text-sm font-semibold text-[#8F3F23] underline">Về bản đồ</a>
         </section>
-        <canvas ref={canvasRef} aria-label="Xem trước bưu thiếp" className="mx-auto w-full max-w-[420px] rounded-sm border border-[#D8CFBD] bg-[#F6F1E6] shadow-md" />
+        <canvas ref={canvasRef} aria-label="Xem trước bưu thiếp" className="mx-auto w-full rounded-sm border border-[#D8CFBD] bg-[#F6F1E6] shadow-md" />
       </div>
     </main>
   );

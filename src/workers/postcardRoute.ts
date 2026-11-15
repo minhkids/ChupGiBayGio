@@ -15,13 +15,13 @@ export async function consumeQuota(kv: KVNamespace, ip: string) {
   return true;
 }
 
-export const WATERCOLOR_PROMPT = 'Turn this photograph into a restrained watercolor and ink illustration on warm ivory paper. Keep the recognizable silhouette and colors. Soft painted edges, no text, no border, no frame, no signature.';
+export const WATERCOLOR_PROMPT = 'Turn this photograph into a restrained watercolor and ink illustration on warm ivory paper, composed as a horizontal scene. Keep the recognizable silhouette and colors. Soft painted edges, no text, no border, no frame, no signature.';
 
 export async function requestWatercolor(apiKey: string, file: Blob) {
   const body = new FormData();
   body.set('model', 'gpt-image-2');
   body.set('prompt', WATERCOLOR_PROMPT);
-  body.set('size', '1024x1536');
+  body.set('size', '1536x1024');
   body.set('quality', 'low');
   body.set('image', file, 'photo.jpg');
   const response = await fetch('https://api.openai.com/v1/images/edits', {

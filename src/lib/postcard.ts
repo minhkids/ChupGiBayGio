@@ -1,5 +1,4 @@
 export type PostcardLayout = 'zine' | 'wash';
-export type PostcardSide = 'front' | 'back';
 export type PostcardRole = 'greeting' | 'message' | 'location' | 'date';
 
 export type PostcardCaptionLine = {
@@ -9,7 +8,10 @@ export type PostcardCaptionLine = {
   aside?: string;
 };
 
-export const POSTCARD_MESSAGE_MAX = 200;
+export const POSTCARD_WIDTH = 1536;
+export const POSTCARD_HEIGHT = 1024;
+export const POSTCARD_MESSAGE_MAX = 400;
+export const POSTCARD_MESSAGE_SIZES = [30, 26, 22, 18] as const;
 export const POSTCARD_RECIPIENT_MAX = 48;
 export const POSTCARD_DATE_ASIDE_GAP = 32;
 
@@ -77,6 +79,64 @@ export function wrapPostcardText(
     if (current) lines.push(current);
   }
   while (lines.length > 0 && lines[lines.length - 1] === '') lines.pop();
+  return lines;
+}
+
+export function postcardMessageLineHeight(fontSize: number): number {
+  return Math.round(fontSize * 1.45);
+}
+
+export function fitPostcardMessage(
+  text: string,
+  maxWidth: number,
+  maxHeight: number,
+  measureAt: (sample: string, fontSize: number) => number,
+  sizes: readonly number[] = POSTCARD_MESSAGE_SIZES,
+): { fontSize: number; lines: string[]; lineHeight: number } {
+  const normalized = normalizePostcardMessage(text);
+  const largest = sizes[0] ?? 30;
+  if (!normalized || maxWidth <= 0 || sizes.length === 0) {
+    return { fontSize: largest, lines: [], lineHeight: postcardMessageLineHeight(largest) };
+  }
+  for (const fontSize of sizes) {
+    const lineHeight = postcardMessageLineHeight(fontSize);
+    const lines = wrapPostcardText(normalized, maxWidth, sample => measureAt(sample, fontSize));
+    if (lines.length * lineHeight <= maxHeight) return { fontSize, lines, lineHeight };
+  }
+  const fontSize = sizes[sizes.length - 1];
+  const lineHeight = postcardMessageLineHeight(fontSize);
+  const wrapped = wrapPostcardText(normalized, maxWidth, sample => measureAt(sample, fontSize));
+  const maxLines = Math.max(1, Math.floor(maxHeight / lineHeight));
+  return {
+    fontSize,
+    lineHeight,
+    lines: capLines(wrapped, maxLines, maxWidth, sample => measureAt(sample, fontSize)),
+  };
+}
+
+export function layoutPostcardFooter(input: {
+  location: string;
+  date: string;
+  maxWidth: number;
+  measure: (text: string, role: 'location' | 'date') => number;
+}): PostcardCaptionLine[] {
+  const location = capLines(
+    wrapPostcardText(cleanSingleLine(input.location), input.maxWidth, text => input.measure(text, 'location')),
+    3,
+    input.maxWidth,
+    text => input.measure(text, 'location'),
+  );
+  const date = cleanSingleLine(input.date);
+  const lines: PostcardCaptionLine[] = location.map(text => ({ role: 'location' as const, text }));
+  if (!date) return lines;
+  if (location.length === 1) {
+    const alongside = input.measure(location[0], 'location') + POSTCARD_DATE_ASIDE_GAP + input.measure(date, 'date');
+    if (alongside <= input.maxWidth) {
+      lines[0].aside = date;
+      return lines;
+    }
+  }
+  lines.push({ role: 'date', text: date });
   return lines;
 }
 
@@ -161,7 +221,6 @@ export function drawPostcard(
     location: string;
     date: string;
     layout: PostcardLayout;
-    side: PostcardSide;
   },
 ) {
   ctx.save();
@@ -169,125 +228,111 @@ export function drawPostcard(
   ctx.fillRect(0, 0, width, height);
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
-  if (options.side === 'back') drawBack(ctx, width, height, options);
-  else drawFront(ctx, width, height, options);
+  const column = writingColumn(width, height, options.layout);
+  paintArtwork(ctx, options.artwork, options.artworkWidth, options.artworkHeight, column.art);
+  if (options.layout === 'zine') {
+    ctx.strokeStyle = RULE;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(column.split, column.textTop);
+    ctx.lineTo(column.split, column.textBottom);
+    ctx.stroke();
+  }
+  drawWriting(ctx, options, column);
   ctx.restore();
 }
 
-function drawFront(
+function writingColumn(width: number, height: number, layout: PostcardLayout) {
+  const wash = layout === 'wash';
+  const split = Math.round(width * (wash ? 0.6 : 0.56));
+  const padY = wash ? 22 : 40;
+  return {
+    split,
+    art: {
+      x: wash ? 14 : 36,
+      y: padY,
+      w: split - (wash ? 8 : 52),
+      h: height - padY * 2,
+      fade: wash ? 92 : 44,
+    },
+    textX: split + (wash ? 20 : 36),
+    textWidth: width - (split + (wash ? 20 : 36)) - (wash ? 36 : 48),
+    textTop: padY + 6,
+    textBottom: height - padY,
+    wash,
+  };
+}
+
+function drawWriting(
   ctx: CanvasRenderingContext2D,
-  width: number,
-  height: number,
   options: {
-    artwork: CanvasImageSource | null;
-    artworkWidth: number;
-    artworkHeight: number;
     recipient: string;
     message: string;
     location: string;
     date: string;
     layout: PostcardLayout;
   },
+  column: ReturnType<typeof writingColumn>,
 ) {
-  const wash = options.layout === 'wash';
-  const inset = 72;
-  const textWidth = width - inset * 2;
-  const lines = captionFor(ctx, options, textWidth, Math.round(height * 0.34));
-  const textHeight = captionBlockHeight(lines, role => CAPTION_METRICS[role].line, role => CAPTION_METRICS[role].gap);
-  const top = wash ? 18 : 44;
-  const gap = wash ? 26 : 36;
-  const bottom = 40;
-  const artH = Math.max(280, height - top - gap - textHeight - bottom);
-  const frame = {
-    x: wash ? 20 : inset,
-    y: top,
-    w: wash ? width - 40 : textWidth,
-    h: artH,
-    fade: wash ? 108 : 56,
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  const measureRole = (text: string, role: PostcardRole) => {
+    ctx.font = CAPTION_METRICS[role].font;
+    return ctx.measureText(text).width;
   };
-  paintArtwork(ctx, options.artwork, options.artworkWidth, options.artworkHeight, frame);
-  if (!wash) {
+  const greeting = capLines(
+    wrapPostcardText(formatGreeting(options.recipient), column.textWidth, text => measureRole(text, 'greeting')),
+    2,
+    column.textWidth,
+    text => measureRole(text, 'greeting'),
+  );
+  const footer = layoutPostcardFooter({
+    location: options.location,
+    date: options.date,
+    maxWidth: column.textWidth,
+    measure: (text, role) => measureRole(text, role),
+  });
+  const greetingHeight = greeting.length * CAPTION_METRICS.greeting.line + (greeting.length ? 16 : 0);
+  const footerHeight = captionBlockHeight(footer, role => CAPTION_METRICS[role].line, role => CAPTION_METRICS[role].gap);
+  const gapBeforeFooter = footer.length ? 24 : 0;
+  const messageTop = column.textTop + greetingHeight;
+  const messageHeight = Math.max(28, column.textBottom - messageTop - footerHeight - gapBeforeFooter);
+  const fitted = fitPostcardMessage(
+    options.message,
+    column.textWidth,
+    messageHeight,
+    (sample, fontSize) => {
+      ctx.font = `400 ${fontSize}px ${POSTCARD_SCRIPT}`;
+      return ctx.measureText(sample).width;
+    },
+  );
+
+  ctx.font = CAPTION_METRICS.greeting.font;
+  ctx.fillStyle = CAPTION_METRICS.greeting.color;
+  let y = column.textTop;
+  for (const line of greeting) {
+    ctx.fillText(line, column.textX, y);
+    y += CAPTION_METRICS.greeting.line;
+  }
+  if (!column.wash && greeting.length) {
     ctx.strokeStyle = RULE;
     ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.moveTo(inset, frame.y + frame.h + gap * 0.42);
-    ctx.lineTo(inset + 112, frame.y + frame.h + gap * 0.42);
+    ctx.moveTo(column.textX, y + 4);
+    ctx.lineTo(column.textX + 96, y + 4);
     ctx.stroke();
   }
-  drawCaption(ctx, lines, inset, frame.y + frame.h + gap, textWidth);
-}
 
-function drawBack(
-  ctx: CanvasRenderingContext2D,
-  width: number,
-  height: number,
-  options: {
-    recipient: string;
-    message: string;
-    location: string;
-    date: string;
-  },
-) {
-  ctx.strokeStyle = RULE;
-  ctx.lineWidth = 1.5;
-  ctx.strokeRect(32, 32, width - 64, height - 64);
-  const split = Math.round(width * 0.56);
-  ctx.beginPath();
-  ctx.moveTo(split, 52);
-  ctx.lineTo(split, height - 52);
-  ctx.stroke();
-
-  ctx.fillStyle = MUTED;
-  ctx.font = `600 18px ${POSTCARD_SERIF}`;
-  ctx.textBaseline = 'top';
-  ctx.fillText('BƯU THIẾP', split + 36, 72);
-
-  const stampW = 168;
-  const stampH = 198;
-  const stampX = width - 32 - 48 - stampW;
-  const stampY = 118;
-  ctx.strokeRect(stampX, stampY, stampW, stampH);
-  ctx.font = `600 16px ${POSTCARD_SERIF}`;
-  ctx.textAlign = 'center';
-  ctx.fillText('TEM', stampX + stampW / 2, stampY + stampH / 2 - 8);
-  ctx.textAlign = 'left';
-
-  ctx.beginPath();
-  for (let index = 0; index < 4; index += 1) {
-    const lineY = stampY + stampH + 72 + index * 78;
-    ctx.moveTo(split + 36, lineY);
-    ctx.lineTo(width - 72, lineY);
+  ctx.font = `400 ${fitted.fontSize}px ${POSTCARD_SCRIPT}`;
+  ctx.fillStyle = '#3A322C';
+  y = messageTop;
+  for (const line of fitted.lines) {
+    ctx.fillText(line, column.textX, y);
+    y += fitted.lineHeight;
   }
-  ctx.stroke();
-
-  const textX = 64;
-  const textWidth = split - textX - 28;
-  const lines = captionFor(ctx, options, textWidth, height - 180);
-  ctx.save();
-  ctx.beginPath();
-  ctx.rect(48, 64, split - 72, height - 120);
-  ctx.clip();
-  drawCaption(ctx, lines, textX, 108, textWidth);
-  ctx.restore();
-}
-
-function captionFor(
-  ctx: CanvasRenderingContext2D,
-  options: { recipient: string; message: string; location: string; date: string },
-  maxWidth: number,
-  availableHeight: number,
-) {
-  return buildPostcardCaption({
-    ...options,
-    maxWidth,
-    availableHeight,
-    measure: (text, role) => {
-      ctx.font = CAPTION_METRICS[role].font;
-      return ctx.measureText(text).width;
-    },
-    lineAdvance: role => CAPTION_METRICS[role].line,
-    roleGap: role => CAPTION_METRICS[role].gap,
-  });
+  if (footer.length) {
+    drawCaption(ctx, footer, column.textX, column.textBottom - footerHeight, column.textWidth);
+  }
 }
 
 function drawCaption(
