@@ -19,7 +19,7 @@ export const WATERCOLOR_PROMPT = 'Turn this photograph into a restrained waterco
 
 export async function requestWatercolor(apiKey: string, file: Blob) {
   const body = new FormData();
-  body.set('model', 'gpt-image-1');
+  body.set('model', 'gpt-image-2');
   body.set('prompt', WATERCOLOR_PROMPT);
   body.set('size', '1024x1536');
   body.set('quality', 'low');
