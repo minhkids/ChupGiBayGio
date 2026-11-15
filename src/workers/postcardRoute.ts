@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 
 const MAX_BYTES = 2_500_000;
-const DAILY_LIMIT = 3;
+const DAILY_LIMIT = 1;
 
 export function dayKey(ip: string, now = new Date()) {
   return `postcard:${ip}:${now.toISOString().slice(0, 10)}`;
@@ -49,7 +49,7 @@ routes.post('/api/postcard', async (c) => {
   }
   const ip = c.req.header('cf-connecting-ip') || 'local';
   if (!(await consumeQuota(c.env.CACHE, ip))) {
-    return c.json({ error: 'Bạn đã tạo đủ 3 bưu thiếp hôm nay. Thử lại vào ngày mai.' }, 429);
+    return c.json({ error: 'Mỗi người chỉ tạo được 1 bưu thiếp mỗi ngày. Thử lại vào ngày mai nhé.' }, 429);
   }
   const form = await c.req.formData();
   const file = form.get('image');
