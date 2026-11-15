@@ -201,10 +201,12 @@ export function PostcardPage({ initialLocation = '' }: { initialLocation?: strin
           <button type="button" disabled={busy} onClick={() => void create()} className="min-h-12 w-full rounded-xl bg-[#C76B3C] text-sm font-bold text-white disabled:opacity-60">{busy ? 'Đang vẽ…' : 'Tạo bưu thiếp'}</button>
           <button type="button" onClick={() => void paint()} className="min-h-11 w-full rounded-xl border border-[#D8CFBD] text-sm font-semibold">Xem bố cục mẫu</button>
           <button type="button" disabled={!ready} onClick={download} className="min-h-11 w-full rounded-xl border border-[#D8CFBD] text-sm font-semibold disabled:opacity-50">Tải PNG</button>
-          {status && <p role="status" className="text-sm text-[#8F3F23]">{status}</p>}
           <a href="/" className="inline-block text-sm font-semibold text-[#8F3F23] underline">Về bản đồ</a>
         </section>
-        <canvas ref={canvasRef} aria-label="Xem trước bưu thiếp" className="mx-auto w-full rounded-sm border border-[#D8CFBD] bg-[#F6F1E6] shadow-md" />
+        <div className="min-w-0">
+          <canvas ref={canvasRef} aria-label="Xem trước bưu thiếp" className="mx-auto w-full rounded-sm border border-[#D8CFBD] bg-[#F6F1E6] shadow-md" />
+          {status && <p role="status" className="mx-auto mt-3 w-full rounded-full border border-[#E7D0C4] bg-[#F8E6DC] px-4 py-2.5 text-base font-medium leading-snug text-[#8F3F23]">{status}</p>}
+        </div>
       </div>
     </main>
   );
