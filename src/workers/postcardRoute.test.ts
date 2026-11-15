@@ -25,7 +25,10 @@ describe('postcard route helpers', () => {
     expect(artwork).toBe('abc');
     const body = fetchMock.mock.calls[0][1].body as FormData;
     expect(body.get('quality')).toBe('low');
-    expect(body.get('model')).toBe('gpt-image-1');
+    expect(body.get('size')).toBe('1024x1536');
+    expect(body.get('model')).toBe('gpt-image-2');
+    expect(body.get('input_fidelity')).toBeNull();
+    expect(fetchMock.mock.calls[0][0]).toBe('https://api.openai.com/v1/images/edits');
     vi.unstubAllGlobals();
   });
 });
