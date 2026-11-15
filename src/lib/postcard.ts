@@ -25,16 +25,15 @@ export const POSTCARD_SCRIPT = `"${POSTCARD_FONT_FAMILIES.script}", "${POSTCARD_
 
 const PAPER = '#F6F1E6';
 const INK = '#2C2621';
-const MUTED = '#6E655B';
 const RULE = '#C9C0B0';
 
-type CaptionStyle = { font: string; line: number; color: string; gap: number };
+type CaptionStyle = { font: string; size: number; line: number; color: string; gap: number };
 
 const CAPTION_METRICS: Record<PostcardRole, CaptionStyle> = {
-  greeting: { font: `italic 500 46px ${POSTCARD_SERIF}`, line: 58, color: INK, gap: 16 },
-  message: { font: `400 32px ${POSTCARD_SCRIPT}`, line: 46, color: '#3A322C', gap: 22 },
-  location: { font: `600 24px ${POSTCARD_SERIF}`, line: 34, color: MUTED, gap: 6 },
-  date: { font: `500 18px ${POSTCARD_SERIF}`, line: 24, color: MUTED, gap: 0 },
+  greeting: { font: `italic 500 46px ${POSTCARD_SERIF}`, size: 46, line: 58, color: INK, gap: 16 },
+  message: { font: `400 32px ${POSTCARD_SCRIPT}`, size: 32, line: 46, color: '#3A322C', gap: 22 },
+  location: { font: `600 42px ${POSTCARD_SERIF}`, size: 42, line: 54, color: '#3A322C', gap: 8 },
+  date: { font: `500 32px ${POSTCARD_SERIF}`, size: 32, line: 42, color: '#4E453D', gap: 0 },
 };
 
 export function formatGreeting(recipient: string): string {
@@ -355,7 +354,7 @@ function drawCaption(
       ctx.font = dateStyle.font;
       ctx.fillStyle = dateStyle.color;
       const dateWidth = ctx.measureText(line.aside).width;
-      const dateY = y + Math.max(0, (style.line - dateStyle.line) * 0.35);
+      const dateY = y + Math.round((style.size - dateStyle.size) * 0.8);
       ctx.fillText(line.aside, x + maxWidth - dateWidth, dateY);
     }
     const next = lines[index + 1];

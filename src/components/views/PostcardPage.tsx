@@ -49,7 +49,8 @@ async function ensurePostcardFonts() {
   if (!document.fonts?.load) return;
   const jobs = [
     document.fonts.load(`italic 500 46px "${POSTCARD_FONT_FAMILIES.serif}"`, VIETNAMESE_SAMPLE),
-    document.fonts.load(`600 24px "${POSTCARD_FONT_FAMILIES.serif}"`, VIETNAMESE_SAMPLE),
+    document.fonts.load(`600 42px "${POSTCARD_FONT_FAMILIES.serif}"`, VIETNAMESE_SAMPLE),
+    document.fonts.load(`500 32px "${POSTCARD_FONT_FAMILIES.serif}"`, VIETNAMESE_SAMPLE),
     document.fonts.load(`400 32px "${POSTCARD_FONT_FAMILIES.script}"`, VIETNAMESE_SAMPLE),
   ];
   await Promise.race([
