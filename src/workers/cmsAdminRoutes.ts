@@ -1,7 +1,8 @@
 import { Hono } from 'hono';
 import { getD1, jsonText } from './d1Client';
+import { resetPostcardQuota } from './postcardRoute';
 
-type Bindings = { DB: D1Database; R2_BUCKET: R2Bucket; ADMIN_SESSION_SECRET?: string; R2_PUBLIC_BASE_URL?: string };
+type Bindings = { DB: D1Database; R2_BUCKET: R2Bucket; CACHE?: KVNamespace; ADMIN_SESSION_SECRET?: string; R2_PUBLIC_BASE_URL?: string };
 const cms = new Hono<{ Bindings: Bindings }>();
 const encoder = new TextEncoder();
 const districts = new Set(['Ba Đình', 'Hoàn Kiếm', 'Đống Đa', 'Cầu Giấy', 'Hai Bà Trưng', 'Tây Hồ', 'Thanh Xuân', 'Long Biên', 'Hà Đông', 'Hoàng Mai', 'Nam Từ Liêm', 'Bắc Từ Liêm', 'Gia Lâm', 'Đông Anh', 'Sóc Sơn', 'Thanh Trì', 'Hoài Đức', 'Đan Phượng', 'Thanh Oai', 'Thường Tín', 'Phúc Thọ', 'Quốc Oai', 'Thạch Thất', 'Chương Mỹ', 'Mỹ Đức', 'Ứng Hòa', 'Ba Vì', 'Sơn Tây', 'Mê Linh']);
@@ -25,6 +26,12 @@ cms.use('*', async (c, next) => {
   const token = c.req.header('Authorization')?.replace(/^Bearer\s+/i, '');
   if (!secret || !token || !(await validSession(token, secret))) return c.json({ error: 'Cần đăng nhập quản trị.' }, 401);
   await next();
+});
+
+cms.post('/api/admin/postcard-quota/reset', async (c) => {
+  const cache = c.env.CACHE;
+  if (!cache) return c.json({ error: 'CACHE chưa được cấu hình.' }, 503);
+  return c.json({ deleted: await resetPostcardQuota(cache) });
 });
 
 cms.post('/api/admin/community-spots/:id/approve', async (c) => {

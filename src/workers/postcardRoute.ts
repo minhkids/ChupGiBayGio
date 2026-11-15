@@ -15,6 +15,20 @@ export async function consumeQuota(kv: KVNamespace, ip: string) {
   return true;
 }
 
+export async function resetPostcardQuota(kv: KVNamespace) {
+  let deleted = 0;
+  let cursor: string | undefined;
+  do {
+    const page = await kv.list({ prefix: 'postcard:', cursor });
+    for (const key of page.keys) {
+      await kv.delete(key.name);
+      deleted += 1;
+    }
+    cursor = page.list_complete ? undefined : page.cursor;
+  } while (cursor);
+  return deleted;
+}
+
 export const WATERCOLOR_PROMPT = 'Turn this photograph into a restrained watercolor and ink illustration on warm ivory paper, composed as a horizontal scene. Keep the recognizable silhouette and colors. Soft painted edges, no text, no border, no frame, no signature.';
 
 export async function requestWatercolor(apiKey: string, file: Blob) {
