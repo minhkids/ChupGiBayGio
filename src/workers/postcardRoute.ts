@@ -3,8 +3,22 @@ import { Hono } from 'hono';
 const MAX_BYTES = 2_500_000;
 const DAILY_LIMIT = 1;
 
+export function quotaSubject(ip: string) {
+  if (!ip.includes(':')) return ip;
+  const lower = ip.toLowerCase();
+  const halves = lower.split('::');
+  if (halves.length > 2) return lower;
+  const head = halves[0] ? halves[0].split(':') : [];
+  const tail = halves[1] ? halves[1].split(':') : [];
+  const missing = halves.length === 2 ? 8 - head.length - tail.length : 0;
+  if (missing < 0) return lower;
+  const groups = [...head, ...Array(missing).fill('0'), ...tail];
+  if (groups.length !== 8) return lower;
+  return groups.slice(0, 4).join(':');
+}
+
 export function dayKey(ip: string, now = new Date()) {
-  return `postcard:${ip}:${now.toISOString().slice(0, 10)}`;
+  return `postcard:${quotaSubject(ip)}:${now.toISOString().slice(0, 10)}`;
 }
 
 export async function consumeQuota(kv: KVNamespace, ip: string) {
@@ -47,14 +61,15 @@ routes.post('/api/postcard', async (c) => {
   if (!c.env.OPENAI_API_KEY) {
     return c.json({ error: 'Chưa cấu hình khóa OpenAI. Thêm secret OPENAI_API_KEY trên Worker.' }, 503);
   }
+  const form = await c.req.formData().catch(() => null);
+  if (!form) return c.json({ error: 'Dữ liệu không hợp lệ.' }, 400);
+  const file = form.get('image');
+  if (!(file instanceof File)) return c.json({ error: 'Thiếu ảnh.' }, 400);
+  if (file.size > MAX_BYTES) return c.json({ error: 'Ảnh lớn hơn 2.5MB sau khi thu nhỏ.' }, 413);
   const ip = c.req.header('cf-connecting-ip') || 'local';
   if (!(await consumeQuota(c.env.CACHE, ip))) {
     return c.json({ error: 'Mỗi người chỉ tạo được 1 bưu thiếp mỗi ngày. Thử lại vào ngày mai nhé.' }, 429);
   }
-  const form = await c.req.formData();
-  const file = form.get('image');
-  if (!(file instanceof File)) return c.json({ error: 'Thiếu ảnh.' }, 400);
-  if (file.size > MAX_BYTES) return c.json({ error: 'Ảnh lớn hơn 2.5MB sau khi thu nhỏ.' }, 413);
   try {
     const artwork = await requestWatercolor(c.env.OPENAI_API_KEY, file);
     return c.json({ artwork });
