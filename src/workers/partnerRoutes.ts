@@ -53,14 +53,17 @@ routes.get('/api/partner/address-suggestions', async (c) => {
   }
 });
 
-async function photos(form: FormData, min: number, max: number, field = 'photos') {
+const vnd = (value: number) => value.toLocaleString('vi-VN');
+const rentalPriceLabel = (min: number, max: number) => max > 0 ? `${vnd(min)}đ – ${vnd(max)}đ` : `Từ ${vnd(min)}đ`;
+
+async function photos(form: FormData, min: number, max: number, field = 'photos', limitError?: string) {
   const files = form.getAll(field);
-  const limitError = field === 'productPhoto'
+  limitError = limitError || (field === 'productPhoto'
     ? 'Ảnh bảng giá phải là JPG, PNG hoặc WebP, tối đa 3 MB.'
     : field === 'avatarPhoto' ? 'Ảnh đại diện phải là JPG, PNG hoặc WebP, tối đa 3 MB.'
       : min === 1 ? 'Cần ít nhất 1 ảnh portfolio (JPG, PNG hoặc WebP; tối đa 3 MB/ảnh).'
         : max === 1 ? 'Chỉ nhận tối đa 1 ảnh tiệm (JPG, PNG hoặc WebP; tối đa 3 MB).'
-          : 'Cần từ 3 đến 6 ảnh portfolio (JPG, PNG hoặc WebP; tối đa 3 MB/ảnh).';
+          : 'Cần từ 3 đến 6 ảnh portfolio (JPG, PNG hoặc WebP; tối đa 3 MB/ảnh).');
   if (files.length < min || files.length > max || files.some((file) => !(file instanceof File) || file.size < 1 || file.size > 3 * 1024 * 1024)) return { error: limitError };
   const uploads: { bytes: Uint8Array; ext: string; type: string }[] = [];
   for (const file of files as File[]) {
@@ -76,7 +79,7 @@ async function photos(form: FormData, min: number, max: number, field = 'photos'
   return { uploads };
 }
 
-async function registration(c: Context<{ Bindings: Bindings }>, kind: 'lab' | 'photographer') {
+async function registration(c: Context<{ Bindings: Bindings }>, kind: 'lab' | 'photographer' | 'shop') {
   // These unauthenticated endpoints publish immediately; cap burst registrations without blocking every shop on a shared network after one success.
   const origin = c.req.header('Origin');
   if (origin && !['https://chupgibaygio.com', 'https://www.chupgibaygio.com', 'http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', 'http://127.0.0.1:5173'].includes(origin)) return c.json({ error: 'Nguồn gửi không hợp lệ.' }, 403);
@@ -97,7 +100,7 @@ async function registration(c: Context<{ Bindings: Bindings }>, kind: 'lab' | 'p
   const social = link(body.socialUrl);
   const imageUrl = link(body.imageUrl);
   if (!name || !number || social === null || imageUrl === null) return c.json({ error: 'Kiểm tra tên, số Zalo và đường dẫn HTTPS.' }, 400);
-  const images = await photos(form, kind === 'lab' ? 0 : 1, kind === 'lab' ? 1 : 6);
+  const images = await photos(form, kind === 'lab' ? 0 : 1, kind === 'lab' ? 1 : 6, 'photos', kind === 'shop' ? 'Cần từ 1 đến 6 ảnh mẫu (JPG, PNG hoặc WebP; tối đa 3 MB/ảnh).' : undefined);
   if ('error' in images) return c.json({ error: images.error }, images.error?.includes('định dạng') ? 415 : 400);
   const avatarPhotos = kind === 'photographer' ? await photos(form, 0, 1, 'avatarPhoto') : { uploads: [] as { bytes: Uint8Array; ext: string; type: string }[] };
   if ('error' in avatarPhotos) return c.json({ error: avatarPhotos.error }, avatarPhotos.error?.includes('định dạng') ? 415 : 400);
@@ -115,6 +118,13 @@ async function registration(c: Context<{ Bindings: Bindings }>, kind: 'lab' | 'p
   let cheapestRollName = '';
   let slogan = '';
   let locations: { ward: string; district: string; openingHours: string }[] = [];
+  let contactName = '';
+  let description = '';
+  let priceMin = 0;
+  let priceMax = 0;
+  let instagramUrl = '';
+  let threadsUrl = '';
+  let facebookUrl = '';
   if (kind === 'lab') {
     const submittedLocations = body.locations === undefined ? [{ ward: body.ward, district: body.district, openingHours: body.openingHours }] : body.locations;
     if (!Array.isArray(submittedLocations) || submittedLocations.length < 1 || submittedLocations.length > 3) return c.json({ error: 'Shop cần khai báo từ 1 đến 3 địa chỉ tại Hà Nội.' }, 400);
@@ -136,6 +146,28 @@ async function registration(c: Context<{ Bindings: Bindings }>, kind: 'lab' | 'p
           || minRollPrice < 1 || maxRollPrice < 0 || (maxRollPrice > 0 && maxRollPrice < minRollPrice) || maxRollPrice > 50000000) {
       return c.json({ error: 'Vui lòng nhập phường/xã, quận/huyện, cuộn film rẻ nhất và giá hợp lệ.' }, 400);
     }
+  } else if (kind === 'shop') {
+    contactName = text(body.contactName, 160);
+    if (body.description !== undefined && (typeof body.description !== 'string' || body.description.trim().length > 500)) return c.json({ error: 'Mô tả tối đa 500 ký tự.' }, 400);
+    description = text(body.description, 500);
+    const instagram = link(body.instagramUrl);
+    const threads = link(body.threadsUrl);
+    const facebook = link(body.facebookUrl);
+    district = text(body.district, 80);
+    ward = text(body.ward, 80);
+    styles = list(body.styles, 12) ?? [];
+    const parsePrice = (value: unknown) => (typeof value === 'number' || typeof value === 'string' && value.trim() !== '') ? Number(value) : Number.NaN;
+    priceMin = parsePrice(body.priceMin);
+    priceMax = body.priceMax === undefined || body.priceMax === null || body.priceMax === '' ? 0 : parsePrice(body.priceMax);
+    if (!contactName || !districts.has(district) || !ward || styles.length < 1 || instagram === null || threads === null || facebook === null
+      || !Number.isSafeInteger(priceMin) || !Number.isSafeInteger(priceMax)
+      || priceMin < 1 || priceMax < 0 || priceMin > 50000000 || priceMax > 50000000 || (priceMax > 0 && priceMax < priceMin)) {
+      return c.json({ error: 'Vui lòng nhập người liên hệ, khu vực Hà Nội, ít nhất một phong cách và khoảng giá hợp lệ.' }, 400);
+    }
+    instagramUrl = instagram || '';
+    threadsUrl = threads || '';
+    facebookUrl = facebook || '';
+    address = [ward, district, 'Hà Nội'].join(', ');
   } else {
     styles = list(body.styles, 12) ?? [];
     shootSpots = list(body.shootSpots, 20) ?? [];
@@ -166,6 +198,13 @@ async function registration(c: Context<{ Bindings: Bindings }>, kind: 'lab' | 'p
       // Keep the legacy registration URL and image keys; this form onboards retail shops only.
       await c.env.DB.prepare(`INSERT INTO film_shops (id, name, slogan, address, district, ward, lat, lng, opening_hours, hotline, fast_2h, in_stock_films, fanpage_url, image_url, product_image_url, cheapest_roll_name, min_roll_price, max_roll_price, locations, express_delivery_2h, status)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(id, name, slogan, address, district, ward, null, null, locations[0].openingHours, number, 0, JSON.stringify(stocks), social || '', urls[0] || imageUrl || '', productImageUrl, cheapestRollName, minRollPrice, maxRollPrice, JSON.stringify(locations), body.expressDelivery2h === true ? 1 : 0, 'published').run();
+    } else if (kind === 'shop') {
+      const primaryLink = facebookUrl || instagramUrl || threadsUrl;
+      await c.env.DB.prepare(`INSERT INTO rental_shops (id, name, address, hotline, fanpage_url, daily_price, contact_name, instagram_url, threads_url, facebook_url, district, ward, styles, description, image_url, sample_photos, price_min, price_max, status)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(
+        id, name, address, number, primaryLink, rentalPriceLabel(priceMin, priceMax), contactName, instagramUrl, threadsUrl, facebookUrl,
+        district, ward, JSON.stringify(styles), description, urls[0] || imageUrl || '', JSON.stringify(urls), priceMin, priceMax, 'published'
+      ).run();
     } else {
       let avatarUrl = imageUrl || '';
       const avatarUpload = avatarPhotos.uploads?.[0];
@@ -183,7 +222,7 @@ async function registration(c: Context<{ Bindings: Bindings }>, kind: 'lab' | 'p
       ]);
     }
     await c.env.CACHE.put(quota, String(registrationsToday + 1), { expirationTtl: 86400 }).catch(() => undefined);
-    const section = kind === 'lab' ? 'film' : 'photographers';
+    const section = kind === 'lab' ? 'film' : kind === 'shop' ? 'outfit' : 'photographers';
     return c.json({ id, status: 'published', url: `https://chupgibaygio.com/?services=${section}&partner=${id}` }, 201);
   } catch (error) {
     await Promise.all(keys.map((key) => c.env.R2_BUCKET.delete(key).catch(() => undefined)));
@@ -193,9 +232,10 @@ async function registration(c: Context<{ Bindings: Bindings }>, kind: 'lab' | 'p
 
 routes.post('/api/partner/register-lab', (c) => registration(c, 'lab'));
 routes.post('/api/partner/register-photographer', (c) => registration(c, 'photographer'));
+routes.post('/api/partner/register-outfit-shop', (c) => registration(c, 'shop'));
 routes.get('/api/partner/images/partner/:kind/:id/:filename', async (c) => {
   const { kind, id, filename } = c.req.param();
-  if (!['lab', 'photographer'].includes(kind) || !/^[0-9a-f-]{36}$/.test(id) || !/^[0-9a-f-]{36}\.(jpg|png|webp)$/.test(filename)) return c.notFound();
+  if (!['lab', 'photographer', 'shop'].includes(kind) || !/^[0-9a-f-]{36}$/.test(id) || !/^[0-9a-f-]{36}\.(jpg|png|webp)$/.test(filename)) return c.notFound();
   const object = await c.env.R2_BUCKET.get(`partner/${kind}/${id}/${filename}`);
   if (!object) return c.notFound();
   return new Response(object.body as BodyInit, { headers: { 'Content-Type': object.httpMetadata?.contentType || 'image/jpeg', 'Cache-Control': 'public, max-age=86400', 'X-Content-Type-Options': 'nosniff' } });

@@ -339,6 +339,59 @@ describe('public partner registration', () => {
     expect(env.bucket.put).not.toHaveBeenCalled();
   });
 
+  it('publishes a clothing rental shop with sample photos and a Hanoi area', async () => {
+    const env = environment();
+    const response = await submit('/api/partner/register-outfit-shop', {
+      name: 'Tiệm Áo Dài Hà Nội', contactName: 'Chị Lan', phone: '0912 345 678',
+      ward: 'Hàng Bông', district: 'Hoàn Kiếm', styles: ['Áo dài', 'Đồ Noel'],
+      priceMin: 200000, priceMax: 450000, description: 'Thuê áo dài chụp phố cổ.',
+      instagramUrl: 'https://instagram.com/tiem', threadsUrl: 'https://www.threads.net/@tiem', facebookUrl: 'https://facebook.com/tiem',
+    }, [jpg(), jpg()], env);
+    expect(response.status).toBe(201);
+    const result = await response.json() as { id: string; status: string; url: string };
+    expect(result).toMatchObject({ status: 'published' });
+    expect(result.url).toBe(`https://chupgibaygio.com/?services=outfit&partner=${result.id}`);
+    const write = env.writes.find(({ sql }) => sql.includes('INSERT INTO rental_shops'));
+    expect(write?.values).toEqual(expect.arrayContaining([
+      'Tiệm Áo Dài Hà Nội', 'Hàng Bông, Hoàn Kiếm, Hà Nội', '0912345678', 'https://facebook.com/tiem',
+      '200.000đ – 450.000đ', 'Chị Lan', 'Hoàn Kiếm', 'Hàng Bông', 'published', 200000, 450000,
+    ]));
+    expect(write?.values).toContain(JSON.stringify(['Áo dài', 'Đồ Noel']));
+    expect(env.bucket.put).toHaveBeenCalledTimes(2);
+    const photo = String(env.bucket.put.mock.calls[0][0]);
+    expect(photo.startsWith(`partner/shop/${result.id}/`)).toBe(true);
+    expect((await worker.request(`/api/partner/images/${photo}`, {}, env)).status).toBe(200);
+  });
+
+  it('rejects a clothing shop without photos, styles, or a valid social link', async () => {
+    const env = environment();
+    const base = {
+      name: 'Tiệm Áo Dài', contactName: 'Chị Lan', phone: '0912345678', ward: 'Hàng Bông', district: 'Hoàn Kiếm',
+      styles: ['Váy'], priceMin: 150000,
+    };
+    expect((await submit('/api/partner/register-outfit-shop', base, [], env)).status).toBe(400);
+    expect((await submit('/api/partner/register-outfit-shop', { ...base, styles: [] }, [jpg()], env)).status).toBe(400);
+    expect((await submit('/api/partner/register-outfit-shop', { ...base, facebookUrl: 'http://facebook.com/tiem' }, [jpg()], env)).status).toBe(400);
+    expect(env.writes).toHaveLength(0);
+    expect(env.bucket.put).not.toHaveBeenCalled();
+  });
+
+  it('lists published clothing shops and hides rows waiting for review', async () => {
+    const env = environment({
+      rental_shops: [
+        { id: 'shop-1', name: 'Tiệm Áo Dài', status: 'published', address: 'Hàng Bông, Hoàn Kiếm, Hà Nội', ward: 'Hàng Bông', district: 'Hoàn Kiếm', hotline: '0912345678', daily_price: 'Từ 200.000đ', description: 'Thuê áo dài', styles: '["Áo dài"]', image_url: 'https://example.com/a.jpg', sample_photos: '["https://example.com/a.jpg"]', instagram_url: 'https://instagram.com/tiem', fanpage_url: 'https://facebook.com/tiem', contact_name: 'Chị Lan', threads_url: 'https://www.threads.net/@tiem' },
+        { id: 'shop-hidden', name: 'Chưa duyệt', status: 'pending_review', hotline: '0900000000' },
+      ],
+    });
+    const directory = await worker.request('/api/services', {}, env);
+    const data = await directory.json() as { id: string; category: string; tags?: string[] }[];
+    expect(data).toContainEqual(expect.objectContaining({ id: 'shop-1', category: 'rental', name: 'Tiệm Áo Dài', tags: ['Áo dài'], description: 'Thuê áo dài', price: 'Từ 200.000đ', threadsUrl: 'https://www.threads.net/@tiem' }));
+    expect(data.find((item) => item.id === 'shop-hidden')).toBeUndefined();
+    const shops = await worker.request('/api/rental-shops', {}, env);
+    const rows = await shops.json() as { id: string }[];
+    expect(rows.map((row) => row.id)).toEqual(['shop-1']);
+  });
+
   it('requires a ward and district instead of an exact shop address', async () => {
     const env = environment();
     const fetchMock = vi.spyOn(globalThis, 'fetch');

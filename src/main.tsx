@@ -12,7 +12,7 @@ import { ScheduledTheme } from './components/features/ScheduledTheme'
 applyScheduledTheme()
 
 const isAdminRoute = window.location.pathname.startsWith('/admin')
-const joinRoute = window.location.pathname === '/join/film-lab' ? 'lab' : window.location.pathname === '/join/photographer' ? 'photographer' : null
+const joinRoute = window.location.pathname === '/join/film-lab' ? 'lab' : window.location.pathname === '/join/photographer' ? 'photographer' : window.location.pathname === '/join/outfit-shop' ? 'shop' : null
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

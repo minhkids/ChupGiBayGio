@@ -1,6 +1,8 @@
 # Đăng ký đối tác
 
-Dự án hiện dùng Vite/React và Hono Worker, không dùng Next.js. Các trang `/join/film-lab` và `/join/photographer` là route SPA; API đăng ký chạy trong `src/workers/partnerRoutes.ts`.
+Dự án hiện dùng Vite/React và Hono Worker, không dùng Next.js. Các trang `/join/film-lab`, `/join/photographer` và `/join/outfit-shop` là route SPA; API đăng ký chạy trong `src/workers/partnerRoutes.ts`.
+
+Shop cho thuê trang phục (áo dài, Việt phục, váy, đồ Noel…) dùng `/join/outfit-shop` và `POST /api/partner/register-outfit-shop`. Bản ghi lưu vào `rental_shops` với `status = published`, hiện trong tab Trang phục và được sửa hoặc xóa tại admin nhóm Tiệm thuê trang phục. Ảnh mẫu 1–6 JPG/PNG/WebP, tối đa 3 MB/ảnh, lưu R2 qua `/api/partner/images/partner/shop/...`. Trước khi deploy worker, áp `migrations/0022_clothing_rental_partner.sql`; không chạy migration từ thay đổi ứng dụng này.
 
 Trước khi deploy API Worker phiên bản này, áp các migration còn thiếu lên D1 production bằng `npm run cf:d1:migrate` (script đã kèm `--remote --env production`); Worker vẫn ghi các cột địa chỉ legacy rỗng để tương thích schema hiện tại, dù form thợ chụp không thu thập địa chỉ. Sau đó triển khai API Worker và frontend Worker `chupgibaygio` theo đúng tài khoản Cloudflare đang phục vụ tên miền. Không dùng lệnh migration local để cập nhật production.
 

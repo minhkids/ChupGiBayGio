@@ -24,6 +24,15 @@ afterEach(() => { cleanup(); sessionStorage.clear(); window.history.replaceState
 const renderView = () => render(<ShootPlanProvider><ServicesHubView onClose={() => undefined} /></ShootPlanProvider>);
 
 describe('ServicesHubView', () => {
+  it('links clothing rental shops to the same free signup pattern as film and photographers', async () => {
+    renderView();
+    expect((await screen.findByRole('link', { name: 'Đăng ký miễn phí' })).getAttribute('href')).toBe('/join/outfit-shop');
+    fireEvent.click(screen.getByRole('button', { name: /Nhiếp ảnh gia/i }));
+    expect(screen.getByRole('link', { name: 'Đăng ký miễn phí' }).getAttribute('href')).toBe('/join/photographer');
+    fireEvent.click(screen.getByRole('button', { name: 'Mua film' }));
+    expect(screen.getByRole('link', { name: 'Đăng ký miễn phí' }).getAttribute('href')).toBe('/join/film-lab');
+  });
+
   it('shows an in-development notice when the user tries the outfit image search', async () => {
     renderView();
 

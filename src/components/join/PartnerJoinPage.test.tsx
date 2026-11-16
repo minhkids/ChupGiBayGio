@@ -147,4 +147,44 @@ describe('partner onboarding pages', () => {
     expect(form.get('avatarPhoto')).toBe(avatar);
     expect(form.getAll('photos')).toEqual([portfolio]);
   });
+
+  it('submits a clothing rental shop with area, styles, price range and sample photos', async () => {
+    vi.spyOn(URL, 'createObjectURL').mockImplementation((file) => `blob:${(file as File).name}`);
+    vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined);
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ id: 'shop-id', status: 'published', url: 'https://chupgibaygio.com/?services=outfit&partner=shop-id' }) });
+    vi.stubGlobal('fetch', fetchMock);
+    render(<PartnerJoinPage kind="shop" />);
+    expect(screen.getByRole('heading', { name: 'Thông tin shop cho thuê trang phục' })).toBeTruthy();
+    fireEvent.change(screen.getByLabelText('Tên shop *'), { target: { value: 'Tiệm Áo Dài Hà Nội' } });
+    fireEvent.change(screen.getByLabelText('Tên người liên hệ *'), { target: { value: 'Chị Lan' } });
+    fireEvent.change(screen.getByLabelText('Quận / Huyện *'), { target: { value: 'Hoàn Kiếm' } });
+    fireEvent.change(screen.getByLabelText('Phường / xã *'), { target: { value: 'Hàng Bông' } });
+    fireEvent.change(screen.getByLabelText('Số điện thoại / Zalo *'), { target: { value: '0912345678' } });
+    fireEvent.change(screen.getByLabelText('Link Instagram'), { target: { value: 'https://instagram.com/tiem' } });
+    fireEvent.change(screen.getByLabelText('Link Threads'), { target: { value: 'https://www.threads.net/@tiem' } });
+    fireEvent.change(screen.getByLabelText('Link Facebook'), { target: { value: 'https://facebook.com/tiem' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Áo dài' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Đồ Noel' }));
+    fireEvent.change(screen.getByLabelText('Giá thuê từ (VNĐ) *'), { target: { value: '200000' } });
+    fireEvent.change(screen.getByLabelText('Giá thuê đến (VNĐ)'), { target: { value: '450000' } });
+    fireEvent.change(screen.getByLabelText('Mô tả ngắn'), { target: { value: 'Thuê áo dài chụp phố cổ.' } });
+    const photos = [new File(['a'], 'ao-dai.jpg', { type: 'image/jpeg' }), new File(['b'], 'vay.jpg', { type: 'image/jpeg' })];
+    fireEvent.change(screen.getByLabelText('Ảnh mẫu trang phục (1–6 ảnh) *'), { target: { files: photos } });
+    const preview = screen.getByTestId('partner-preview');
+    expect(preview.textContent).toContain('Tiệm Áo Dài Hà Nội');
+    expect(preview.textContent).toContain('Shop cho thuê trang phục');
+    expect(preview.textContent).toContain('200.000đ – 450.000đ');
+    expect(preview.textContent).toContain('Hàng Bông, Hoàn Kiếm, Hà Nội');
+    expect(preview.textContent).toContain('Áo dài');
+    fireEvent.submit(screen.getByRole('button', { name: 'Hoàn tất đăng ký' }).closest('form')!);
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining('/api/partner/register-outfit-shop'), expect.objectContaining({ method: 'POST' })));
+    const form = fetchMock.mock.calls[0][1].body as FormData;
+    expect(JSON.parse(String(form.get('payload')))).toMatchObject({
+      name: 'Tiệm Áo Dài Hà Nội', contactName: 'Chị Lan', district: 'Hoàn Kiếm', ward: 'Hàng Bông',
+      styles: ['Áo dài', 'Đồ Noel'], priceMin: 200000, priceMax: 450000, description: 'Thuê áo dài chụp phố cổ.',
+      instagramUrl: 'https://instagram.com/tiem', threadsUrl: 'https://www.threads.net/@tiem', facebookUrl: 'https://facebook.com/tiem',
+    });
+    expect(form.getAll('photos')).toEqual(photos);
+    expect((await screen.findByRole('link', { name: /Xem thẻ trên website/i })).getAttribute('href')).toContain('partner=shop-id');
+  });
 });

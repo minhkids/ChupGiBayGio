@@ -32,6 +32,7 @@ describe('ShootServicesHubDrawer', () => {
 
     // Initial outfit tab
     expect(screen.getByText(/bóc đồ từ ảnh tham khảo/i)).toBeDefined();
+    expect(screen.getByRole('link', { name: /đăng ký shop cho thuê/i }).getAttribute('href')).toBe('/join/outfit-shop');
 
     // Switch to Photographers tab
     const photographerTabBtn = screen.getByRole('button', { name: /thợ chụp/i });
