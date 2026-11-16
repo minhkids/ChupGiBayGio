@@ -379,7 +379,31 @@ app.get('/api/services', async (c) => {
   const packages = rows(packageRows.results);
   const mapFields = (row: Record<string, unknown>, keys: Record<string, string>) => Object.fromEntries(Object.entries(keys).map(([key, column]) => [key, row[column]]));
   const catalogs = [
-    ...rows(rentalRows.results).map((row) => ({ ...mapFields(row, { address: 'address', phone: 'hotline', link: 'fanpage_url', price: 'daily_price' }), id: row.id, name: row.name, category: 'rental' })),
+    ...rows(rentalRows.results).filter((row) => !row.status || row.status === 'published').map((row) => {
+      const photos = parseJsonField(String(row.sample_photos || '[]'), []) as string[];
+      const styles = parseJsonField(String(row.styles || '[]'), []) as string[];
+      const priceMin = Number(row.price_min) || 0;
+      const priceMax = Number(row.price_max) || 0;
+      const ward = String(row.ward || '');
+      const district = String(row.district || '');
+      const area = [ward, district, ward || district ? 'Hà Nội' : ''].filter(Boolean).join(', ');
+      const storedPrice = String(row.daily_price || '');
+      const price = storedPrice || (priceMin > 0 && priceMax > 0 ? `${priceMin.toLocaleString('vi-VN')}đ – ${priceMax.toLocaleString('vi-VN')}đ` : priceMin > 0 ? `Từ ${priceMin.toLocaleString('vi-VN')}đ` : '');
+      return {
+        ...mapFields(row, { phone: 'hotline', description: 'description' }),
+        id: row.id, name: row.name, category: 'rental',
+        address: String(row.address || '') || area, ward, district, price,
+        link: String(row.fanpage_url || row.facebook_url || ''),
+        secondaryLink: String(row.instagram_url || ''),
+        threadsUrl: String(row.threads_url || ''),
+        facebookUrl: String(row.facebook_url || ''),
+        instagramUrl: String(row.instagram_url || ''),
+        contactName: String(row.contact_name || ''),
+        tags: styles,
+        imageUrl: String(row.image_url || photos[0] || ''),
+        portfolioPhotos: photos,
+      };
+    }),
     ...rows(outfitRows.results).map((row) => ({ ...mapFields(row, { description: 'description', price: 'estimated_price', imageUrl: 'image_url', link: 'shopee_url', secondaryLink: 'tiktok_url', material: 'material' }), id: row.id, name: row.name, category: 'outfit', hotspots: parseJsonField(String(row.hotspots || '[]'), []) })),
     ...rows(photographerRows.results).map((row) => {
       const photographerPackages = packages.filter((pkg) => pkg.photographer_id === row.id);
@@ -457,7 +481,10 @@ app.get('/api/photographers', async (c) => {
 
 app.get('/api/rental-shops', async (c) => {
   const { results } = await getD1(c.env).prepare('SELECT * FROM rental_shops ORDER BY created_at DESC').all();
-  return c.json(results || []);
+  return c.json((results || []).filter((row) => {
+    const status = (row as Record<string, unknown>).status;
+    return !status || status === 'published';
+  }));
 });
 
 // Admin login. Secrets must be configured with `wrangler secret put`.

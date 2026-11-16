@@ -399,8 +399,12 @@ cms.put('/api/admin/cms/:table/:id', async (c) => {
     result = await db.prepare('UPDATE outfits SET spot_id = ?, name = ?, description = ?, material = ?, estimated_price = ?, image_url = ?, hotspots = ?, shopee_url = ?, tiktok_url = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
       .bind(text(body.spotId, 160) || null, text(body.name, 160), text(body.description), text(body.material, 300), text(body.estimatedPrice, 100), text(body.imageUrl, 2000), jsonText(array(body.hotspots)), text(body.shopeeUrl, 2000), text(body.tiktokUrl, 2000), id).run();
   } else if (table === 'rentalShops') {
-    result = await db.prepare('UPDATE rental_shops SET name = ?, address = ?, hotline = ?, fanpage_url = ?, daily_price = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
-      .bind(text(body.name, 160), text(body.address), text(body.hotline, 80), text(body.fanpageUrl, 2000), text(body.dailyPrice, 100), id).run();
+    const styles = body.styles === undefined ? null : boundedStringArray(body.styles, 12, 100);
+    const samplePhotos = body.samplePhotos === undefined ? null : boundedStringArray(body.samplePhotos, 6, 2000);
+    if (body.styles !== undefined && !styles) return c.json({ error: 'Danh sách phong cách không hợp lệ.' }, 400);
+    if (body.samplePhotos !== undefined && !samplePhotos) return c.json({ error: 'Ảnh mẫu không hợp lệ.' }, 400);
+    result = await db.prepare(`UPDATE rental_shops SET name = ?, address = ?, hotline = ?, fanpage_url = ?, daily_price = ?, contact_name = ?, description = ?, ward = ?, district = ?, instagram_url = ?, threads_url = ?, facebook_url = ?, styles = COALESCE(?, styles), image_url = COALESCE(NULLIF(?, ''), image_url), sample_photos = COALESCE(?, sample_photos), updated_at = CURRENT_TIMESTAMP WHERE id = ?`)
+      .bind(text(body.name, 160), text(body.address), text(body.hotline, 80), text(body.fanpageUrl, 2000), text(body.dailyPrice, 100), text(body.contactName, 160), text(body.description, 500), text(body.ward, 80), text(body.district, 80), text(body.instagramUrl, 2000), text(body.threadsUrl, 2000), text(body.facebookUrl, 2000), styles === null ? null : jsonText(styles), text(body.imageUrl, 2000), samplePhotos === null ? null : jsonText(samplePhotos), id).run();
   } else if (table === 'photographers') {
     result = await db.prepare('UPDATE photographers SET name = ?, avatar_url = ?, bio = ?, phone = ?, instagram = ?, gear_body = ?, gear_lens = ?, styles = ?, portfolio_photos = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
       .bind(text(body.name, 160), text(body.avatarUrl, 2000), text(body.bio), text(body.phone, 80), text(body.instagram, 300), text(body.gearBody, 300), text(body.gearLens, 300), jsonText(body.styles), jsonText(body.portfolioPhotos), id).run();

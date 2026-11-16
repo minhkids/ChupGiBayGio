@@ -67,9 +67,23 @@ CREATE TABLE IF NOT EXISTS rental_shops (
   hotline TEXT NOT NULL DEFAULT '',
   fanpage_url TEXT NOT NULL DEFAULT '',
   daily_price TEXT NOT NULL DEFAULT '',
+  contact_name TEXT NOT NULL DEFAULT '',
+  instagram_url TEXT NOT NULL DEFAULT '',
+  threads_url TEXT NOT NULL DEFAULT '',
+  facebook_url TEXT NOT NULL DEFAULT '',
+  district TEXT NOT NULL DEFAULT '',
+  ward TEXT NOT NULL DEFAULT '',
+  styles TEXT NOT NULL DEFAULT '[]',
+  description TEXT NOT NULL DEFAULT '',
+  image_url TEXT NOT NULL DEFAULT '',
+  sample_photos TEXT NOT NULL DEFAULT '[]',
+  price_min INTEGER NOT NULL DEFAULT 0,
+  price_max INTEGER NOT NULL DEFAULT 0,
+  status TEXT NOT NULL DEFAULT 'published' CHECK (status IN ('published', 'pending_review')),
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+CREATE INDEX IF NOT EXISTS idx_rental_shops_status ON rental_shops(status);
 
 CREATE TABLE IF NOT EXISTS photographers (
   id TEXT PRIMARY KEY,

@@ -25,7 +25,6 @@ import { type FilmLab } from '../../data/filmLabsData';
 import { useShootPlan } from '../../context/ShootPlanContext';
 import type { Photographer } from '../../types';
 import { serviceHubApi, type ServiceListing } from '../../services/serviceHubApi';
-import type { RentalShop } from '../../types';
 import { ExpressDeliveryBadge } from './ExpressDeliveryBadge';
 import { FilmShopCard } from './FilmShopCard';
 import { FilmShopDetailDialog } from './FilmShopDetailDialog';
@@ -142,9 +141,10 @@ export const ShootServicesHubDrawer: React.FC<ShootServicesHubDrawerProps> = ({
 
   // Outfit rental shops
   const outfitShops = useMemo(() => {
-    return directoryItems.filter((item) => item.category === 'rental').map((shop): RentalShop => ({
-      id: shop.id, name: shop.name, type: 'OUTFIT', address: shop.address || '', lat: 0, lng: 0,
-      priceRange: shop.price || '', phone: shop.phone || '', link: shop.link || ''
+    return directoryItems.filter((item) => item.category === 'rental').map((shop) => ({
+      id: shop.id, name: shop.name, address: shop.address || '',
+      priceRange: shop.price || '', phone: shop.phone || '', link: shop.link || '',
+      styles: shop.tags || [],
     }));
   }, [directoryItems]);
 
@@ -256,6 +256,10 @@ export const ShootServicesHubDrawer: React.FC<ShootServicesHubDrawerProps> = ({
             {/* ============================================================== */}
             {activeTab === 'outfit' && (
               <div className={`${standalone ? 'max-w-6xl mx-auto grid grid-cols-1 xl:grid-cols-2 gap-6' : 'space-y-5'}`}>
+                <div className={`${standalone ? 'xl:col-span-2' : ''} flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#D8CFBD] bg-[#FAF8F4] p-3 text-sm`}>
+                  <span className="font-semibold">Bạn có shop cho thuê áo dài, váy hoặc đồ concept?</span>
+                  <a href="/join/outfit-shop" className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#C76B3C] px-4 py-2 font-semibold text-white hover:bg-[#B35D30]">Đăng ký shop cho thuê <ExternalLink className="h-4 w-4" /></a>
+                </div>
                 {/* Visual Tap-to-Shop & AI Outfit Finder */}
                 <div className="p-4 rounded-2xl bg-[#FAF8F4] border border-[#D8CFBD] space-y-3.5 shadow-sm">
                   <div className="flex items-center justify-between">
@@ -417,6 +421,7 @@ export const ShootServicesHubDrawer: React.FC<ShootServicesHubDrawerProps> = ({
                         <div className="flex items-start justify-between">
                           <div>
                             <h4 className="text-sm font-bold text-[#2C2621]">{shop.name}</h4>
+                            {!!shop.styles.length && <p className="mt-1 text-[11px] text-[#8A4A2C]">{shop.styles.slice(0, 3).join(' · ')}</p>}
                             <p className="text-xs text-[#6E655B] flex items-center space-x-1 mt-0.5">
                               <MapPin className="w-3 h-3 text-terracotta shrink-0" />
                               <span className="truncate">{shop.address}</span>
