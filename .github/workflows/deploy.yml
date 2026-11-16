@@ -100,6 +100,33 @@ jobs:
           name: frontend-dist
           path: dist
 
+      - name: Apply clothing rental D1 migration
+        # Apply only 0022. `d1 migrations apply` can replay untracked older files and must not run here.
+        run: |
+          set -euo pipefail
+          npx --yes wrangler@4.149.0 d1 execute chupgibaygio-db \
+            --remote \
+            --env production \
+            --config wrangler-worker.toml \
+            --json \
+            --command "PRAGMA table_info(rental_shops)" > rental-shops-schema.json
+          decision="$(node scripts/clothing-rental-migration-gate.mjs < rental-shops-schema.json)"
+          if [ "$decision" = "skip" ]; then
+            echo "rental_shops already has the 0022 columns; skipping migrations/0022_clothing_rental_partner.sql."
+            exit 0
+          fi
+          if [ "$decision" != "apply" ]; then
+            echo "::error::Refusing to migrate rental_shops (gate returned: $decision)."
+            exit 1
+          fi
+          npx --yes wrangler@4.149.0 d1 execute chupgibaygio-db \
+            --remote \
+            --env production \
+            --config wrangler-worker.toml \
+            --yes \
+            --file migrations/0022_clothing_rental_partner.sql
+          echo "Applied migrations/0022_clothing_rental_partner.sql to production D1 chupgibaygio-db."
+
       - name: Deploy API Worker
         # Keep the deploy CLI isolated from this repo's Wrangler 3/types 4 dependencies.
         run: npx --yes wrangler@4.149.0 deploy --env production --config wrangler-worker.toml --keep-vars
