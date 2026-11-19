@@ -18,6 +18,7 @@ import type { ServiceListing } from '../../services/serviceHubApi';
 import { ExpressDeliveryBadge } from './ExpressDeliveryBadge';
 import { FilmShopCard } from './FilmShopCard';
 import { FilmShopDetailDialog } from './FilmShopDetailDialog';
+import { LocationHelpDialog } from '../location/LocationHelpDialog';
 
 interface NearestFilmShopsDrawerProps {
   isOpen: boolean;
@@ -41,7 +42,9 @@ export const NearestFilmShopsDrawer: React.FC<NearestFilmShopsDrawerProps> = ({
     isUsingFallback,
     filmFilter,
     setFilmFilter,
-    requestLocation
+    requestLocation,
+    locationNotice,
+    dismissLocationNotice,
   } = useNearestLabs({ filmStockQuery: initialFilterFilm, source: 'all' });
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -85,6 +88,7 @@ export const NearestFilmShopsDrawer: React.FC<NearestFilmShopsDrawerProps> = ({
   });
 
   return (
+    <>
     <AnimatePresence>
       {isOpen && (
         <>
@@ -271,6 +275,14 @@ export const NearestFilmShopsDrawer: React.FC<NearestFilmShopsDrawerProps> = ({
         </>
       )}
     </AnimatePresence>
+    {locationNotice && (
+      <LocationHelpDialog
+        title={locationNotice.title}
+        message={locationNotice.message}
+        onClose={dismissLocationNotice}
+      />
+    )}
+    </>
   );
 };
 

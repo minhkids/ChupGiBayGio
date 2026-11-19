@@ -28,6 +28,7 @@ import { serviceHubApi, type ServiceListing } from '../../services/serviceHubApi
 import { ExpressDeliveryBadge } from './ExpressDeliveryBadge';
 import { FilmShopCard } from './FilmShopCard';
 import { FilmShopDetailDialog } from './FilmShopDetailDialog';
+import { LocationHelpDialog } from '../location/LocationHelpDialog';
 import { PhotographerDetailDialog } from './PhotographerDetailDialog';
 import { FeatureInDevelopmentDialog } from './FeatureInDevelopmentDialog';
 
@@ -79,7 +80,7 @@ export const ShootServicesHubDrawer: React.FC<ShootServicesHubDrawerProps> = ({
 
   // Tab 3 (Film Labs) State
   const [filmSearch, setFilmSearch] = useState('');
-  const { labs, areaOnlyShops, userCoords, isFallback, isLocating, refreshLocation } = useNearestLabs({
+  const { labs, areaOnlyShops, userCoords, isFallback, isLocating, refreshLocation, locationNotice, dismissLocationNotice } = useNearestLabs({
     filmStockQuery: filmSearch, source: 'shops'
   });
   const filteredAreaOnlyShops = areaOnlyShops.filter((shop) => !filmSearch.trim()
@@ -154,7 +155,10 @@ export const ShootServicesHubDrawer: React.FC<ShootServicesHubDrawerProps> = ({
     tiktokUrl: item.secondaryLink || '', similarItems: []
   })), [directoryItems]);
 
-  if (!isOpen) return null;
+  const locationHelp = locationNotice && (
+    <LocationHelpDialog title={locationNotice.title} message={locationNotice.message} onClose={dismissLocationNotice} />
+  );
+  if (!isOpen) return locationHelp;
 
   return (
     <AnimatePresence>
@@ -862,6 +866,7 @@ export const ShootServicesHubDrawer: React.FC<ShootServicesHubDrawerProps> = ({
         <AnimatePresence>{selectedAreaOnlyShop && <FilmShopDetailDialog key={selectedAreaOnlyShop.id} shop={selectedAreaOnlyShop} onClose={() => setSelectedAreaOnlyShop(null)} />}</AnimatePresence>
         <AnimatePresence>{selectedPhotographerDetails && <PhotographerDetailDialog key={selectedPhotographerDetails.id} photographer={selectedPhotographerDetails} onClose={() => setSelectedPhotographerDetails(null)} />}</AnimatePresence>
         {isFeatureNoticeOpen && <FeatureInDevelopmentDialog onClose={() => setIsFeatureNoticeOpen(false)} />}
+        {locationHelp}
       </div>
     </AnimatePresence>
   );

@@ -14,6 +14,8 @@ import type { FilterState, ConceptTag, PlaceCategory } from '../../types';
 import { CONCEPT_METADATA } from '../../utils/season';
 import { DEFAULT_PLACE_CATEGORIES } from '../../utils/placeCategories';
 import { PlaceCategoryFilterControl } from './PlaceCategoryFilterControl';
+import { LocationHelpDialog } from '../location/LocationHelpDialog';
+import { requestUserLocation, type LocationRequest } from '../../utils/userLocation';
 
 interface FilterBarProps {
   filters: FilterState;
@@ -68,6 +70,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [isMonthPopoverOpen, setIsMonthPopoverOpen] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
+  const [locationHelp, setLocationHelp] = useState<Extract<LocationRequest, { ok: false }> | null>(null);
 
   const handleToggleNearby = () => {
     if (filters.onlyNearby) {
@@ -79,45 +82,21 @@ export const FilterBar: React.FC<FilterBarProps> = ({
       return;
     }
 
+    const pending = requestUserLocation();
     setIsLocating(true);
-    if ('geolocation' in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setIsLocating(false);
-          onChangeFilters({
-            ...filters,
-            onlyNearby: true,
-            userCoords: {
-              lat: position.coords.latitude,
-              lng: position.coords.longitude
-            }
-          });
-        },
-        (error) => {
-          console.warn('Geolocation fallback:', error);
-          setIsLocating(false);
-          onChangeFilters({
-            ...filters,
-            onlyNearby: true,
-            userCoords: {
-              lat: 21.0285,
-              lng: 105.8542
-            }
-          });
-        },
-        { timeout: 8000 }
-      );
-    } else {
+    setLocationHelp(null);
+    void pending.then((result) => {
       setIsLocating(false);
+      if (!result.ok) {
+        setLocationHelp(result);
+        return;
+      }
       onChangeFilters({
         ...filters,
         onlyNearby: true,
-        userCoords: {
-          lat: 21.0285,
-          lng: 105.8542
-        }
+        userCoords: result.coords
       });
-    }
+    });
   };
 
   const hasActiveFilters = 
@@ -134,6 +113,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
     showAdvanced || filters.timeOfDay !== 'ALL' || filters.concept !== 'ALL' || filters.placeCategory !== 'ALL' || filters.cost !== 'ALL';
 
   return (
+    <>
     <div className="sticky top-0 z-30 border-b border-[#E2DAD0] bg-[#FAF8F4]/90 backdrop-blur-md select-none">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 space-y-3">
         
@@ -357,5 +337,13 @@ export const FilterBar: React.FC<FilterBarProps> = ({
 
       </div>
     </div>
+    {locationHelp && (
+      <LocationHelpDialog
+        title={locationHelp.title}
+        message={locationHelp.message}
+        onClose={() => setLocationHelp(null)}
+      />
+    )}
+    </>
   );
 };
