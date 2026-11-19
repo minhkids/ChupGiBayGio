@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useCatalogRevision } from './useCatalogRevision';
 import { HANOI_DEFAULT_COORDS, type FilmLab } from '../data/filmLabsData';
 import type { FilmShopLocation, ServiceListing } from '../services/serviceHubApi';
+import { requestUserLocation, type LocationRequest } from '../utils/userLocation';
 
 export interface NearestFilmLab extends FilmLab {
   distanceKm: number;
@@ -66,6 +67,7 @@ export function useNearestLabs(optionsOrFilter?: string | { filmStockQuery?: str
   const [isLocating, setIsLocating] = useState<boolean>(false);
   const [isUsingFallback, setIsUsingFallback] = useState<boolean>(true);
   const [locationError, setLocationError] = useState<string | null>(null);
+  const [locationNotice, setLocationNotice] = useState<Extract<LocationRequest, { ok: false }> | null>(null);
   const [filmFilter, setFilmFilter] = useState<string>(initialFilmFilter || '');
   const [filmLabs, setFilmLabs] = useState<FilmLab[]>([]);
   const [areaOnlyShops, setAreaOnlyShops] = useState<ServiceListing[]>([]);
@@ -150,51 +152,32 @@ export function useNearestLabs(optionsOrFilter?: string | { filmStockQuery?: str
   }, [initialFilmFilter]);
 
   const requestLocation = useCallback(() => {
-    if (typeof window === 'undefined' || !navigator.geolocation) {
-      setLocationError('Trình duyệt không hỗ trợ Geolocation.');
-      setIsUsingFallback(true);
-      return;
-    }
-
+    // Must start inside the click. A page-load request does not show the
+    // mobile permission prompt and can block the later tap from showing it.
+    const pending = requestUserLocation();
     setIsLocating(true);
     setLocationError(null);
 
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setUserCoords({
-          lat: position.coords.latitude,
-          lng: position.coords.longitude
-        });
+    void pending.then((result) => {
+      setIsLocating(false);
+      if (result.ok) {
+        setUserCoords(result.coords);
         setIsUsingFallback(false);
-        setIsLocating(false);
-      },
-      (error) => {
-        // Fallback to Hoan Kiem Lake center if GPS denied or timeout
-        console.warn('Geolocation failed or denied, using Hoan Kiem fallback:', error.message);
-        setUserCoords({
-          lat: HANOI_DEFAULT_COORDS.lat,
-          lng: HANOI_DEFAULT_COORDS.lng
-        });
-        setIsUsingFallback(true);
-        setIsLocating(false);
-        setLocationError(
-          error.code === error.PERMISSION_DENIED
-            ? 'Quyền truy cập vị trí bị từ chối. Sử dụng tọa độ trung tâm Hồ Gươm.'
-            : 'Không lấy được vị trí GPS. Sử dụng tọa độ trung tâm Hồ Gươm.'
-        );
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 60000
+        setLocationNotice(null);
+        setLocationError(null);
+        return;
       }
-    );
+      setUserCoords({
+        lat: HANOI_DEFAULT_COORDS.lat,
+        lng: HANOI_DEFAULT_COORDS.lng
+      });
+      setIsUsingFallback(true);
+      setLocationNotice(result);
+      setLocationError(result.message);
+    });
   }, []);
 
-  // Attempt to get location on mount
-  useEffect(() => {
-    requestLocation();
-  }, [requestLocation]);
+  const dismissLocationNotice = useCallback(() => setLocationNotice(null), []);
 
   // Compute distances, filter and sort nearest to farthest
   const sortedLabs = useMemo(() => {
@@ -243,6 +226,8 @@ export function useNearestLabs(optionsOrFilter?: string | { filmStockQuery?: str
     isUsingFallback,
     isFallback: isUsingFallback,
     locationError,
+    locationNotice,
+    dismissLocationNotice,
     filmFilter,
     setFilmFilter,
     requestLocation,

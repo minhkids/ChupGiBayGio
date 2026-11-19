@@ -10,6 +10,7 @@ import { exportCyclingStoryVideo } from '../../utils/cyclingVideoExport';
 import { ArrivalSpotPopup } from './ArrivalSpotPopup';
 import { StoryPlayerControls } from './StoryPlayerControls';
 import { cyclingBikeArtwork } from './cyclingBikeArtwork';
+import { CYCLING_STORY_LOCATION_MESSAGE } from '../../utils/userLocation';
 
 export type CyclingStoryMode = 'spot' | 'plan';
 type StoryStatus = 'loading' | 'intro' | 'playing' | 'paused' | 'arrived' | 'error';
@@ -36,20 +37,6 @@ function asWaypoint(spot: Spot): CyclingWaypoint {
 
 function validWaypoint(point: CyclingWaypoint): boolean {
   return Number.isFinite(point.lat) && Number.isFinite(point.lng) && point.lat >= 8 && point.lat <= 24 && point.lng >= 102 && point.lng <= 110;
-}
-
-function locateCurrentPosition(): Promise<CyclingWaypoint> {
-  return new Promise((resolve, reject) => {
-    if (!navigator.geolocation) {
-      reject(new Error('Trình duyệt không hỗ trợ GPS. Hãy thêm ít nhất hai điểm có tọa độ vào Kế hoạch chụp.'));
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(
-      ({ coords }) => resolve({ id: 'current-location', name: 'Vị trí hiện tại', lat: coords.latitude, lng: coords.longitude, kind: 'origin' }),
-      () => reject(new Error('Không lấy được vị trí GPS. Hãy cấp quyền vị trí hoặc thêm đủ hai điểm vào Kế hoạch chụp.')),
-      { enableHighAccuracy: true, maximumAge: 30_000, timeout: 10_000 },
-    );
-  });
 }
 
 function bikeIcon() {
@@ -138,10 +125,10 @@ export function CyclingStoryController({ map, isOpen, mode, targetSpot, waypoint
         let stops = mode === 'spot' && target ? [target] : waypoints.filter(validWaypoint);
         if (mode === 'spot' && target && !validWaypoint(target)) throw new Error('Địa điểm này chưa có tọa độ hợp lệ để tạo hành trình.');
         if (stops.length === 1) {
-          const origin = userCoordinates && Number.isFinite(userCoordinates.lat) && Number.isFinite(userCoordinates.lng)
-            ? { id: 'current-location', name: 'Vị trí hiện tại', lat: userCoordinates.lat, lng: userCoordinates.lng, kind: 'origin' as const }
-            : await locateCurrentPosition();
-          stops = [origin, ...stops];
+          if (!userCoordinates || !Number.isFinite(userCoordinates.lat) || !Number.isFinite(userCoordinates.lng)) {
+            throw new Error(CYCLING_STORY_LOCATION_MESSAGE);
+          }
+          stops = [{ id: 'current-location', name: 'Vị trí hiện tại', lat: userCoordinates.lat, lng: userCoordinates.lng, kind: 'origin' as const }, ...stops];
         }
         if (stops.length < 2) throw new Error('Thêm ít nhất hai điểm có tọa độ vào Kế hoạch buổi chụp, hoặc bật GPS để đi đến một điểm chụp.');
         if (stops.length > 7) throw new Error('Mỗi hành trình tối đa 7 điểm dừng.');

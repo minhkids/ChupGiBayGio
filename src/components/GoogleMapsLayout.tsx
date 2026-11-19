@@ -43,6 +43,8 @@ import type { ServicesTab } from './layout/ShootServicesHubDrawer';
 import type { FilmLab } from '../data/filmLabsData';
 import { SingleFilmLabCard } from './layout/SingleFilmLabCard';
 import { formatDistance, getNearestSpots } from '../utils/geo';
+import { requestUserLocation, type LocationRequest } from '../utils/userLocation';
+import { LocationHelpDialog } from './location/LocationHelpDialog';
 import { useShootPlan } from '../context/ShootPlanContext';
 import { CyclingStoryController, type CyclingStoryMode } from './map/CyclingStoryController';
 
@@ -123,6 +125,7 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
   // Toast feedback state
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isLocatingUser, setIsLocatingUser] = useState(false);
+  const [locationHelp, setLocationHelp] = useState<Extract<LocationRequest, { ok: false }> | null>(null);
   const [showNearbySpots, setShowNearbySpots] = useState(false);
 
   // Quick active photo gallery index for detail card
@@ -150,17 +153,43 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
   const [cyclingStoryTarget, setCyclingStoryTarget] = useState<Spot | null>(null);
   const [isStoryVertical, setIsStoryVertical] = useState(false);
 
-  const startSpotCyclingStory = (spot: Spot) => {
+  const openSpotStory = (spot: Spot) => {
     setCyclingStoryMode('spot');
     setCyclingStoryTarget(spot);
     setIsCyclingStoryOpen(true);
     onSelectSpot(null);
   };
-  const startPlanCyclingStory = () => {
+  const openPlanStory = () => {
     setCyclingStoryMode('plan');
     setCyclingStoryTarget(null);
     setIsCyclingStoryOpen(true);
     shootPlan.closeDrawer();
+  };
+  const planHasOwnRoute = shootPlan.cyclingStops.filter((stop) => (
+    Number.isFinite(stop.lat) && Number.isFinite(stop.lng) && stop.lat >= 8 && stop.lat <= 24 && stop.lng >= 102 && stop.lng <= 110
+  )).length >= 2;
+  const startAfterLocation = (open: () => void) => {
+    if (filters.userCoords) {
+      open();
+      return;
+    }
+    const pending = requestUserLocation();
+    setIsLocatingUser(true);
+    setLocationHelp(null);
+    void pending.then((result) => {
+      setIsLocatingUser(false);
+      if (!result.ok) {
+        setLocationHelp(result);
+        return;
+      }
+      onChangeFilters((current) => ({ ...current, userCoords: result.coords }));
+      open();
+    });
+  };
+  const startSpotCyclingStory = (spot: Spot) => startAfterLocation(() => openSpotStory(spot));
+  const startPlanCyclingStory = () => {
+    if (planHasOwnRoute) openPlanStory();
+    else startAfterLocation(openPlanStory);
   };
 
   const nearbySpots = useMemo(
@@ -237,33 +266,20 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
   };
 
   const handleLocateUser = () => {
-    if (!navigator.geolocation?.getCurrentPosition) {
-      showToast('Trình duyệt không hỗ trợ xác định vị trí.');
-      return;
-    }
-
+    const pending = requestUserLocation();
     setIsLocatingUser(true);
+    setLocationHelp(null);
     setShowNearbySpots(false);
-    navigator.geolocation.getCurrentPosition(
-      position => {
-        const coords = { lat: position.coords.latitude, lng: position.coords.longitude };
-        setIsLocatingUser(false);
-        onChangeFilters(current => ({ ...current, userCoords: coords }));
-        setFocusedCoordinates({ ...coords, zoom: 14 });
-        setShowNearbySpots(true);
-      },
-      error => {
-        setIsLocatingUser(false);
-        if (error.code === error.PERMISSION_DENIED) {
-          showToast('Hãy cho phép truy cập vị trí để tìm địa điểm gần bạn.');
-        } else if (error.code === error.TIMEOUT) {
-          showToast('Hết thời gian xác định vị trí. Vui lòng thử lại.');
-        } else {
-          showToast('Không xác định được vị trí của bạn.');
-        }
-      },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
-    );
+    void pending.then((result) => {
+      setIsLocatingUser(false);
+      if (!result.ok) {
+        setLocationHelp(result);
+        return;
+      }
+      onChangeFilters(current => ({ ...current, userCoords: result.coords }));
+      setFocusedCoordinates({ ...result.coords, zoom: 14 });
+      setShowNearbySpots(true);
+    });
   };
 
   const handleSelectNearbySpot = (spot: Spot) => {
@@ -486,6 +502,14 @@ export const GoogleMapsLayout: React.FC<GoogleMapsLayoutProps> = ({
         </div>
 
       </div>
+
+      {locationHelp && (
+        <LocationHelpDialog
+          title={locationHelp.title}
+          message={locationHelp.message}
+          onClose={() => setLocationHelp(null)}
+        />
+      )}
 
       <button
         type="button"

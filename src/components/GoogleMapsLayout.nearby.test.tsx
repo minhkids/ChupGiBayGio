@@ -114,6 +114,14 @@ describe('GoogleMapsLayout nearby locations', () => {
     expect(screen.getAllByText('Chia sẻ')).toHaveLength(2);
   });
 
+  it('does not ask for location until the locate button is tapped', () => {
+    const geolocation = navigator.geolocation.getCurrentPosition as ReturnType<typeof vi.fn>;
+    render(<TestMap />);
+    expect(geolocation).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Vị trí của tôi' }));
+    expect(geolocation).toHaveBeenCalledTimes(1);
+  });
+
   it('shows the five closest spots in distance order after locating the user', async () => {
     render(<TestMap />);
 
@@ -154,7 +162,8 @@ describe('GoogleMapsLayout nearby locations', () => {
     render(<TestMap />);
     fireEvent.click(screen.getByRole('button', { name: 'Vị trí của tôi' }));
 
-    expect(await screen.findByText('Hãy cho phép truy cập vị trí để tìm địa điểm gần bạn.')).toBeTruthy();
+    expect(await screen.findByRole('dialog', { name: 'Quyền vị trí đang bị tắt' })).toBeTruthy();
+    expect(screen.getByText(/Cho phép/)).toBeTruthy();
     expect(screen.queryByRole('region', { name: 'Địa điểm gần bạn' })).toBeNull();
     expect(screen.getByTestId('map').getAttribute('data-user-lat')).toBeNull();
   });

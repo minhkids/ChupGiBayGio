@@ -83,6 +83,14 @@ it('anticipates launch and settles the basket and flowers independently on braki
   expect(css).toMatch(/@media\(prefers-reduced-motion:reduce\)\{[^}]*animation:none!important/);
 });
 
+it('does not request GPS from the story loader when the origin is still missing', async () => {
+  const getCurrentPosition = vi.fn();
+  Object.defineProperty(navigator, 'geolocation', { configurable: true, value: { getCurrentPosition } });
+  render(<CyclingStoryController map={map} isOpen mode="spot" targetSpot={null} waypoints={[stops[0]]} isVertical={false} onVerticalModeChange={vi.fn()} onClose={vi.fn()} />);
+  expect(await screen.findByText(/Vị trí của tôi/)).toBeTruthy();
+  expect(getCurrentPosition).not.toHaveBeenCalled();
+});
+
 it('shows a clear error when a route cannot be returned', async () => {
   fetchRoute.mockRejectedValueOnce(new Error('Không có tuyến xe đạp hợp lệ.'));
   render(<CyclingStoryController map={map} isOpen mode="plan" targetSpot={null} waypoints={stops} isVertical={false} onVerticalModeChange={vi.fn()} onClose={vi.fn()} />);
